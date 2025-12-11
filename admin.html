@@ -768,33 +768,40 @@
     }
 
     // =======================
-    // Логика входа по паролю
-    // =======================
+// Вход по секретному URL
+// =======================
 
-    async function handleLogin() {
-        const input = document.getElementById("loginPassword");
-        const password = input.value.trim();
-        if (!password) {
-            showLoginError("Введите пароль.");
-            return;
-        }
-        const hash = await sha256Hex(password);
-        if (hash === PASSWORD_HASH_HEX) {
-            setSession();
-            showLoginError("");
-            hideLogin();
-            initAdmin();
-        } else {
-            showLoginError("Неверный пароль.");
-        }
+function checkAccessByURL() {
+    const url = new URL(window.location.href);
+    const key = url.searchParams.get("key");
+
+    // секретный ключ
+    const SECRET_KEY = "khvalla74";
+
+    if (key === SECRET_KEY) {
+        // доступ разрешён
+        document.getElementById("loginOverlay").style.display = "none";
+        document.getElementById("adminMain").style.display = "block";
+        initAdmin();
+    } else {
+        // доступ запрещён
+        document.body.innerHTML = `
+            <div style="
+                font-family: system-ui;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                font-size: 20px;
+                color: #b22222;
+            ">
+                Доступ запрещён
+            </div>
+        `;
     }
+}
 
-    document.getElementById("loginButton").addEventListener("click", handleLogin);
-    document.getElementById("loginPassword").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            handleLogin();
-        }
-    });
+window.addEventListener("load", checkAccessByURL);
 
     // =======================
     // Состояние админки
