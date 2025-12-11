@@ -6,72 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <style>
-        /* Модальное окно */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.55);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
-}
-
-.modal-overlay.open {
-    display: flex;
-}
-
-.modal-window {
-    background: #fff;
-    border-radius: 16px;
-    max-width: 480px;
-    width: 90%;
-    padding: 16px;
-    position: relative;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-    animation: fadeIn 0.25s ease;
-}
-
-.modal-close {
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    font-size: 24px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    opacity: 0.7;
-}
-
-.modal-close:hover {
-    opacity: 1;
-}
-
-.modal-photo {
-    width: 100%;
-    height: 260px;
-    object-fit: cover;
-    border-radius: 12px;
-    margin-bottom: 12px;
-}
-
-.modal-meta {
-    font-size: 14px;
-    color: #555;
-    margin-bottom: 8px;
-}
-
-.modal-desc {
-    font-size: 14px;
-    line-height: 1.4;
-    color: #333;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to   { opacity: 1; transform: scale(1); }
-}
-
         body {
             margin: 0;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -109,7 +43,7 @@
             padding: 12px 8px 32px;
         }
 
-        /* Панель фильтров — всегда сверху */
+        /* Панель фильтров */
         .filters-wrapper {
             display: flex;
             flex-wrap: wrap;
@@ -253,7 +187,7 @@
             color: #fff;
         }
 
-        /* Сетка карточек — адаптивная */
+        /* Сетка карточек */
         .cards {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -267,6 +201,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            cursor: pointer;
         }
 
         .card img {
@@ -298,24 +233,79 @@
             font-size: 14px;
             opacity: 0.7;
         }
+
+        /* Модальное окно */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-window {
+            background: #fff;
+            border-radius: 16px;
+            max-width: 480px;
+            width: 90%;
+            padding: 16px;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            animation: fadeIn 0.25s ease;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .modal-close:hover {
+            opacity: 1;
+        }
+
+        .modal-photo {
+            width: 100%;
+            height: 260px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .modal-meta {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .modal-desc {
+            font-size: 14px;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to   { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body>
-    <!-- Модальное окно карточки -->
-<div id="modalOverlay" class="modal-overlay">
-    <div class="modal-window">
-        <button class="modal-close">×</button>
-        <img id="modalPhoto" class="modal-photo" src="" alt="">
-        <h2 id="modalTitle"></h2>
-        <div id="modalMeta" class="modal-meta"></div>
-        <p id="modalDesc" class="modal-desc"></p>
-    </div>
-</div>
-
 <header>
     <div>
         <h1>Каталог томатов</h1>
-        <div class="version">Версия 15.1 (без мобильной панели)</div>
+        <div class="version">Версия 15.2 (с модалкой)</div>
     </div>
 </header>
 
@@ -384,46 +374,229 @@
     <div id="noResults" class="no-results" style="display:none;">Ничего не найдено по текущим фильтрам.</div>
 </main>
 
+<!-- Модальное окно -->
+<div id="modalOverlay" class="modal-overlay">
+    <div class="modal-window">
+        <button class="modal-close">×</button>
+        <img id="modalPhoto" class="modal-photo" src="" alt="">
+        <h2 id="modalTitle"></h2>
+        <div id="modalMeta" class="modal-meta"></div>
+        <p id="modalDesc" class="modal-desc"></p>
+    </div>
+</div>
+
 <script>
-    // --- Модальное окно ---
-const modalOverlay = document.getElementById("modalOverlay");
-const modalPhoto = document.getElementById("modalPhoto");
-const modalTitle = document.getElementById("modalTitle");
-const modalMeta = document.getElementById("modalMeta");
-const modalDesc = document.getElementById("modalDesc");
-const modalClose = document.querySelector(".modal-close");
-
-function openModal(item) {
-    modalPhoto.src = getPhotoUrl(item);
-    modalTitle.textContent = item.name || ("ID: " + item.id);
-    
-    const metaParts = [];
-    if (item.color) metaParts.push("Цвет: " + item.color);
-    if (item.type) metaParts.push("Тип: " + item.type);
-    if (item.size) metaParts.push("Размер: " + item.size);
-    modalMeta.textContent = metaParts.join(" • ");
-
-    modalDesc.textContent = item.description || "";
-
-    modalOverlay.classList.add("open");
-}
-
-function closeModal() {
-    modalOverlay.classList.remove("open");
-}
-
-modalClose.addEventListener("click", closeModal);
-modalOverlay.addEventListener("click", (e) => {
-    if (e.target === modalOverlay) closeModal();
-});
-document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeModal();
-});
-
 (function() {
     "use strict";
 
     try {
 
-        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0kK2Vq1bW0LZgXn7XjvBzW4WkXoUe8VbOue
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0kK2Vq1bW0LZgXn7XjvBzW4WkXoUe8VbOue0N9hE4Uu9s7sR0/export?format=tsv&gid=0";
 
+        const cardsContainer = document.getElementById("cardsContainer");
+        const noResultsEl = document.getElementById("noResults");
+        const quickSearchInput = document.getElementById("quickSearchInput");
+
+        let allData = [];
+        let activeFilters = {
+            color: [],
+            type: [],
+            size: [],
+            search: ""
+        };
+
+        function normalizeString(s) {
+            if (!s) return "";
+            return String(s).trim().toLowerCase();
+        }
+
+        function uniqueSorted(values) {
+            return Array.from(new Set(values.filter(v => v && String(v).trim() !== "")))
+                .sort((a, b) => String(a).localeCompare(String(b), "ru"));
+        }
+
+        async function loadData() {
+            const res = await fetch(CSV_URL, { cache: "no-store" });
+            const text = await res.text();
+            return parseTSV(text);
+        }
+
+        function parseTSV(text) {
+            const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+            if (rows.length < 2) return [];
+
+            const header = rows[0].split("\t").map(h => h.trim());
+            const dataRows = rows.slice(1);
+
+            return dataRows.map(row => {
+                const cols = row.split("\t");
+                const obj = {};
+                header.forEach((name, idx) => {
+                    obj[name] = (cols[idx] || "").trim();
+                });
+                return obj;
+            });
+        }
+
+        function getPhotoUrl(item) {
+            const url = item.mainphoto || item.photo || "";
+            if (!url) {
+                return "https://placehold.co/300x200?text=No+Photo";
+            }
+            return url;
+        }
+
+        function renderCards(data) {
+            cardsContainer.innerHTML = "";
+
+            if (!data || data.length === 0) {
+                noResultsEl.style.display = "block";
+                return;
+            } else {
+                noResultsEl.style.display = "none";
+            }
+
+            const frag = document.createDocumentFragment();
+
+            data.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "card";
+
+                const img = document.createElement("img");
+                img.loading = "lazy";
+                img.src = getPhotoUrl(item);
+                img.alt = item.name || item.id || "Томат";
+
+                img.onerror = () => {
+                    img.onerror = null;
+                    img.src = "https://placehold.co/300x200?text=No+Photo";
+                };
+
+                const body = document.createElement("div");
+                body.className = "card-body";
+
+                const title = document.createElement("div");
+                title.className = "card-title";
+                title.textContent = item.name || ("ID: " + (item.id || ""));
+
+                const meta = document.createElement("div");
+                meta.className = "card-meta";
+                const parts = [];
+                if (item.color) parts.push("Цвет: " + item.color);
+                if (item.type) parts.push("Тип: " + item.type);
+                if (item.size) parts.push("Размер: " + item.size);
+                meta.textContent = parts.join(" • ");
+
+                body.appendChild(title);
+                if (parts.length) body.appendChild(meta);
+
+                card.appendChild(img);
+                card.appendChild(body);
+
+                // ✅ Открытие модального окна
+                card.addEventListener("click", () => openModal(item));
+
+                frag.appendChild(card);
+            });
+
+            cardsContainer.appendChild(frag);
+        }
+
+        function applyFilters() {
+            const search = normalizeString(activeFilters.search);
+
+            const filtered = allData.filter(item => {
+                if (search) {
+                    const name = normalizeString(item.name);
+                    const id = normalizeString(item.id);
+                    if (!name.includes(search) && !id.includes(search)) {
+                        return false;
+                    }
+                }
+
+                if (activeFilters.color.length > 0) {
+                    const value = normalizeString(item.color);
+                    if (!activeFilters.color.some(v => v === value)) {
+                        return false;
+                    }
+                }
+
+                if (activeFilters.type.length > 0) {
+                    const value = normalizeString(item.type);
+                    if (!activeFilters.type.some(v => v === value)) {
+                        return false;
+                    }
+                }
+
+                if (activeFilters.size.length > 0) {
+                    const value = normalizeString(item.size);
+                    if (!activeFilters.size.some(v => v === value)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            renderCards(filtered);
+        }
+
+        function initMultiFilter(field) {
+            const root = document.querySelector('.multi-filter[data-field="' + field + '"]');
+            if (!root) return;
+
+            const display = root.querySelector(".multi-filter-display");
+            const dropdown = root.querySelector(".multi-filter-dropdown");
+            const searchInput = root.querySelector(".multi-filter-search input");
+            const optionsContainer = root.querySelector(".multi-filter-options");
+            const btnClear = root.querySelector(".btn-clear");
+            const btnApply = root.querySelector(".btn-apply");
+
+            const placeholderText = display.dataset.placeholder || "";
+
+            const values = uniqueSorted(allData.map(item => item[field]));
+
+            optionsContainer.innerHTML = "";
+            values.forEach(val => {
+                const valueNorm = String(val).trim();
+                if (!valueNorm) return;
+
+                const opt = document.createElement("div");
+                opt.className = "multi-filter-option";
+
+                const id = field + "_" + valueNorm;
+
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.id = id;
+                checkbox.value = valueNorm;
+
+                const label = document.createElement("label");
+                label.setAttribute("for", id);
+                label.textContent = valueNorm;
+
+                opt.appendChild(checkbox);
+                opt.appendChild(label);
+                optionsContainer.appendChild(opt);
+            });
+
+            function updateDisplay() {
+                const selected = activeFilters[field];
+                display.innerHTML = "";
+
+                if (!selected || selected.length === 0) {
+                    const span = document.createElement("span");
+                    span.className = "placeholder";
+                    span.textContent = placeholderText;
+                    display.appendChild(span);
+                    return;
+                }
+
+                selected.forEach(val => {
+                    const tag = document.createElement("span");
+                    tag.className = "tag";
+                    tag.textContent = val;
+
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.textContent = "×";
