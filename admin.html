@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Tomato Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        :root {
+            --primary: #b22222;
+            --primary-light: #d94747;
+            --bg: #f5f5f7;
+            --card-bg: #ffffff;
+            --text-main: #222222;
+            --text-muted: #666666;
+            --border-soft: #e0e0e0;
+            --shadow-soft: 0 10px 30px rgba(0,0,0,0.08);
+            --radius-lg: 12px;
+            --radius-md: 8px;
+            --transition-fast: 0.2s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+        }
+
+        .app-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .logo-block {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-mark {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 30%, #ff8a80, #b22222);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+        }
+
+        .logo-text-main {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .logo-text-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .badge-env {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(178,34,34,0.08);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 16px auto 32px;
+            padding: 0 16px 32px;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        @media (max-width: 960px) {
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            padding: 16px 18px 18px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .card-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .card-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin: 16px 0 6px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 16px;
+        }
+
+        @media (max-width: 720px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .label-muted {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        input[type="text"],
+        input[type="file"],
+        textarea,
+        select {
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-soft);
+            padding: 8px 10px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+            background: #fafafa;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 1px rgba(178,34,34,0.16);
+            background: #ffffff;
+        }
+
+        .btn {
+            border-radius: 999px;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast), opacity var(--transition-fast);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 6px 16px rgba(178,34,34,0.35);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(178,34,34,0.45);
+        }
+
+        .btn-secondary {
+            background: #f0f0f3;
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: #e2e2e7;
+        }
+
+        .btn-danger {
+            background: #c62828;
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background: #e53935;
+        }
+
+        .btn-icon {
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: transparent;
+            border: 1px solid var(--border-soft);
+            font-size: 12px;
+        }
+
+        .btn-icon:hover {
+            background: #f3f3f7;
+        }
+
+        .btn:disabled {
+            opacity: 0.55;
+            cursor: default;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .flex-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .flex-space-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chips-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .chip-stat {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            background: #f4f4f7;
+            color: var(--text-muted);
+        }
+
+        .chip-stat strong {
+            color: var(--primary);
+        }
+
+        .preview-photo {
+            margin-top: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .preview-photo-item {
+            width: 70px;
+            height: 70px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border-soft);
+            background: #f3f3f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .preview-photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .table-card {
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        thead {
+            background: #fafafa;
+        }
+
+        th, td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #f0f0f3;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .cell-photo-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f3f3f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell-photo-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cell-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+        }
+
+        .status-ok {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-warn {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .status-bad {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .muted {
+            color: var(--text-muted);
+        }
+
+        /* Login overlay */
+
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at top, rgba(178,34,34,0.18), rgba(0,0,0,0.65));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .login-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+            padding: 22px 22px 18px;
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .login-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .login-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .login-error {
+            font-size: 12px;
+            color: #c62828;
+            margin-top: 6px;
+            min-height: 16px;
+        }
+
+        /* Modals */
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+        }
+
+        .modal {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 16px 18px 14px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 16px 36px rgba(0,0,0,0.35);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .modal-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .modal-footer {
+            margin-top: 14px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #f4f4f7;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+
+    <!-- Вход по паролю -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <div class="login-title">Вход в админку</div>
+            <div class="login-sub">Доступ только для владельцев каталога томатов.</div>
+            <div class="form-field">
+                <label for="loginPassword">Пароль</label>
+                <input type="password" id="loginPassword" autocomplete="current-password" placeholder="Введите пароль">
+            </div>
+            <div class="login-error" id="loginError"></div>
+            <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
+                <button id="loginButton" class="btn btn-primary">
+                    Войти
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="header-inner">
+            <div class="logo-block">
+                <div class="logo-mark"></div>
+                <div>
+                    <div class="logo-text-main">Tomato Admin</div>
+                    <div class="logo-text-sub">Управление каталогом сортов</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="badge-env">Админка</span>
+                <span id="headerInfo" class="muted">CSV: загружается…</span>
+            </div>
+        </div>
+    </header>
+
+    <main style="display:none" id="adminMain">
+
+        <div class="layout-grid">
+            <!-- Левая колонка: добавление сорта -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Добавить сорт</div>
+                        <div class="card-sub">Форма для создания нового сорта в каталоге</div>
+                    </div>
+                    <div id="nextIdBadge" class="tag">ID: …</div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="fieldName">Название сорта</label>
+                        <input type="text" id="fieldName" placeholder="Например: Бычье сердце розовое">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="fieldOrigin">Происхождение</label>
+                        <div class="flex-row">
+                            <select id="fieldOrigin" style="flex:1;"></select>
+                            <button id="btnAddOrigin" class="btn-icon">+ новое</button>
+                        </div>
+                        <div class="label-muted">Выпадающий список + возможность добавить новый вариант</div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="fieldColor">Цвет</label>
+                        <select id="fieldColor"></select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="fieldType">Тип</label>
+                        <select id="fieldType"></select>
+                    </div>
+
+                    <div class="form-field" style="grid-column: 1 / -1;">
+                        <label for="fieldDescription">Описание</label>
+                        <textarea id="fieldDescription" placeholder="Кратко опишите сорт, вкус, урожайность, особенности…"></textarea>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Главное фото</label>
+                        <input type="file" id="fieldMainPhoto" accept="image/*">
+                        <div class="label-muted">Будет на карточке и первым в модалке</div>
+                        <div id="previewMainPhoto" class="preview-photo"></div>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Галерея фото</label>
+                        <input type="file" id="fieldGalleryPhotos" accept="image/*" multiple>
+                        <div class="label-muted">Дополнительные фото для модального окна (2–10 штук)</div>
+                        <div id="previewGalleryPhotos" class="preview-photo"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 14px;" class="flex-space-between">
+                    <div class="chips-row" id="formHints">
+                        <span class="chip-stat">Главное фото: <strong>обязательно</strong></span>
+                        <span class="chip-stat">Галерея: <strong>по желанию</strong></span>
+                    </div>
+                    <button id="btnCreateTomato" class="btn btn-primary">
+                        Сохранить сорт
+                    </button>
+                </div>
+            </div>
+
+            <!-- Правая колонка: статистика и подсказки -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Статистика и состояние</div>
+                        <div class="card-sub">Общая картина по каталогу сортов</div>
+                    </div>
+                </div>
+                <div class="chips-row" id="statsChips">
+                    <span class="chip-stat">Всего сортов: <strong>–</strong></span>
+                    <span class="chip-stat">Без фото: <strong>–</strong></span>
+                    <span class="chip-stat">Без описания: <strong>–</strong></span>
+                </div>
+
+                <div style="margin-top: 14px;">
+                    <div class="card-section-title">Уникальные значения</div>
+                    <div class="chips-row" id="statsUnique">
+                        <span class="chip-stat">Цветов: <strong>–</strong></span>
+                        <span class="chip-stat">Типов: <strong>–</strong></span>
+                        <span class="chip-stat">Происхождений: <strong>–</strong></span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 14px;">
+                    <div class="card-section-title">Состояние</div>
+                    <div id="statusBlock">
+                        <div class="status-pill status-warn">CSV: <span>загружается…</span></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Таблица сортов -->
+        <div class="card table-card" style="margin-top: 20px;">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">Все сорта</div>
+                    <div class="card-sub">Редактирование и удаление существующих записей</div>
+                </div>
+                <button id="btnReloadData" class="btn btn-secondary">Обновить данные</button>
+            </div>
+
+            <div style="overflow-x:auto; max-height: 420px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Фото</th>
+                            <th>Название</th>
+                            <th>Цвет</th>
+                            <th>Тип</th>
+                            <th>Origin</th>
+                            <th>ID</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tomatoesTableBody">
+                        <!-- Записи будут подставляться динамически -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Модалка: добавить origin -->
+    <div id="originModalBackdrop" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Добавить новое происхождение</div>
+                <button class="modal-close" data-close-origin>&times;</button>
+            </div>
+            <div class="form-field">
+                <label for="inputNewOrigin">Новое значение origin</label>
+                <input type="text" id="inputNewOrigin" placeholder="Например: Сибирская селекция, Крым, авторский сорт…">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close-origin>Отмена</button>
+                <button id="btnSaveNewOrigin" class="btn btn-primary">Добавить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка: редактирование сорта (каркас) -->
+    <div id="editModalBackdrop" class="modal-backdrop">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Редактировать сорт</div>
+                <button class="modal-close" data-close-edit>&times;</button>
+            </div>
+            <div id="editFormContainer">
+                <!-- Содержимое формы редактирования будет формироваться JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close-edit>Отмена</button>
+                <button id="btnSaveEdit" class="btn btn-primary">Сохранить изменения</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // =======================
+    // Конфигурация
+    // =======================
+
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1fdNIH6J3sLQDzsEXm-RRl8VlbBfWfEiPhpL_3xWHZfesBJ_qpCBEsEU0Xe4wbkAzDAntYFSP2cnQ/pub?output=csv";
+
+    const GITHUB_USER = "SergeyHv";
+    const GITHUB_REPO = "tomato";
+    const GITHUB_BRANCH = "main";
+    const GITHUB_IMAGES_PATH = "images"; // без / в начале и конце
+
+    // SHA-256 хэш пароля khvalla74.
+    // Хэш сгенерирован заранее и здесь захардкожен.
+    const PASSWORD_HASH_HEX = "f4e9d0d64c827f9c3ad0a54be6a34f2e9b10c5e0b9e9e6f1a87c46bea9b95a0f";
+
+    const SESSION_KEY = "tomato_admin_session";
+
+    // =======================
+    // Вспомогательные функции
+    // =======================
+
+    async function sha256Hex(str) {
+        const enc = new TextEncoder().encode(str);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", enc);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function setSession() {
+        sessionStorage.setItem(SESSION_KEY, "ok");
+    }
+
+    function hasSession() {
+        return sessionStorage.getItem(SESSION_KEY) === "ok";
+    }
+
+    function clearSession() {
+        sessionStorage.removeItem(SESSION_KEY);
+    }
+
+    function showLoginError(msg) {
+        document.getElementById("loginError").textContent = msg;
+    }
+
+    function hideLogin() {
+        document.getElementById("loginOverlay").style.display = "none";
+        document.getElementById("adminMain").style.display = "block";
+    }
+
+    function showLogin() {
+        document.getElementById("loginOverlay").style.display = "flex";
+        document.getElementById("adminMain").style.display = "none";
+    }
+
+    // =======================
+    // Логика входа по паролю
+    // =======================
+
+    async function handleLogin() {
+        const input = document.getElementById("loginPassword");
+        const password = input.value.trim();
+        if (!password) {
+            showLoginError("Введите пароль.");
+            return;
+        }
+        const hash = await sha256Hex(password);
+        if (hash === PASSWORD_HASH_HEX) {
+            setSession();
+            showLoginError("");
+            hideLogin();
+            initAdmin();
+        } else {
+            showLoginError("Неверный пароль.");
+        }
+    }
+
+    document.getElementById("loginButton").addEventListener("click", handleLogin);
+    document.getElementById("loginPassword").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            handleLogin();
+        }
+    });
+
+    // =======================
+    // Состояние админки
+    // =======================
+
+    let tomatoesData = []; // массив объектов из CSV
+    let nextIdNumeric = 1;
+
+    const fieldName = document.getElementById("fieldName");
+    const fieldOrigin = document.getElementById("fieldOrigin");
+    const fieldColor = document.getElementById("fieldColor");
+    const fieldType = document.getElementById("fieldType");
+    const fieldDescription = document.getElementById("fieldDescription");
+    const fieldMainPhoto = document.getElementById("fieldMainPhoto");
+    const fieldGalleryPhotos = document.getElementById("fieldGalleryPhotos");
+
+    const previewMainPhoto = document.getElementById("previewMainPhoto");
+    const previewGalleryPhotos = document.getElementById("previewGalleryPhotos");
+
+    const headerInfo = document.getElementById("headerInfo");
+    const statusBlock = document.getElementById("statusBlock");
+    const nextIdBadge = document.getElementById("nextIdBadge");
+    const tableBody = document.getElementById("tomatoesTableBody");
+
+    const originModalBackdrop = document.getElementById("originModalBackdrop");
+    const inputNewOrigin = document.getElementById("inputNewOrigin");
+    const btnSaveNewOrigin = document.getElementById("btnSaveNewOrigin");
+
+    const editModalBackdrop = document.getElementById("editModalBackdrop");
+    const editFormContainer = document.getElementById("editFormContainer");
+    const btnSaveEdit = document.getElementById("btnSaveEdit");
+
+    let editingRowIndex = null; // индекс в tomatoesData для редактирования
+
+    // =======================
+    // CSV загрузка и парсинг
+    // =======================
+
+    async function loadCSV() {
+        headerInfo.textContent = "CSV: загружается…";
+        statusBlock.innerHTML = '<div class="status-pill status-warn">CSV: <span>загружается…</span></div>';
+        try {
+            const resp = await fetch(CSV_URL);
+            if (!resp.ok) throw new Error("Ошибка загрузки CSV");
+            const text = await resp.text();
+            const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+            if (rows.length === 0) {
+                throw new Error("Пустой CSV");
+            }
+            const header = rows[0].split(",").map(h => h.trim());
+            const dataRows = rows.slice(1);
+            const items = dataRows.map(row => {
+                const cols = row.split(",");
+                const obj = {};
+                header.forEach((h, i) => {
+                    obj[h] = (cols[i] || "").trim();
+                });
+                return obj;
+            });
+            tomatoesData = items;
+            headerInfo.textContent = `CSV: загружено записей: ${tomatoesData.length}`;
+            statusBlock.innerHTML = '<div class="status-pill status-ok">CSV: <span>успешно загружен</span></div>';
+            refreshAllState();
+        } catch (e) {
+            console.error(e);
+            headerInfo.textContent = "CSV: ошибка загрузки";
+            statusBlock.innerHTML = '<div class="status-pill status-bad">CSV: <span>ошибка загрузки</span></div>';
+        }
+    }
+
+    // =======================
+    // Генерация ID
+    // =======================
+
+    function parseIdNumeric(idStr) {
+        if (!idStr) return null;
+        const parts = idStr.split("-");
+        const last = parts[parts.length - 1];
+        const num = parseInt(last, 10);
+        return isNaN(num) ? null : num;
+    }
+
+    function computeNextId() {
+        let maxNum = 0;
+        const now = new Date();
+        const year = now.getFullYear();
+        tomatoesData.forEach(row => {
+            const numeric = parseIdNumeric(row.id);
+            if (numeric && numeric > maxNum) {
+                maxNum = numeric;
+            }
+        });
+        nextIdNumeric = maxNum + 1;
+        const padded = String(nextIdNumeric).padStart(6, "0");
+        const nextId = `TOM-${year}-${padded}`;
+        nextIdBadge.textContent = `ID: ${nextId}`;
+        return nextId;
+    }
+
+    // =======================
+    // Заполнение списков color/type/origin
+    // =======================
+
+    function fillSelectFromUnique(selectEl, values, addPlusOption = false) {
+        selectEl.innerHTML = "";
+        const unique = Array.from(new Set(values.filter(v => v && v.trim() !== ""))).sort((a,b) => a.localeCompare(b, "ru"));
+        unique.forEach(v => {
+            const opt = document.createElement("option");
+            opt.value = v;
+            opt.textContent = v;
+            selectEl.appendChild(opt);
+        });
+        if (addPlusOption) {
+            const opt = document.createElement("option");
+            opt.value = "__ADD_NEW__";
+            opt.textContent = "+ Добавить новое…";
+            selectEl.appendChild(opt);
+        }
+    }
+
+    function updateSelectsFromData() {
+        const colors = tomatoesData.map(r => r.color || "").filter(Boolean);
+        const types = tomatoesData.map(r => r.type || "").filter(Boolean);
+        const origins = tomatoesData.map(r => r.origin || "").filter(Boolean);
+
+        fillSelectFromUnique(fieldColor, colors, false);
+        fillSelectFromUnique(fieldType, types, false);
+        fillSelectFromUnique(fieldOrigin, origins, false);
+
+        // добавим option для "добавить новый" через кнопку, а не через select
+    }
+
+    // =======================
+    // Превью фото (frontend)
+    // =======================
+
+    fieldMainPhoto.addEventListener("change", () => {
+        previewMainPhoto.innerHTML = "";
+        const file = fieldMainPhoto.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const div = document.createElement("div");
+            div.className = "preview-photo-item";
+            const img = document.createElement("img");
+            img.src = e.target.result;
+            div.appendChild(img);
+            previewMainPhoto.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    fieldGalleryPhotos.addEventListener("change", () => {
+        previewGalleryPhotos.innerHTML = "";
+        const files = Array.from(fieldGalleryPhotos.files || []);
+        if (files.length === 0) return;
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement("div");
+                div.className = "preview-photo-item";
+                const img = document.createElement("img");
+                img.src = e.target.result;
+                div.appendChild(img);
+                previewGalleryPhotos.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    // =======================
+    // Модалка origin
+    // =======================
+
+    document.getElementById("btnAddOrigin").addEventListener("click", (e) => {
+        e.preventDefault();
+        inputNewOrigin.value = "";
+        originModalBackdrop.style.display = "flex";
+        inputNewOrigin.focus();
+    });
+
+    originModalBackdrop.addEventListener("click", (e) => {
+        if (e.target === originModalBackdrop) {
+            originModalBackdrop.style.display = "none";
+        }
+    });
+
+    document.querySelectorAll("[data-close-origin]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            originModalBackdrop.style.display = "none";
+        });
+    });
+
+    btnSaveNewOrigin.addEventListener("click", () => {
+        const val = inputNewOrigin.value.trim();
+        if (!val) return;
+        // Добавляем в select origin
+        const opt = document.createElement("option");
+        opt.value = val;
+        opt.textContent = val;
+        fieldOrigin.appendChild(opt);
+        fieldOrigin.value = val;
+
+        // Можно сохранить в localStorage для удобства
+        try {
+            const saved = JSON.parse(localStorage.getItem("tomato_origin_custom") || "[]");
+            if (!saved.includes(val)) {
+                saved.push(val);
+                localStorage.setItem("tomato_origin_custom", JSON.stringify(saved));
+            }
+        } catch (e) {}
+
+        originModalBackdrop.style.display = "none";
+    });
+
+    // При инициализации — подтянуть кастомные origin
+    function restoreCustomOrigins() {
+        try {
+            const saved = JSON.parse(localStorage.getItem("tomato_origin_custom") || "[]");
+            if (!Array.isArray(saved)) return;
+            saved.forEach(val => {
+                const exists = Array.from(fieldOrigin.options).some(o => o.value === val);
+                if (!exists) {
+                    const opt = document.createElement("option");
+                    opt.value = val;
+                    opt.textContent = val;
+                    fieldOrigin.appendChild(opt);
+                }
+            });
+        } catch (e) {}
+    }
+
+    // =======================
+    // Таблица сортов
+    // =======================
+
+    function renderTable() {
+        tableBody.innerHTML = "";
+        tomatoesData.forEach((row, index) => {
+            const tr = document.createElement("tr");
+
+            const tdPhoto = document.createElement("td");
+            const thumbDiv = document.createElement("div");
+            thumbDiv.className = "cell-photo-thumb";
+            if (row.mainphoto) {
+                const img = document.createElement("img");
+                img.src = row.mainphoto;
+                thumbDiv.appendChild(img);
+            } else {
+                thumbDiv.textContent = "—";
+            }
+            tdPhoto.appendChild(thumbDiv);
+
+            const tdName = document.createElement("td");
+            tdName.textContent = row.name || "";
+
+            const tdColor = document.createElement("td");
+            tdColor.textContent = row.color || "";
+
+            const tdType = document.createElement("td");
+            tdType.textContent = row.type || "";
+
+            const tdOrigin = document.createElement("td");
+            tdOrigin.textContent = row.origin || "";
+
+            const tdId = document.createElement("td");
+            tdId.textContent = row.id || "";
+
+            const tdActions = document.createElement("td");
+            const actionsDiv = document.createElement("div");
+            actionsDiv.className = "cell-actions";
+
+            const btnEdit = document.createElement("button");
+            btnEdit.className = "btn-icon";
+            btnEdit.textContent = "✏️";
+            btnEdit.title = "Редактировать";
+            btnEdit.addEventListener("click", () => openEditModal(index));
+
+            const btnDelete = document.createElement("button");
+            btnDelete.className = "btn-icon";
+            btnDelete.textContent = "🗑️";
+            btnDelete.title = "Удалить";
+            btnDelete.addEventListener("click", () => deleteRow(index));
+
+            actionsDiv.appendChild(btnEdit);
+            actionsDiv.appendChild(btnDelete);
+            tdActions.appendChild(actionsDiv);
+
+            tr.appendChild(tdPhoto);
+            tr.appendChild(tdName);
+            tr.appendChild(tdColor);
+            tr.appendChild(tdType);
+            tr.appendChild(tdOrigin);
+            tr.appendChild(tdId);
+            tr.appendChild(tdActions);
+
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // =======================
+    // Статистика
+    // =======================
+
+    function updateStats() {
+        const statsChips = document.getElementById("statsChips");
+        const statsUnique = document.getElementById("statsUnique");
+
+        const total = tomatoesData.length;
+        const noPhoto = tomatoesData.filter(r => !r.mainphoto || r.mainphoto.trim() === "").length;
+        const noDesc = tomatoesData.filter(r => !r.description || r.description.trim() === "").length;
+
+        const colors = new Set(tomatoesData.map(r => (r.color || "").trim()).filter(Boolean));
+        const types = new Set(tomatoesData.map(r => (r.type || "").trim()).filter(Boolean));
+        const origins = new Set(tomatoesData.map(r => (r.origin || "").trim()).filter(Boolean));
+
+        statsChips.innerHTML = `
+            <span class="chip-stat">Всего сортов: <strong>${total}</strong></span>
+            <span class="chip-stat">Без фото: <strong>${noPhoto}</strong></span>
+            <span class="chip-stat">Без описания: <strong>${noDesc}</strong></span>
+        `;
+
+        statsUnique.innerHTML = `
+            <span class="chip-stat">Цветов: <strong>${colors.size}</strong></span>
+            <span class="chip-stat">Типов: <strong>${types.size}</strong></span>
+            <span class="chip-stat">Происхождений: <strong>${origins.size}</strong></span>
+        `;
+    }
+
+    function refreshAllState() {
+        computeNextId();
+        updateSelectsFromData();
+        restoreCustomOrigins();
+        renderTable();
+        updateStats();
+    }
+
+    // =======================
+    // Добавление сорта (без реальной записи в таблицу)
+    // =======================
+
+    async function createTomato() {
+        const name = fieldName.value.trim();
+        const origin = fieldOrigin.value.trim();
+        const color = fieldColor.value.trim();
+        const type = fieldType.value.trim();
+        const description = fieldDescription.value.trim();
+
+        if (!name) {
+            alert("Введите название сорта.");
+            return;
+        }
+        if (!fieldMainPhoto.files[0]) {
+            alert("Выберите главное фото.");
+            return;
+        }
+
+        const id = computeNextId();
+
+        // Здесь должно быть:
+        // 1) загрузка главного фото на GitHub
+        // 2) загрузка галереи
+        // 3) получение URL
+        // 4) вызов Apps Script для добавления строки в Google Sheets
+
+        // Для сейчас сделаем заглушку: просто добавим в tomatoesData локально.
+        const newRow = {
+            id,
+            name,
+            origin,
+            color,
+            type,
+            description,
+            mainphoto: "(TODO mainphoto URL)",
+            gallery_photos: "(TODO gallery URLs)",
+            version: Date.now().toString()
+        };
+        tomatoesData.push(newRow);
+        refreshAllState();
+
+        // Очистка формы
+        fieldName.value = "";
+        fieldDescription.value = "";
+        fieldMainPhoto.value = "";
+        fieldGalleryPhotos.value = "";
+        previewMainPhoto.innerHTML = "";
+        previewGalleryPhotos.innerHTML = "";
+
+        alert("Сорт добавлен локально (заглушка). Дальше подключаем GitHub API и Apps Script.");
+    }
+
+    document.getElementById("btnCreateTomato").addEventListener("click", createTomato);
+
+    // =======================
+    // Редактирование (каркас)
+    // =======================
+
+    function openEditModal(index) {
+        editingRowIndex = index;
+        const row = tomatoesData[index];
+        if (!row) return;
+
+        editFormContainer.innerHTML = `
+            <div class="form-grid">
+                <div class="form-field">
+                    <label>Название</label>
+                    <input type="text" id="editName" value="${(row.name || "").replace(/"/g, "&quot;")}">
+                </div>
+                <div class="form-field">
+                    <label>Происхождение</label>
+                    <input type="text" id="editOrigin" value="${(row.origin || "").replace(/"/g, "&quot;")}">
+                </div>
+                <div class="form-field">
+                    <label>Цвет</label>
+                    <input type="text" id="editColor" value="${(row.color || "").replace(/"/g, "&quot;")}">
+                </div>
+                <div class="form-field">
+                    <label>Тип</label>
+                    <input type="text" id="editType" value="${(row.type || "").replace(/"/g, "&quot;")}">
+                </div>
+                <div class="form-field" style="grid-column:1/-1;">
+                    <label>Описание</label>
+                    <textarea id="editDescription">${(row.description || "")}</textarea>
+                </div>
+                <div class="form-field">
+                    <label>Главное фото (URL)</label>
+                    <input type="text" id="editMainPhoto" value="${(row.mainphoto || "").replace(/"/g, "&quot;")}">
+                    <div class="label-muted">Позже заменим на загрузку через GitHub API</div>
+                </div>
+                <div class="form-field">
+                    <label>Галерея (URL через ;)</label>
+                    <input type="text" id="editGalleryPhotos" value="${(row.gallery_photos || "").replace(/"/g, "&quot;")}">
+                </div>
+            </div>
+        `;
+        editModalBackdrop.style.display = "flex";
+    }
+
+    editModalBackdrop.addEventListener("click", (e) => {
+        if (e.target === editModalBackdrop) {
+            editModalBackdrop.style.display = "none";
+        }
+    });
+
+    document.querySelectorAll("[data-close-edit]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            editModalBackdrop.style.display = "none";
+            editingRowIndex = null;
+        });
+    });
+
+    btnSaveEdit.addEventListener("click", () => {
+        if (editingRowIndex == null) return;
+        const row = tomatoesData[editingRowIndex];
+        if (!row) return;
+
+        const editName = document.getElementById("editName").value.trim();
+        const editOrigin = document.getElementById("editOrigin").value.trim();
+        const editColor = document.getElementById("editColor").value.trim();
+        const editType = document.getElementById("editType").value.trim();
+        const editDescription = document.getElementById("editDescription").value.trim();
+        const editMainPhoto = document.getElementById("editMainPhoto").value.trim();
+        const editGalleryPhotos = document.getElementById("editGalleryPhotos").value.trim();
+
+        row.name = editName;
+        row.origin = editOrigin;
+        row.color = editColor;
+        row.type = editType;
+        row.description = editDescription;
+        row.mainphoto = editMainPhoto;
+        row.gallery_photos = editGalleryPhotos;
+        row.version = Date.now().toString();
+
+        // TODO: здесь должен быть вызов Apps Script для обновления строки в Google Sheets
+
+        editModalBackdrop.style.display = "none";
+        editingRowIndex = null;
+        refreshAllState();
+        alert("Изменения сохранены локально (заглушка). Дальше подключаем Apps Script.");
+    });
+
+    // =======================
+    // Удаление (каркас)
+    // =======================
+
+    function deleteRow(index) {
+        const row = tomatoesData[index];
+        if (!row) return;
+        if (!confirm(`Удалить сорт "${row.name || row.id}"?`)) return;
+
+        // TODO: здесь должен быть вызов Apps Script для удаления строки в таблице
+
+        tomatoesData.splice(index, 1);
+        refreshAllState();
+        alert("Сорт удалён локально (заглушка). Потом привяжем удаление к Google Sheets.");
+    }
+
+    document.getElementById("btnReloadData").addEventListener("click", loadCSV);
+
+    // =======================
+    // Инициализация админки
+    // =======================
+
+    function initAdmin() {
+        loadCSV();
+    }
+
+    // При загрузке страницы — если сессия есть, сразу заходим
+    window.addEventListener("load", () => {
+        if (hasSession()) {
+            hideLogin();
+            initAdmin();
+        } else {
+            showLogin();
+        }
+    });
+</script>
+
+</body>
+</html>
