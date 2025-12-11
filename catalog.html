@@ -33,7 +33,6 @@
             font-weight: 600;
         }
 
-        /* Поиск */
         .search-box {
             padding: 12px 16px;
         }
@@ -46,7 +45,6 @@
             font-size: 16px;
         }
 
-        /* Фильтры */
         .filters {
             display: flex;
             gap: 12px;
@@ -139,7 +137,6 @@
             color: #fff;
         }
 
-        /* Сетка карточек */
         .catalog-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -189,7 +186,6 @@
             color: #444;
         }
 
-        /* Нет результатов */
         .no-results {
             text-align: center;
             padding: 40px;
@@ -197,7 +193,6 @@
             opacity: 0.6;
         }
 
-        /* Модалка */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -266,11 +261,50 @@
             }
         }
 
-        /* Небольшой сервисный блок (можно скрыть позже) */
-        .debug-info {
+        /* Админ-панель диагностики */
+        .admin-panel {
             font-size: 11px;
-            opacity: 0.6;
-            padding: 4px 10px 10px;
+            background: #111;
+            color: #ddd;
+            padding: 8px 10px;
+            border-top: 1px solid #444;
+        }
+
+        .admin-panel__row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .admin-panel__label {
+            opacity: 0.7;
+        }
+
+        .admin-panel__value {
+            font-weight: 500;
+        }
+
+        .admin-panel__btn {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            background: #444;
+            color: #fff;
+        }
+
+        .admin-panel__btn:hover {
+            background: #666;
+        }
+
+        .admin-panel__tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 6px;
+            background: #333;
+            margin-right: 6px;
         }
     </style>
 </head>
@@ -327,7 +361,35 @@
 
 <div id="catalog" class="catalog-grid"></div>
 
-<div class="debug-info" id="debugInfo"></div>
+<!-- Админ-панель диагностики -->
+<div class="admin-panel" id="adminPanel">
+    <div class="admin-panel__row">
+        <span class="admin-panel__tag">diagnostics</span>
+        <span class="admin-panel__label">Версия:</span>
+        <span class="admin-panel__value" id="diagVersion">—</span>
+
+        <span class="admin-panel__label">Источник:</span>
+        <span class="admin-panel__value" id="diagSource">—</span>
+
+        <span class="admin-panel__label">Загрузка:</span>
+        <span class="admin-panel__value" id="diagTime">—</span>
+
+        <span class="admin-panel__label">Всего сортов:</span>
+        <span class="admin-panel__value" id="diagTotal">—</span>
+
+        <span class="admin-panel__label">На экране:</span>
+        <span class="admin-panel__value" id="diagVisible">—</span>
+
+        <span class="admin-panel__label">Без фото:</span>
+        <span class="admin-panel__value" id="diagNoPhoto">—</span>
+
+        <span class="admin-panel__label">Без описания:</span>
+        <span class="admin-panel__value" id="diagNoDesc">—</span>
+
+        <button class="admin-panel__btn" type="button" id="btnClearCache">Очистить кэш</button>
+        <button class="admin-panel__btn" type="button" id="btnReloadData">Перезагрузить</button>
+    </div>
+</div>
 
 <!-- Модалка -->
 <div id="modalOverlay" class="modal-overlay">
@@ -348,7 +410,9 @@ let activeFilters = {
 };
 let searchQuery = "";
 
-// Нормализация строки
+const CACHE_KEY_DATA = "tomato_catalog_data";
+const CACHE_KEY_VERSION = "tomato_catalog_version";
+
 function normalizeString(str) {
     return (str || "")
         .toString()
@@ -357,14 +421,12 @@ function normalizeString(str) {
         .replace(/\s+/g, " ");
 }
 
-// Уникальные значения из массива с сортировкой
 function uniqueSorted(arr) {
     return Array.from(new Set(arr.filter(Boolean))).sort((a, b) =>
         a.localeCompare(b, "ru", { sensitivity: "base" })
     );
 }
 
-// URL фото с fallback
 function getPhotoUrl(item) {
     const url = (item.mainphoto || "").trim();
     if (!url) {
@@ -373,7 +435,6 @@ function getPhotoUrl(item) {
     return url;
 }
 
-// Рендер карточек
 function renderCards(items) {
     const container = document.getElementById("catalog");
     const noResultsEl = document.getElementById("noResults");
@@ -382,7 +443,6 @@ function renderCards(items) {
 
     if (!items.length) {
         noResultsEl.style.display = "block";
-        return;
     } else {
         noResultsEl.style.display = "none";
     }
@@ -434,9 +494,10 @@ function renderCards(items) {
 
         container.appendChild(card);
     });
+
+    updateDiagnosticsCounts();
 }
 
-// Применение поиска и фильтров
 function applyFilters() {
     const q = normalizeString(searchQuery);
 
@@ -472,10 +533,8 @@ function applyFilters() {
     });
 
     renderCards(filtered);
-    updateDebugInfo();
 }
 
-// Инициализация одного мульти-фильтра
 function initMultiFilter(fieldName, items) {
     const multiFilterEl = document.querySelector(`.multi-filter[data-field="${fieldName}"]`);
     if (!multiFilterEl) return;
@@ -580,7 +639,6 @@ function initMultiFilter(fieldName, items) {
     renderDisplay();
 }
 
-// Открытие модалки
 function openModal(item) {
     const overlay = document.getElementById("modalOverlay");
     const content = document.getElementById("modalContent");
@@ -629,7 +687,6 @@ function closeModal() {
 }
 window.closeModal = closeModal;
 
-// Простой CSV-парсер с поддержкой кавычек
 function parseCSV(text) {
     const rows = [];
     let current = "";
@@ -668,24 +725,45 @@ function parseCSV(text) {
     return rows;
 }
 
-// Обновление сервисной информации
-function updateDebugInfo(extra) {
-    const el = document.getElementById("debugInfo");
-    if (!el) return;
-    const total = allItems.length;
-    const filteredCount = document.querySelectorAll(".card").length;
-    const base = `Всего сортов: ${total}, на экране: ${filteredCount}`;
-    el.textContent = extra ? base + " • " + extra : base;
+function updateDiagnosticsMeta(source, version, loadTimeMs) {
+    document.getElementById("diagSource").textContent = source || "—";
+    document.getElementById("diagVersion").textContent = version || "—";
+    document.getElementById("diagTime").textContent = loadTimeMs != null ? loadTimeMs + " мс" : "—";
 }
 
-// Загрузка CSV + кэширование по версии
-async function loadData() {
-    const CACHE_KEY_DATA = "tomato_catalog_data";
-    const CACHE_KEY_VERSION = "tomato_catalog_version";
+function updateDiagnosticsCounts() {
+    const total = allItems.length;
+    const visible = document.querySelectorAll(".card").length;
+    const noPhoto = allItems.filter(i => !(i.mainphoto || "").trim()).length;
+    const noDesc = allItems.filter(i => !(i.description || "").trim()).length;
 
+    document.getElementById("diagTotal").textContent = total;
+    document.getElementById("diagVisible").textContent = visible;
+    document.getElementById("diagNoPhoto").textContent = noPhoto;
+    document.getElementById("diagNoDesc").textContent = noDesc;
+}
+
+// Основная загрузка данных
+async function loadData(forceReload = false) {
     const t0 = performance.now();
 
     try {
+        const cachedVersion = localStorage.getItem(CACHE_KEY_VERSION);
+        const cachedData = localStorage.getItem(CACHE_KEY_DATA);
+
+        if (!forceReload && cachedVersion && cachedData) {
+            const parsed = JSON.parse(cachedData);
+            allItems = parsed;
+            initMultiFilter("color", allItems);
+            initMultiFilter("type", allItems);
+            initMultiFilter("size", allItems);
+            renderCards(allItems);
+
+            const t1 = performance.now();
+            updateDiagnosticsMeta("кэш", cachedVersion, Math.round(t1 - t0));
+            return;
+        }
+
         const resp = await fetch(CSV_URL);
         if (!resp.ok) throw new Error("Ошибка загрузки CSV: " + resp.status);
 
@@ -703,19 +781,6 @@ async function loadData() {
         });
 
         const newVersion = rawItems[0]?.version || "unknown";
-        const cachedVersion = localStorage.getItem(CACHE_KEY_VERSION);
-        const cachedData = localStorage.getItem(CACHE_KEY_DATA);
-
-        if (cachedVersion === newVersion && cachedData) {
-            allItems = JSON.parse(cachedData);
-            initMultiFilter("color", allItems);
-            initMultiFilter("type", allItems);
-            initMultiFilter("size", allItems);
-            renderCards(allItems);
-            const t1 = performance.now();
-            updateDebugInfo(`из кэша, версия: ${newVersion}, ${Math.round(t1 - t0)} мс`);
-            return;
-        }
 
         allItems = rawItems.map(obj => ({
             id: obj.id || "",
@@ -739,13 +804,13 @@ async function loadData() {
         renderCards(allItems);
 
         const t1 = performance.now();
-        updateDebugInfo(`обновлено с сервера, версия: ${newVersion}, ${Math.round(t1 - t0)} мс`);
+        updateDiagnosticsMeta("сервер", newVersion, Math.round(t1 - t0));
     } catch (err) {
         console.error(err);
         const noResultsEl = document.getElementById("noResults");
         noResultsEl.textContent = "Ошибка загрузки данных";
         noResultsEl.style.display = "block";
-        updateDebugInfo("ошибка загрузки");
+        updateDiagnosticsMeta("ошибка", null, null);
     }
 }
 
@@ -762,7 +827,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    loadData();
+    document.getElementById("btnClearCache").addEventListener("click", () => {
+        localStorage.removeItem(CACHE_KEY_DATA);
+        localStorage.removeItem(CACHE_KEY_VERSION);
+        loadData(true);
+    });
+
+    document.getElementById("btnReloadData").addEventListener("click", () => {
+        loadData(true);
+    });
+
+    loadData(false);
 });
 </script>
 
