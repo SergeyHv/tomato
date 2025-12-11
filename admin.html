@@ -711,13 +711,8 @@
 
     const SESSION_KEY = "tomato_admin_session";
 
-    // =======================
-    // Вспомогательные функции
-    // =======================
-
     
-
-    // =======================
+ // =======================
 // Вход по секретному URL
 // =======================
 
@@ -725,14 +720,16 @@ function checkAccessByURL() {
     const url = new URL(window.location.href);
     const key = url.searchParams.get("key");
 
-    // секретный ключ
     const SECRET_KEY = "khvalla74";
 
     if (key === SECRET_KEY) {
-        // доступ разрешён
-        document.getElementById("loginOverlay").style.display = "none";
+        // показываем админку
         document.getElementById("adminMain").style.display = "block";
-        initAdmin();
+
+        // запускаем админку
+        if (typeof initAdmin === "function") {
+            initAdmin();
+        }
     } else {
         // доступ запрещён
         document.body.innerHTML = `
@@ -752,6 +749,7 @@ function checkAccessByURL() {
 }
 
 window.addEventListener("load", checkAccessByURL);
+
 
     // =======================
     // Состояние админки
