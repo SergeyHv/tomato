@@ -1,395 +1,759 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Каталог коллекционных томатов</title>
+    <meta charset="UTF-8" />
+    <title>Каталог томатов</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
-    background: #f4f4f4;
-  }
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #faf5e6;
+            color: #222;
+        }
 
-  h1 {
-    text-align: center;
-    margin-bottom: 20px;
-  }
+        header {
+            padding: 12px 16px;
+            background: #b22222;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
 
-  /* ✅ Контейнер фильтров */
-  .controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 15px;
-  }
+        header h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
 
-  #search {
-    flex: 1 1 200px;
-    padding: 8px;
-    font-size: 14px;
-  }
+        header .version {
+            font-size: 12px;
+            opacity: 0.8;
+        }
 
-  /* ✅ Кастомные фильтры */
-  .filter-box {
-    position: relative;
-    flex: 1 1 180px;
-  }
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 12px 8px 32px;
+        }
 
-  .filter-display {
-    padding: 8px;
-    background: white;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    cursor: pointer;
-    user-select: none;
-  }
+        /* Контейнер фильтров */
+        .filters-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
 
-  .filter-dropdown {
-    display: none;
-    position: absolute;
-    top: 110%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    max-height: 260px;
-    overflow-y: auto;
-    z-index: 1000;
-    padding: 8px;
-  }
+        /* Мобильная кнопка фильтров */
+        .mobile-filters-toggle {
+            display: none;
+            width: 100%;
+            margin-bottom: 8px;
+        }
 
-  .filter-dropdown.open {
-    display: block;
-  }
+        .mobile-filters-toggle button {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 999px;
+            border: none;
+            background: #d32f2f;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
 
-  .filter-search {
-    width: 100%;
-    padding: 6px;
-    margin-bottom: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
+        .mobile-filters-toggle button:active {
+            transform: translateY(1px);
+        }
 
-  .filter-option {
-    padding: 6px;
-    cursor: pointer;
-    border-radius: 4px;
-  }
+        /* Панель фильтров */
+        .filters-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
 
-  .filter-option:hover {
-    background: #eee;
-  }
+        /* Кастомный мультиселект с живым поиском */
+        .multi-filter {
+            position: relative;
+            min-width: 160px;
+            max-width: 220px;
+            font-size: 13px;
+        }
 
-  .filter-option.selected {
-    background: #d62828;
-    color: white;
-  }
+        .multi-filter-display {
+            padding: 8px 10px;
+            border-radius: 16px;
+            border: 1px solid #ccc;
+            background: #fff;
+            cursor: pointer;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
 
-  /* ✅ Сетка каталога */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 15px;
-  }
+        .multi-filter-display span.placeholder {
+            opacity: 0.6;
+        }
 
-  .card {
-    background: #fff;
-    border-radius: 8px;
-    padding: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    transition: 0.2s;
-    cursor: pointer;
-  }
+        .multi-filter-display .tag {
+            background: #ffe0b2;
+            border-radius: 12px;
+            padding: 2px 6px;
+            font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-  .card:hover {
-    transform: scale(1.03);
-  }
+        .multi-filter-display .tag button {
+            border: none;
+            background: none;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1;
+        }
 
-  .card img {
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
-    border-radius: 5px;
-  }
+        .multi-filter-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            padding: 8px;
+            z-index: 30;
+            display: none;
+        }
 
-  .card h2 {
-    font-size: 18px;
-    margin: 10px 0 5px;
-  }
+        .multi-filter-dropdown.open {
+            display: block;
+        }
 
-  .card p {
-    font-size: 14px;
-    color: #555;
-    flex-grow: 1;
-  }
+        .multi-filter-search {
+            margin-bottom: 6px;
+        }
 
-  .tags {
-    margin-top: 10px;
-    font-size: 13px;
-    color: #333;
-  }
+        .multi-filter-search input {
+            width: 100%;
+            padding: 6px 8px;
+            border-radius: 999px;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        }
 
-  /* ✅ Кнопка фильтров для мобильных */
-  #mobileFiltersBtn {
-    display: none;
-    position: fixed;
-    bottom: 15px;
-    right: 15px;
-    background: #d62828;
-    color: white;
-    border: none;
-    padding: 14px 22px;
-    border-radius: 50px;
-    font-size: 16px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-    z-index: 1000;
-  }
+        .multi-filter-options {
+            max-height: 220px;
+            overflow: auto;
+            padding-right: 4px;
+        }
 
-  /* ✅ Панель фильтров (мобильная анимация) */
-  #filtersPanel {
-    transition: transform 0.3s ease;
-  }
+        .multi-filter-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 2px;
+            font-size: 12px;
+            cursor: pointer;
+        }
 
-  @media (max-width: 900px) {
-    #mobileFiltersBtn {
-      display: block;
-    }
+        .multi-filter-option input {
+            cursor: pointer;
+        }
 
-    #filtersPanel {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: white;
-      padding: 15px;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
-      transform: translateY(100%);
-      z-index: 999;
-    }
+        .multi-filter-option label {
+            cursor: pointer;
+        }
 
-    #filtersPanel.open {
-      transform: translateY(0);
-    }
+        .multi-filter-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            gap: 6px;
+        }
 
-    .controls {
-      flex-direction: column;
-      gap: 10px;
-    }
+        .multi-filter-footer button {
+            flex: 1;
+            padding: 5px 6px;
+            border-radius: 999px;
+            border: none;
+            font-size: 11px;
+            cursor: pointer;
+        }
 
-    #search {
-      width: 100%;
-      font-size: 16px;
-      padding: 12px;
-    }
+        .btn-clear {
+            background: #f5f5f5;
+        }
 
-    .filter-box {
-      width: 100%;
-    }
+        .btn-apply {
+            background: #d32f2f;
+            color: #fff;
+        }
 
-    .card img {
-      height: 140px;
-    }
-  }
-</style>
+        /* Поле быстрого поиска по названию */
+        .quick-search {
+            flex: 1 1 200px;
+        }
+
+        .quick-search input {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 16px;
+            border: 1px solid #ccc;
+            font-size: 13px;
+        }
+
+        /* Список карточек */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #eee;
+        }
+
+        .card-body {
+            padding: 8px 10px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .card-meta {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .no-results {
+            margin-top: 24px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        /* Мобильная адаптация: включаем "мобильный режим" шире,
+           чтобы и Яндекс-браузер вел себя как мобилка */
+        @media (max-width: 1100px) {
+            main {
+                padding: 8px 6px 24px;
+            }
+
+            .filters-wrapper {
+                flex-direction: column;
+            }
+
+            .mobile-filters-toggle {
+                display: block;
+            }
+
+            .filters-panel {
+                display: none;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding: 8px;
+                border-radius: 12px;
+                background: rgba(255,255,255,0.9);
+                box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+            }
+
+            .filters-panel.open {
+                display: flex;
+            }
+
+            .multi-filter {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+
+            .quick-search {
+                order: -1;
+            }
+        }
+    </style>
 </head>
 <body>
-
-<h1>Каталог коллекционных томатов</h1>
-
-<!-- ✅ Фильтры -->
-<div class="controls" id="filtersPanel">
-
-  <input type="text" id="search" placeholder="Поиск по названию...">
-
-  <!-- ✅ Живой поиск: Цвет -->
-  <div class="filter-box" data-field="color">
-    <div class="filter-display">Цвет</div>
-    <div class="filter-dropdown">
-      <input class="filter-search" placeholder="Поиск...">
-      <div class="filter-options"></div>
+<header>
+    <div>
+        <h1>Каталог томатов</h1>
+        <div class="version">Версия 15 (живой поиск)</div>
     </div>
-  </div>
+</header>
 
-  <!-- ✅ Живой поиск: Тип -->
-  <div class="filter-box" data-field="type">
-    <div class="filter-display">Тип</div>
-    <div class="filter-dropdown">
-      <input class="filter-search" placeholder="Поиск...">
-      <div class="filter-options"></div>
+<main>
+    <div class="mobile-filters-toggle">
+        <button type="button" id="mobileFiltersBtn">Фильтры и поиск</button>
     </div>
-  </div>
 
-  <!-- ✅ Живой поиск: Размер -->
-  <div class="filter-box" data-field="size">
-    <div class="filter-display">Размер</div>
-    <div class="filter-dropdown">
-      <input class="filter-search" placeholder="Поиск...">
-      <div class="filter-options"></div>
+    <div class="filters-wrapper">
+        <div class="filters-panel" id="filtersPanel">
+            <!-- Живой поиск по названию/ID -->
+            <div class="quick-search">
+                <input type="text" id="quickSearchInput" placeholder="Быстрый поиск по названию или ID" />
+            </div>
+
+            <!-- Цвет -->
+            <div class="multi-filter" data-field="color">
+                <div class="multi-filter-display" data-placeholder="Цвет">
+                    <span class="placeholder">Цвет</span>
+                </div>
+                <div class="multi-filter-dropdown">
+                    <div class="multi-filter-search">
+                        <input type="text" placeholder="Поиск по цветам..." />
+                    </div>
+                    <div class="multi-filter-options"></div>
+                    <div class="multi-filter-footer">
+                        <button type="button" class="btn-clear">Сбросить</button>
+                        <button type="button" class="btn-apply">Применить</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Тип -->
+            <div class="multi-filter" data-field="type">
+                <div class="multi-filter-display" data-placeholder="Тип">
+                    <span class="placeholder">Тип</span>
+                </div>
+                <div class="multi-filter-dropdown">
+                    <div class="multi-filter-search">
+                        <input type="text" placeholder="Поиск по типам..." />
+                    </div>
+                    <div class="multi-filter-options"></div>
+                    <div class="multi-filter-footer">
+                        <button type="button" class="btn-clear">Сбросить</button>
+                        <button type="button" class="btn-apply">Прменить</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Размер -->
+            <div class="multi-filter" data-field="size">
+                <div class="multi-filter-display" data-placeholder="Размер">
+                    <span class="placeholder">Размер</span>
+                </div>
+                <div class="multi-filter-dropdown">
+                    <div class="multi-filter-search">
+                        <input type="text" placeholder="Поиск по размерам..." />
+                    </div>
+                    <div class="multi-filter-options"></div>
+                    <div class="multi-filter-footer">
+                        <button type="button" class="btn-clear">Сбросить</button>
+                        <button type="button" class="btn-apply">Применить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- ✅ Живой поиск: Срок созревания -->
-  <div class="filter-box" data-field="season">
-    <div class="filter-display">Срок созревания</div>
-    <div class="filter-dropdown">
-      <input class="filter-search" placeholder="Поиск...">
-      <div class="filter-options"></div>
-    </div>
-  </div>
+    <div id="cardsContainer" class="cards"></div>
+    <div id="noResults" class="no-results" style="display:none;">Ничего не найдено по текущим фильтрам.</div>
+</main>
 
-</div>
-
-<!-- ✅ Кнопка фильтров для мобильных -->
-<button id="mobileFiltersBtn">Фильтры</button>
-
-<!-- ✅ Каталог -->
-<div class="grid" id="catalog"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script>
+(function() {
+    "use strict";
 
-const csvUrl =
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vR1fdNIH6J3sLQDzsEXm-RRl8VlbBfWfEiPhpL_3xWHZfesBJ_qpCBEsEU0Xe4wbkAzDAntYFSP2cnQ/pub?output=csv';
+    // Обёртка, чтобы защищаться от внешних скриптов/ошибок
+    try {
 
-let allData = [];
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0kK2Vq1bW0LZgXn7XjvBzW4WkXoUe8VbOue0N9hE4Uu9s7sR0/export?format=tsv&gid=0";
+        // ↑ сюда подставь свой актуальный URL TSV/CSV при необходимости
 
-/* ✅ Рендер каталога */
-function renderCatalog(data) {
-  const catalog = document.getElementById('catalog');
-  catalog.innerHTML = '';
+        const cardsContainer = document.getElementById("cardsContainer");
+        const noResultsEl = document.getElementById("noResults");
+        const mobileFiltersBtn = document.getElementById("mobileFiltersBtn");
+        const filtersPanel = document.getElementById("filtersPanel");
+        const quickSearchInput = document.getElementById("quickSearchInput");
 
-  for (const t of data) {
-    if (!t.name) continue;
+        let allData = [];
+        let activeFilters = {
+            color: [],
+            type: [],
+            size: [],
+            search: ""
+        };
 
-    let img = 'https://placehold.co/300x200?text=No+Photo';
+        // ---- Утилиты ----
 
+        function normalizeString(s) {
+            if (!s) return "";
+            return String(s).trim().toLowerCase();
+        }
 
-    if (t.mainphoto && t.mainphoto.trim() !== '') {
-      img = t.mainphoto.trim();
+        function uniqueSorted(values) {
+            return Array.from(new Set(values.filter(v => v && String(v).trim() !== "")))
+                .sort((a, b) => String(a).localeCompare(String(b), "ru"));
+        }
+
+        // ---- Парсинг TSV ----
+
+        async function loadData() {
+            const res = await fetch(CSV_URL, { cache: "no-store" });
+            const text = await res.text();
+            return parseTSV(text);
+        }
+
+        function parseTSV(text) {
+            const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+            if (rows.length < 2) return [];
+
+            const header = rows[0].split("\t").map(h => h.trim());
+            const dataRows = rows.slice(1);
+
+            return dataRows.map(row => {
+                const cols = row.split("\t");
+                const obj = {};
+                header.forEach((name, idx) => {
+                    obj[name] = (cols[idx] || "").trim();
+                });
+                return obj;
+            });
+        }
+
+        // ---- Рендер карточек ----
+
+        function getPhotoUrl(item) {
+            // предполагаем, что у тебя есть поле mainphoto с прямой ссылкой RAW
+            const url = item.mainphoto || item.photo || "";
+            if (!url) {
+                // fallback-заглушка
+                return "https://placehold.co/300x200?text=No+Photo";
+            }
+            return url;
+        }
+
+        function renderCards(data) {
+            cardsContainer.innerHTML = "";
+
+            if (!data || data.length === 0) {
+                noResultsEl.style.display = "block";
+                return;
+            } else {
+                noResultsEl.style.display = "none";
+            }
+
+            const frag = document.createDocumentFragment();
+
+            data.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "card";
+
+                const img = document.createElement("img");
+                img.loading = "lazy";
+                img.src = getPhotoUrl(item);
+                img.alt = item.name || item.id || "Томат";
+
+                img.onerror = () => {
+                    img.onerror = null;
+                    img.src = "https://placehold.co/300x200?text=No+Photo";
+                };
+
+                const body = document.createElement("div");
+                body.className = "card-body";
+
+                const title = document.createElement("div");
+                title.className = "card-title";
+                title.textContent = item.name || ("ID: " + (item.id || ""));
+
+                const meta = document.createElement("div");
+                meta.className = "card-meta";
+                const parts = [];
+                if (item.color) parts.push("Цвет: " + item.color);
+                if (item.type) parts.push("Тип: " + item.type);
+                if (item.size) parts.push("Размер: " + item.size);
+                meta.textContent = parts.join(" • ");
+
+                body.appendChild(title);
+                if (parts.length) body.appendChild(meta);
+
+                card.appendChild(img);
+                card.appendChild(body);
+
+                frag.appendChild(card);
+            });
+
+            cardsContainer.appendChild(frag);
+        }
+
+        // ---- Фильтрация ----
+
+        function applyFilters() {
+            const search = normalizeString(activeFilters.search);
+
+            const filtered = allData.filter(item => {
+                // Поиск по названию/ID
+                if (search) {
+                    const name = normalizeString(item.name);
+                    const id = normalizeString(item.id);
+                    if (!name.includes(search) && !id.includes(search)) {
+                        return false;
+                    }
+                }
+
+                // color
+                if (activeFilters.color.length > 0) {
+                    const value = normalizeString(item.color);
+                    if (!activeFilters.color.some(v => v === value)) {
+                        return false;
+                    }
+                }
+
+                // type
+                if (activeFilters.type.length > 0) {
+                    const value = normalizeString(item.type);
+                    if (!activeFilters.type.some(v => v === value)) {
+                        return false;
+                    }
+                }
+
+                // size
+                if (activeFilters.size.length > 0) {
+                    const value = normalizeString(item.size);
+                    if (!activeFilters.size.some(v => v === value)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            renderCards(filtered);
+        }
+
+        // ---- Живой мульти-фильтр ----
+
+        function initMultiFilter(field) {
+            const root = document.querySelector('.multi-filter[data-field="' + field + '"]');
+            if (!root) return;
+
+            const display = root.querySelector(".multi-filter-display");
+            const dropdown = root.querySelector(".multi-filter-dropdown");
+            const searchInput = root.querySelector(".multi-filter-search input");
+            const optionsContainer = root.querySelector(".multi-filter-options");
+            const btnClear = root.querySelector(".btn-clear");
+            const btnApply = root.querySelector(".btn-apply");
+
+            const placeholderText = display.dataset.placeholder || "";
+
+            // Собираем уникальные значения
+            const values = uniqueSorted(allData.map(item => item[field]));
+
+            // Рендерим чекбоксы
+            optionsContainer.innerHTML = "";
+            values.forEach(val => {
+                const valueNorm = String(val).trim();
+                if (!valueNorm) return;
+
+                const opt = document.createElement("div");
+                opt.className = "multi-filter-option";
+
+                const id = field + "_" + valueNorm;
+
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.id = id;
+                checkbox.value = valueNorm;
+
+                const label = document.createElement("label");
+                label.setAttribute("for", id);
+                label.textContent = valueNorm;
+
+                opt.appendChild(checkbox);
+                opt.appendChild(label);
+                optionsContainer.appendChild(opt);
+            });
+
+            // Отображение выбранных значений в "плашке"
+            function updateDisplay() {
+                const selected = activeFilters[field];
+                display.innerHTML = "";
+
+                if (!selected || selected.length === 0) {
+                    const span = document.createElement("span");
+                    span.className = "placeholder";
+                    span.textContent = placeholderText;
+                    display.appendChild(span);
+                    return;
+                }
+
+                selected.forEach(val => {
+                    const tag = document.createElement("span");
+                    tag.className = "tag";
+                    tag.textContent = val;
+
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.textContent = "×";
+                    btn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        removeValue(val);
+                    });
+
+                    tag.appendChild(btn);
+                    display.appendChild(tag);
+                });
+            }
+
+            function removeValue(val) {
+                activeFilters[field] = activeFilters[field].filter(v => v !== val);
+                // снять чекбокс
+                Array.from(optionsContainer.querySelectorAll("input[type=checkbox]")).forEach(cb => {
+                    if (normalizeString(cb.value) === normalizeString(val)) {
+                        cb.checked = false;
+                    }
+                });
+                updateDisplay();
+                applyFilters();
+            }
+
+            // Обновление массива выбранных значений при применении
+            function collectSelected() {
+                const selected = [];
+                Array.from(optionsContainer.querySelectorAll("input[type=checkbox]")).forEach(cb => {
+                    if (cb.checked) {
+                        selected.push(normalizeString(cb.value));
+                    }
+                });
+                activeFilters[field] = selected;
+                updateDisplay();
+                applyFilters();
+            }
+
+            // Поиск по списку внутри дропдауна
+            function filterOptionsBySearch() {
+                const q = normalizeString(searchInput.value);
+                Array.from(optionsContainer.children).forEach(row => {
+                    const label = row.querySelector("label");
+                    if (!label) return;
+                    const text = normalizeString(label.textContent);
+                    row.style.display = (!q || text.includes(q)) ? "" : "none";
+                });
+            }
+
+            // Открытие / закрытие дропдауна
+            function openDropdown() {
+                closeAllDropdowns();
+                dropdown.classList.add("open");
+                searchInput.value = "";
+                filterOptionsBySearch();
+            }
+
+            function closeDropdown() {
+                dropdown.classList.remove("open");
+            }
+
+            display.addEventListener("click", () => {
+                if (dropdown.classList.contains("open")) {
+                    closeDropdown();
+                } else {
+                    openDropdown();
+                }
+            });
+
+            btnClear.addEventListener("click", () => {
+                activeFilters[field] = [];
+                Array.from(optionsContainer.querySelectorAll("input[type=checkbox]")).forEach(cb => {
+                    cb.checked = false;
+                });
+                updateDisplay();
+                applyFilters();
+            });
+
+            btnApply.addEventListener("click", () => {
+                collectSelected();
+                closeDropdown();
+            });
+
+            searchInput.addEventListener("input", filterOptionsBySearch);
+
+            document.addEventListener("click", (e) => {
+                if (!root.contains(e.target)) {
+                    closeDropdown();
+                }
+            });
+
+            // Инициализация отображения
+            updateDisplay();
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll(".multi-filter-dropdown.open").forEach(d => {
+                d.classList.remove("open");
+            });
+        }
+
+        // ---- Мобильная панель ----
+
+        if (mobileFiltersBtn && filtersPanel) {
+            mobileFiltersBtn.addEventListener("click", () => {
+                filtersPanel.classList.toggle("open");
+            });
+        }
+
+        // ---- Быстрый поиск ----
+
+        if (quickSearchInput) {
+            quickSearchInput.addEventListener("input", () => {
+                activeFilters.search = quickSearchInput.value || "";
+                applyFilters();
+            });
+        }
+
+        // ---- Запуск ----
+
+        (async function init() {
+            try {
+                allData = await loadData();
+            } catch (e) {
+                console.error("Ошибка загрузки данных:", e);
+                allData = [];
+            }
+
+            // Инициализируем фильтры
+            initMultiFilter("color");
+            initMultiFilter("type");
+            initMultiFilter("size");
+
+            // Первичный рендер
+            applyFilters();
+        })();
+
+    } catch (err) {
+        console.error("Глобальная ошибка catalog.html:", err);
     }
+})();
+</script>
 
-    const card = document.createElement('div');
-    card.className = 'card';
-
-    card.addEventListener('click', () => {
-      window.location.href = `tomato.html?id=${t.id}`;
-    });
-
-    card.innerHTML = `
-      <img src="${img}" alt="${t.name}" loading="lazy">
-      <h2>${t.name}</h2>
-      <p>${t.description || ''}</p>
-      <div class="tags">
-        <b>Цвет:</b> ${t.color || '-'}<br>
-        <b>Тип:</b> ${t.type || '-'}<br>
-        <b>Размер:</b> ${t.size || '-'}<br>
-        <b>Срок:</b> ${t.season || '-'}
-      </div>
-    `;
-    catalog.appendChild(card);
-  }
-}
-
-/* ✅ Живой поиск внутри фильтров */
-function initLiveFilter(field) {
-  const box = document.querySelector(`.filter-box[data-field="${field}"]`);
-  const display = box.querySelector('.filter-display');
-  const dropdown = box.querySelector('.filter-dropdown');
-  const search = box.querySelector('.filter-search');
-  const optionsContainer = box.querySelector('.filter-options');
-
-  let values = [...new Set(allData.map(t => t[field]).filter(v => v))].sort();
-  let selected = [];
-
-  function renderOptions() {
-    optionsContainer.innerHTML = '';
-    const q = search.value.toLowerCase();
-
-    values
-      .filter(v => v.toLowerCase().includes(q))
-      .forEach(v => {
-        const div = document.createElement('div');
-        div.className = 'filter-option';
-        if (selected.includes(v)) div.classList.add('selected');
-        div.textContent = v;
-
-        div.addEventListener('click', () => {
-          if (selected.includes(v)) {
-            selected = selected.filter(x => x !== v);
-          } else {
-            selected.push(v);
-          }
-          renderOptions();
-          applyFilters();
-          updateDisplay();
-        });
-
-        optionsContainer.appendChild(div);
-      });
-  }
-
-  function updateDisplay() {
-    display.textContent = selected.length ? selected.join(', ') : display.dataset.default;
-  }
-
-  display.dataset.default = display.textContent;
-
-  display.addEventListener('click', () => {
-    dropdown.classList.toggle('open');
-    search.focus();
-  });
-
-  search.addEventListener('input', renderOptions);
-
-  return () => selected;
-}
-
-/* ✅ Инициализация всех фильтров */
-let getSelectedColor, getSelectedType, getSelectedSize, getSelectedSeason;
-
-function initAllFilters() {
-  getSelectedColor = initLiveFilter('color');
-  getSelectedType = initLiveFilter('type');
-  getSelectedSize = initLiveFilter('size');
-  getSelectedSeason = initLiveFilter('season');
-}
-
-/* ✅ Применение фильтров */
-function applyFilters() {
-  const q = document.getElementById('search').value.toLowerCase();
-
-  const fColor = getSelectedColor();
-  const fType = getSelectedType();
-  const fSize = getSelectedSize();
-  const fSeason = getSelectedSeason();
-
-  const filtered = allData.filter(t => {
-    if (!t.name) return false;
-
-    return (
-      t.name.toLowerCase().includes(q) &&
-      (fColor.length === 0 || fColor.includes(t.color)) &&
-      (fType.length === 0 || fType.includes(t.type)) &&
-      (fSize.length === 0 || fSize.includes(t.size)) &&
-      (fSeason.length === 0 || fSeason.includes(t.season))
-    );
-  });
-
-  renderCatalog(filtered);
-}
-
-/* ✅ Загрузка CSV */
-fetch(csvUrl)
-  .then(r => r.text())
-  .then(text => {
-    allData = Papa.parse(text, { header: true }).data;
-    renderCatalog(allData);
-    initAllFilters();
-  });
-
-
+</body>
+</html>
