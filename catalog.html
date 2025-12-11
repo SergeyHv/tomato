@@ -43,7 +43,7 @@
             padding: 12px 8px 32px;
         }
 
-        /* Контейнер фильтров */
+        /* Панель фильтров — всегда сверху */
         .filters-wrapper {
             display: flex;
             flex-wrap: wrap;
@@ -52,37 +52,20 @@
             align-items: flex-start;
         }
 
-        /* Мобильная кнопка фильтров */
-        .mobile-filters-toggle {
-            display: none;
+        /* Быстрый поиск */
+        .quick-search {
+            flex: 1 1 240px;
+        }
+
+        .quick-search input {
             width: 100%;
-            margin-bottom: 8px;
+            padding: 8px 10px;
+            border-radius: 16px;
+            border: 1px solid #ccc;
+            font-size: 13px;
         }
 
-        .mobile-filters-toggle button {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 999px;
-            border: none;
-            background: #d32f2f;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .mobile-filters-toggle button:active {
-            transform: translateY(1px);
-        }
-
-        /* Панель фильтров */
-        .filters-panel {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        /* Кастомный мультиселект с живым поиском */
+        /* Кастомный мультиселект */
         .multi-filter {
             position: relative;
             min-width: 160px;
@@ -204,20 +187,7 @@
             color: #fff;
         }
 
-        /* Поле быстрого поиска по названию */
-        .quick-search {
-            flex: 1 1 200px;
-        }
-
-        .quick-search input {
-            width: 100%;
-            padding: 8px 10px;
-            border-radius: 16px;
-            border: 1px solid #ccc;
-            font-size: 13px;
-        }
-
-        /* Список карточек */
+        /* Сетка карточек — адаптивная */
         .cards {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -262,118 +232,75 @@
             font-size: 14px;
             opacity: 0.7;
         }
-
-        /* Мобильная адаптация: включаем "мобильный режим" шире,
-           чтобы и Яндекс-браузер вел себя как мобилка */
-        @media (max-width: 1100px) {
-            main {
-                padding: 8px 6px 24px;
-            }
-
-            .filters-wrapper {
-                flex-direction: column;
-            }
-
-            .mobile-filters-toggle {
-                display: block;
-            }
-
-            .filters-panel {
-                display: none;
-                flex-wrap: wrap;
-                gap: 8px;
-                padding: 8px;
-                border-radius: 12px;
-                background: rgba(255,255,255,0.9);
-                box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-            }
-
-            .filters-panel.open {
-                display: flex;
-            }
-
-            .multi-filter {
-                flex: 1 1 100%;
-                max-width: 100%;
-            }
-
-            .quick-search {
-                order: -1;
-            }
-        }
     </style>
 </head>
 <body>
 <header>
     <div>
         <h1>Каталог томатов</h1>
-        <div class="version">Версия 15 (живой поиск)</div>
+        <div class="version">Версия 15.1 (без мобильной панели)</div>
     </div>
 </header>
 
 <main>
-    <div class="mobile-filters-toggle">
-        <button type="button" id="mobileFiltersBtn">Фильтры и поиск</button>
-    </div>
-
     <div class="filters-wrapper">
-        <div class="filters-panel" id="filtersPanel">
-            <!-- Живой поиск по названию/ID -->
-            <div class="quick-search">
-                <input type="text" id="quickSearchInput" placeholder="Быстрый поиск по названию или ID" />
-            </div>
 
-            <!-- Цвет -->
-            <div class="multi-filter" data-field="color">
-                <div class="multi-filter-display" data-placeholder="Цвет">
-                    <span class="placeholder">Цвет</span>
-                </div>
-                <div class="multi-filter-dropdown">
-                    <div class="multi-filter-search">
-                        <input type="text" placeholder="Поиск по цветам..." />
-                    </div>
-                    <div class="multi-filter-options"></div>
-                    <div class="multi-filter-footer">
-                        <button type="button" class="btn-clear">Сбросить</button>
-                        <button type="button" class="btn-apply">Применить</button>
-                    </div>
-                </div>
-            </div>
+        <!-- Быстрый поиск -->
+        <div class="quick-search">
+            <input type="text" id="quickSearchInput" placeholder="Быстрый поиск по названию или ID" />
+        </div>
 
-            <!-- Тип -->
-            <div class="multi-filter" data-field="type">
-                <div class="multi-filter-display" data-placeholder="Тип">
-                    <span class="placeholder">Тип</span>
-                </div>
-                <div class="multi-filter-dropdown">
-                    <div class="multi-filter-search">
-                        <input type="text" placeholder="Поиск по типам..." />
-                    </div>
-                    <div class="multi-filter-options"></div>
-                    <div class="multi-filter-footer">
-                        <button type="button" class="btn-clear">Сбросить</button>
-                        <button type="button" class="btn-apply">Прменить</button>
-                    </div>
-                </div>
+        <!-- Цвет -->
+        <div class="multi-filter" data-field="color">
+            <div class="multi-filter-display" data-placeholder="Цвет">
+                <span class="placeholder">Цвет</span>
             </div>
-
-            <!-- Размер -->
-            <div class="multi-filter" data-field="size">
-                <div class="multi-filter-display" data-placeholder="Размер">
-                    <span class="placeholder">Размер</span>
+            <div class="multi-filter-dropdown">
+                <div class="multi-filter-search">
+                    <input type="text" placeholder="Поиск по цветам..." />
                 </div>
-                <div class="multi-filter-dropdown">
-                    <div class="multi-filter-search">
-                        <input type="text" placeholder="Поиск по размерам..." />
-                    </div>
-                    <div class="multi-filter-options"></div>
-                    <div class="multi-filter-footer">
-                        <button type="button" class="btn-clear">Сбросить</button>
-                        <button type="button" class="btn-apply">Применить</button>
-                    </div>
+                <div class="multi-filter-options"></div>
+                <div class="multi-filter-footer">
+                    <button type="button" class="btn-clear">Сбросить</button>
+                    <button type="button" class="btn-apply">Применить</button>
                 </div>
             </div>
         </div>
+
+        <!-- Тип -->
+        <div class="multi-filter" data-field="type">
+            <div class="multi-filter-display" data-placeholder="Тип">
+                <span class="placeholder">Тип</span>
+            </div>
+            <div class="multi-filter-dropdown">
+                <div class="multi-filter-search">
+                    <input type="text" placeholder="Поиск по типам..." />
+                </div>
+                <div class="multi-filter-options"></div>
+                <div class="multi-filter-footer">
+                    <button type="button" class="btn-clear">Сбросить</button>
+                    <button type="button" class="btn-apply">Применить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Размер -->
+        <div class="multi-filter" data-field="size">
+            <div class="multi-filter-display" data-placeholder="Размер">
+                <span class="placeholder">Размер</span>
+            </div>
+            <div class="multi-filter-dropdown">
+                <div class="multi-filter-search">
+                    <input type="text" placeholder="Поиск по размерам..." />
+                </div>
+                <div class="multi-filter-options"></div>
+                <div class="multi-filter-footer">
+                    <button type="button" class="btn-clear">Сбросить</button>
+                    <button type="button" class="btn-apply">Применить</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <div id="cardsContainer" class="cards"></div>
@@ -384,376 +311,6 @@
 (function() {
     "use strict";
 
-    // Обёртка, чтобы защищаться от внешних скриптов/ошибок
     try {
 
-        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0kK2Vq1bW0LZgXn7XjvBzW4WkXoUe8VbOue0N9hE4Uu9s7sR0/export?format=tsv&gid=0";
-        // ↑ сюда подставь свой актуальный URL TSV/CSV при необходимости
-
-        const cardsContainer = document.getElementById("cardsContainer");
-        const noResultsEl = document.getElementById("noResults");
-        const mobileFiltersBtn = document.getElementById("mobileFiltersBtn");
-        const filtersPanel = document.getElementById("filtersPanel");
-        const quickSearchInput = document.getElementById("quickSearchInput");
-
-        let allData = [];
-        let activeFilters = {
-            color: [],
-            type: [],
-            size: [],
-            search: ""
-        };
-
-        // ---- Утилиты ----
-
-        function normalizeString(s) {
-            if (!s) return "";
-            return String(s).trim().toLowerCase();
-        }
-
-        function uniqueSorted(values) {
-            return Array.from(new Set(values.filter(v => v && String(v).trim() !== "")))
-                .sort((a, b) => String(a).localeCompare(String(b), "ru"));
-        }
-
-        // ---- Парсинг TSV ----
-
-        async function loadData() {
-            const res = await fetch(CSV_URL, { cache: "no-store" });
-            const text = await res.text();
-            return parseTSV(text);
-        }
-
-        function parseTSV(text) {
-            const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
-            if (rows.length < 2) return [];
-
-            const header = rows[0].split("\t").map(h => h.trim());
-            const dataRows = rows.slice(1);
-
-            return dataRows.map(row => {
-                const cols = row.split("\t");
-                const obj = {};
-                header.forEach((name, idx) => {
-                    obj[name] = (cols[idx] || "").trim();
-                });
-                return obj;
-            });
-        }
-
-        // ---- Рендер карточек ----
-
-        function getPhotoUrl(item) {
-            // предполагаем, что у тебя есть поле mainphoto с прямой ссылкой RAW
-            const url = item.mainphoto || item.photo || "";
-            if (!url) {
-                // fallback-заглушка
-                return "https://placehold.co/300x200?text=No+Photo";
-            }
-            return url;
-        }
-
-        function renderCards(data) {
-            cardsContainer.innerHTML = "";
-
-            if (!data || data.length === 0) {
-                noResultsEl.style.display = "block";
-                return;
-            } else {
-                noResultsEl.style.display = "none";
-            }
-
-            const frag = document.createDocumentFragment();
-
-            data.forEach(item => {
-                const card = document.createElement("div");
-                card.className = "card";
-
-                const img = document.createElement("img");
-                img.loading = "lazy";
-                img.src = getPhotoUrl(item);
-                img.alt = item.name || item.id || "Томат";
-
-                img.onerror = () => {
-                    img.onerror = null;
-                    img.src = "https://placehold.co/300x200?text=No+Photo";
-                };
-
-                const body = document.createElement("div");
-                body.className = "card-body";
-
-                const title = document.createElement("div");
-                title.className = "card-title";
-                title.textContent = item.name || ("ID: " + (item.id || ""));
-
-                const meta = document.createElement("div");
-                meta.className = "card-meta";
-                const parts = [];
-                if (item.color) parts.push("Цвет: " + item.color);
-                if (item.type) parts.push("Тип: " + item.type);
-                if (item.size) parts.push("Размер: " + item.size);
-                meta.textContent = parts.join(" • ");
-
-                body.appendChild(title);
-                if (parts.length) body.appendChild(meta);
-
-                card.appendChild(img);
-                card.appendChild(body);
-
-                frag.appendChild(card);
-            });
-
-            cardsContainer.appendChild(frag);
-        }
-
-        // ---- Фильтрация ----
-
-        function applyFilters() {
-            const search = normalizeString(activeFilters.search);
-
-            const filtered = allData.filter(item => {
-                // Поиск по названию/ID
-                if (search) {
-                    const name = normalizeString(item.name);
-                    const id = normalizeString(item.id);
-                    if (!name.includes(search) && !id.includes(search)) {
-                        return false;
-                    }
-                }
-
-                // color
-                if (activeFilters.color.length > 0) {
-                    const value = normalizeString(item.color);
-                    if (!activeFilters.color.some(v => v === value)) {
-                        return false;
-                    }
-                }
-
-                // type
-                if (activeFilters.type.length > 0) {
-                    const value = normalizeString(item.type);
-                    if (!activeFilters.type.some(v => v === value)) {
-                        return false;
-                    }
-                }
-
-                // size
-                if (activeFilters.size.length > 0) {
-                    const value = normalizeString(item.size);
-                    if (!activeFilters.size.some(v => v === value)) {
-                        return false;
-                    }
-                }
-
-                return true;
-            });
-
-            renderCards(filtered);
-        }
-
-        // ---- Живой мульти-фильтр ----
-
-        function initMultiFilter(field) {
-            const root = document.querySelector('.multi-filter[data-field="' + field + '"]');
-            if (!root) return;
-
-            const display = root.querySelector(".multi-filter-display");
-            const dropdown = root.querySelector(".multi-filter-dropdown");
-            const searchInput = root.querySelector(".multi-filter-search input");
-            const optionsContainer = root.querySelector(".multi-filter-options");
-            const btnClear = root.querySelector(".btn-clear");
-            const btnApply = root.querySelector(".btn-apply");
-
-            const placeholderText = display.dataset.placeholder || "";
-
-            // Собираем уникальные значения
-            const values = uniqueSorted(allData.map(item => item[field]));
-
-            // Рендерим чекбоксы
-            optionsContainer.innerHTML = "";
-            values.forEach(val => {
-                const valueNorm = String(val).trim();
-                if (!valueNorm) return;
-
-                const opt = document.createElement("div");
-                opt.className = "multi-filter-option";
-
-                const id = field + "_" + valueNorm;
-
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.id = id;
-                checkbox.value = valueNorm;
-
-                const label = document.createElement("label");
-                label.setAttribute("for", id);
-                label.textContent = valueNorm;
-
-                opt.appendChild(checkbox);
-                opt.appendChild(label);
-                optionsContainer.appendChild(opt);
-            });
-
-            // Отображение выбранных значений в "плашке"
-            function updateDisplay() {
-                const selected = activeFilters[field];
-                display.innerHTML = "";
-
-                if (!selected || selected.length === 0) {
-                    const span = document.createElement("span");
-                    span.className = "placeholder";
-                    span.textContent = placeholderText;
-                    display.appendChild(span);
-                    return;
-                }
-
-                selected.forEach(val => {
-                    const tag = document.createElement("span");
-                    tag.className = "tag";
-                    tag.textContent = val;
-
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.textContent = "×";
-                    btn.addEventListener("click", (e) => {
-                        e.stopPropagation();
-                        removeValue(val);
-                    });
-
-                    tag.appendChild(btn);
-                    display.appendChild(tag);
-                });
-            }
-
-            function removeValue(val) {
-                activeFilters[field] = activeFilters[field].filter(v => v !== val);
-                // снять чекбокс
-                Array.from(optionsContainer.querySelectorAll("input[type=checkbox]")).forEach(cb => {
-                    if (normalizeString(cb.value) === normalizeString(val)) {
-                        cb.checked = false;
-                    }
-                });
-                updateDisplay();
-                applyFilters();
-            }
-
-            // Обновление массива выбранных значений при применении
-            function collectSelected() {
-                const selected = [];
-                Array.from(optionsContainer.querySelectorAll("input[type=checkbox]")).forEach(cb => {
-                    if (cb.checked) {
-                        selected.push(normalizeString(cb.value));
-                    }
-                });
-                activeFilters[field] = selected;
-                updateDisplay();
-                applyFilters();
-            }
-
-            // Поиск по списку внутри дропдауна
-            function filterOptionsBySearch() {
-                const q = normalizeString(searchInput.value);
-                Array.from(optionsContainer.children).forEach(row => {
-                    const label = row.querySelector("label");
-                    if (!label) return;
-                    const text = normalizeString(label.textContent);
-                    row.style.display = (!q || text.includes(q)) ? "" : "none";
-                });
-            }
-
-            // Открытие / закрытие дропдауна
-            function openDropdown() {
-                closeAllDropdowns();
-                dropdown.classList.add("open");
-                searchInput.value = "";
-                filterOptionsBySearch();
-            }
-
-            function closeDropdown() {
-                dropdown.classList.remove("open");
-            }
-
-            display.addEventListener("click", () => {
-                if (dropdown.classList.contains("open")) {
-                    closeDropdown();
-                } else {
-                    openDropdown();
-                }
-            });
-
-            btnClear.addEventListener("click", () => {
-                activeFilters[field] = [];
-                Array.from(optionsContainer.querySelectorAll("input[type=checkbox]")).forEach(cb => {
-                    cb.checked = false;
-                });
-                updateDisplay();
-                applyFilters();
-            });
-
-            btnApply.addEventListener("click", () => {
-                collectSelected();
-                closeDropdown();
-            });
-
-            searchInput.addEventListener("input", filterOptionsBySearch);
-
-            document.addEventListener("click", (e) => {
-                if (!root.contains(e.target)) {
-                    closeDropdown();
-                }
-            });
-
-            // Инициализация отображения
-            updateDisplay();
-        }
-
-        function closeAllDropdowns() {
-            document.querySelectorAll(".multi-filter-dropdown.open").forEach(d => {
-                d.classList.remove("open");
-            });
-        }
-
-        // ---- Мобильная панель ----
-
-        if (mobileFiltersBtn && filtersPanel) {
-            mobileFiltersBtn.addEventListener("click", () => {
-                filtersPanel.classList.toggle("open");
-            });
-        }
-
-        // ---- Быстрый поиск ----
-
-        if (quickSearchInput) {
-            quickSearchInput.addEventListener("input", () => {
-                activeFilters.search = quickSearchInput.value || "";
-                applyFilters();
-            });
-        }
-
-        // ---- Запуск ----
-
-        (async function init() {
-            try {
-                allData = await loadData();
-            } catch (e) {
-                console.error("Ошибка загрузки данных:", e);
-                allData = [];
-            }
-
-            // Инициализируем фильтры
-            initMultiFilter("color");
-            initMultiFilter("type");
-            initMultiFilter("size");
-
-            // Первичный рендер
-            applyFilters();
-        })();
-
-    } catch (err) {
-        console.error("Глобальная ошибка catalog.html:", err);
-    }
-})();
-</script>
-
-</body>
-</html>
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0kK2Vq1bW0LZgXn7XjvBzW4WkXoUe8VbOue
