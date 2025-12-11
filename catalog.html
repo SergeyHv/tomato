@@ -20,7 +20,6 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
             position: sticky;
             top: 0;
             z-index: 20;
@@ -32,573 +31,272 @@
             font-weight: 600;
         }
 
-        header .version {
-            font-size: 12px;
-            opacity: 0.8;
+        /* Поиск */
+        .search-box {
+            padding: 12px 16px;
         }
 
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 12px 8px 32px;
-        }
-
-        /* Панель фильтров */
-        .filters-wrapper {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 12px;
-            align-items: flex-start;
-        }
-
-        /* Быстрый поиск */
-        .quick-search {
-            flex: 1 1 240px;
-        }
-
-        .quick-search input {
+        .search-box input {
             width: 100%;
-            padding: 8px 10px;
-            border-radius: 16px;
+            padding: 10px 14px;
+            border-radius: 12px;
             border: 1px solid #ccc;
-            font-size: 13px;
+            font-size: 16px;
         }
 
-        /* Кастомный мультиселект */
+        /* Фильтры */
+        .filters {
+            display: flex;
+            gap: 12px;
+            padding: 0 16px 12px;
+            flex-wrap: wrap;
+        }
+
         .multi-filter {
             position: relative;
-            min-width: 160px;
-            max-width: 220px;
-            font-size: 13px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            min-width: 140px;
         }
 
         .multi-filter-display {
-            padding: 8px 10px;
-            border-radius: 16px;
-            border: 1px solid #ccc;
-            background: #fff;
-            cursor: pointer;
-            min-height: 32px;
             display: flex;
-            align-items: center;
             flex-wrap: wrap;
-            gap: 4px;
+            gap: 6px;
         }
 
-        .multi-filter-display span.placeholder {
+        .multi-filter-display .placeholder {
             opacity: 0.6;
         }
 
-        .multi-filter-display .tag {
-            background: #ffe0b2;
-            border-radius: 12px;
-            padding: 2px 6px;
-            font-size: 11px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .multi-filter-display .tag button {
-            border: none;
-            background: none;
-            padding: 0;
-            margin: 0;
-            cursor: pointer;
-            font-size: 12px;
-            line-height: 1;
+        .tag {
+            background: #b22222;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 13px;
         }
 
         .multi-filter-dropdown {
             position: absolute;
-            top: calc(100% + 4px);
+            top: calc(100% + 6px);
             left: 0;
-            right: 0;
+            width: 260px;
             background: #fff;
             border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-            padding: 8px;
-            z-index: 30;
+            border: 1px solid #ccc;
+            padding: 12px;
             display: none;
-        }
-
-        .multi-filter-dropdown.open {
-            display: block;
-        }
-
-        .multi-filter-search {
-            margin-bottom: 6px;
+            z-index: 30;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .multi-filter-search input {
             width: 100%;
-            padding: 6px 8px;
-            border-radius: 999px;
-            border: 1px solid #ddd;
-            font-size: 12px;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
         }
 
         .multi-filter-options {
-            max-height: 220px;
-            overflow: auto;
+            max-height: 200px;
+            overflow-y: auto;
             padding-right: 4px;
         }
 
         .multi-filter-option {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 3px 2px;
-            font-size: 12px;
-            cursor: pointer;
+            gap: 8px;
+            padding: 4px 0;
         }
 
-        .multi-filter-option input {
-            cursor: pointer;
-        }
-
-        .multi-filter-option label {
-            cursor: pointer;
-        }
-
-        .multi-filter-footer {
+        .btns {
             display: flex;
             justify-content: space-between;
-            margin-top: 6px;
-            gap: 6px;
+            margin-top: 10px;
         }
 
-        .multi-filter-footer button {
-            flex: 1;
-            padding: 5px 6px;
-            border-radius: 999px;
+        .btn-clear, .btn-apply {
+            padding: 6px 12px;
+            border-radius: 8px;
             border: none;
-            font-size: 11px;
             cursor: pointer;
         }
 
         .btn-clear {
-            background: #f5f5f5;
+            background: #eee;
         }
 
         .btn-apply {
-            background: #d32f2f;
+            background: #b22222;
             color: #fff;
         }
 
         /* Сетка карточек */
-        .cards {
+        .catalog-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 12px;
+            gap: 20px;
+            padding: 16px;
         }
 
         .card {
             background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-radius: 12px;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
         }
 
         .card img {
             width: 100%;
-            height: 180px;
+            height: 160px;
             object-fit: cover;
-            background: #eee;
         }
 
         .card-body {
-            padding: 8px 10px 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            padding: 12px;
         }
 
         .card-title {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
+            margin-bottom: 6px;
         }
 
         .card-meta {
-            font-size: 12px;
-            color: #555;
-        }
-
-        .no-results {
-            margin-top: 24px;
-            font-size: 14px;
+            font-size: 13px;
             opacity: 0.7;
         }
 
-        /* Модальное окно */
+        /* Нет результатов */
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            opacity: 0.6;
+        }
+
+        /* Модалка */
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.55);
+            background: rgba(0,0,0,0.5);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 200;
+            z-index: 50;
         }
 
-        .modal-overlay.open {
-            display: flex;
-        }
-
-        .modal-window {
+        .modal {
             background: #fff;
             border-radius: 16px;
-            max-width: 480px;
+            max-width: 600px;
             width: 90%;
-            padding: 16px;
-            position: relative;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-            animation: fadeIn 0.25s ease;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            font-size: 24px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            opacity: 0.7;
-        }
-
-        .modal-close:hover {
-            opacity: 1;
-        }
-
-        .modal-photo {
-            width: 100%;
-            height: 260px;
-            object-fit: cover;
-            border-radius: 12px;
-            margin-bottom: 12px;
-        }
-
-        .modal-meta {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 8px;
-        }
-
-        .modal-desc {
-            font-size: 14px;
-            line-height: 1.4;
-            color: #333;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            animation: fadeIn 0.2s ease;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to   { opacity: 1; transform: scale(1); }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-close {
+            float: right;
+            cursor: pointer;
+            font-size: 22px;
+            opacity: 0.6;
         }
     </style>
 </head>
+
 <body>
+
 <header>
-    <div>
-        <h1>Каталог томатов</h1>
-        <div class="version">Версия 15.2 (с модалкой)</div>
-    </div>
+    <h1>Каталог томатов</h1>
 </header>
 
-<main>
-    <div class="filters-wrapper">
+<div class="search-box">
+    <input id="searchInput" type="text" placeholder="Поиск по названию или ID">
+</div>
 
-        <!-- Быстрый поиск -->
-        <div class="quick-search">
-            <input type="text" id="quickSearchInput" placeholder="Быстрый поиск по названию или ID" />
-        </div>
-
-        <!-- Цвет -->
-        <div class="multi-filter" data-field="color">
-            <div class="multi-filter-display" data-placeholder="Цвет">
-                <span class="placeholder">Цвет</span>
-            </div>
-            <div class="multi-filter-dropdown">
-                <div class="multi-filter-search">
-                    <input type="text" placeholder="Поиск по цветам..." />
-                </div>
-                <div class="multi-filter-options"></div>
-                <div class="multi-filter-footer">
-                    <button type="button" class="btn-clear">Сбросить</button>
-                    <button type="button" class="btn-apply">Применить</button>
-                </div>
+<div class="filters">
+    <div class="multi-filter" data-field="color">
+        <div class="multi-filter-display" data-placeholder="Цвет"></div>
+        <div class="multi-filter-dropdown">
+            <div class="multi-filter-search"><input type="text" placeholder="Поиск..."></div>
+            <div class="multi-filter-options"></div>
+            <div class="btns">
+                <button class="btn-clear">Сброс</button>
+                <button class="btn-apply">Применить</button>
             </div>
         </div>
-
-        <!-- Тип -->
-        <div class="multi-filter" data-field="type">
-            <div class="multi-filter-display" data-placeholder="Тип">
-                <span class="placeholder">Тип</span>
-            </div>
-            <div class="multi-filter-dropdown">
-                <div class="multi-filter-search">
-                    <input type="text" placeholder="Поиск по типам..." />
-                </div>
-                <div class="multi-filter-options"></div>
-                <div class="multi-filter-footer">
-                    <button type="button" class="btn-clear">Сбросить</button>
-                    <button type="button" class="btn-apply">Применить</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Размер -->
-        <div class="multi-filter" data-field="size">
-            <div class="multi-filter-display" data-placeholder="Размер">
-                <span class="placeholder">Размер</span>
-            </div>
-            <div class="multi-filter-dropdown">
-                <div class="multi-filter-search">
-                    <input type="text" placeholder="Поиск по размерам..." />
-                </div>
-                <div class="multi-filter-options"></div>
-                <div class="multi-filter-footer">
-                    <button type="button" class="btn-clear">Сбросить</button>
-                    <button type="button" class="btn-apply">Применить</button>
-                </div>
-            </div>
-        </div>
-
     </div>
 
-    <div id="cardsContainer" class="cards"></div>
-    <div id="noResults" class="no-results" style="display:none;">Ничего не найдено по текущим фильтрам.</div>
-</main>
+    <div class="multi-filter" data-field="type">
+        <div class="multi-filter-display" data-placeholder="Тип"></div>
+        <div class="multi-filter-dropdown">
+            <div class="multi-filter-search"><input type="text" placeholder="Поиск..."></div>
+            <div class="multi-filter-options"></div>
+            <div class="btns">
+                <button class="btn-clear">Сброс</button>
+                <button class="btn-apply">Применить</button>
+            </div>
+        </div>
+    </div>
 
-<!-- Модальное окно -->
+    <div class="multi-filter" data-field="size">
+        <div class="multi-filter-display" data-placeholder="Размер"></div>
+        <div class="multi-filter-dropdown">
+            <div class="multi-filter-search"><input type="text" placeholder="Поиск..."></div>
+            <div class="multi-filter-options"></div>
+            <div class="btns">
+                <button class="btn-clear">Сброс</button>
+                <button class="btn-apply">Применить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="noResults" class="no-results" style="display:none;">Нет результатов</div>
+
+<div id="catalog" class="catalog-grid"></div>
+
+<!-- Модалка -->
 <div id="modalOverlay" class="modal-overlay">
-    <div class="modal-window">
-        <button class="modal-close">×</button>
-        <img id="modalPhoto" class="modal-photo" src="" alt="">
-        <h2 id="modalTitle"></h2>
-        <div id="modalMeta" class="modal-meta"></div>
-        <p id="modalDesc" class="modal-desc"></p>
+    <div class="modal">
+        <div class="modal-close" onclick="closeModal()">×</div>
+        <div id="modalContent"></div>
     </div>
 </div>
 
 <script>
-(function() {
-    "use strict";
+/* ✅ Здесь будут твои функции:
+   - normalizeString
+   - uniqueSorted
+   - getPhotoUrl
+   - renderCards
+   - applyFilters
+   - initMultiFilter
+   - openModal
+   - closeModal
+   - загрузка TSV
+   - обработка событий
+*/
+</script>
 
-    try {
-
-        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0kK2Vq1bW0LZgXn7XjvBzW4WkXoUe8VbOue0N9hE4Uu9s7sR0/export?format=tsv&gid=0";
-
-        const cardsContainer = document.getElementById("cardsContainer");
-        const noResultsEl = document.getElementById("noResults");
-        const quickSearchInput = document.getElementById("quickSearchInput");
-
-        let allData = [];
-        let activeFilters = {
-            color: [],
-            type: [],
-            size: [],
-            search: ""
-        };
-
-        function normalizeString(s) {
-            if (!s) return "";
-            return String(s).trim().toLowerCase();
-        }
-
-        function uniqueSorted(values) {
-            return Array.from(new Set(values.filter(v => v && String(v).trim() !== "")))
-                .sort((a, b) => String(a).localeCompare(String(b), "ru"));
-        }
-
-        async function loadData() {
-            const res = await fetch(CSV_URL, { cache: "no-store" });
-            const text = await res.text();
-            return parseTSV(text);
-        }
-
-        function parseTSV(text) {
-            const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
-            if (rows.length < 2) return [];
-
-            const header = rows[0].split("\t").map(h => h.trim());
-            const dataRows = rows.slice(1);
-
-            return dataRows.map(row => {
-                const cols = row.split("\t");
-                const obj = {};
-                header.forEach((name, idx) => {
-                    obj[name] = (cols[idx] || "").trim();
-                });
-                return obj;
-            });
-        }
-
-        function getPhotoUrl(item) {
-            const url = item.mainphoto || item.photo || "";
-            if (!url) {
-                return "https://placehold.co/300x200?text=No+Photo";
-            }
-            return url;
-        }
-
-        function renderCards(data) {
-            cardsContainer.innerHTML = "";
-
-            if (!data || data.length === 0) {
-                noResultsEl.style.display = "block";
-                return;
-            } else {
-                noResultsEl.style.display = "none";
-            }
-
-            const frag = document.createDocumentFragment();
-
-            data.forEach(item => {
-                const card = document.createElement("div");
-                card.className = "card";
-
-                const img = document.createElement("img");
-                img.loading = "lazy";
-                img.src = getPhotoUrl(item);
-                img.alt = item.name || item.id || "Томат";
-
-                img.onerror = () => {
-                    img.onerror = null;
-                    img.src = "https://placehold.co/300x200?text=No+Photo";
-                };
-
-                const body = document.createElement("div");
-                body.className = "card-body";
-
-                const title = document.createElement("div");
-                title.className = "card-title";
-                title.textContent = item.name || ("ID: " + (item.id || ""));
-
-                const meta = document.createElement("div");
-                meta.className = "card-meta";
-                const parts = [];
-                if (item.color) parts.push("Цвет: " + item.color);
-                if (item.type) parts.push("Тип: " + item.type);
-                if (item.size) parts.push("Размер: " + item.size);
-                meta.textContent = parts.join(" • ");
-
-                body.appendChild(title);
-                if (parts.length) body.appendChild(meta);
-
-                card.appendChild(img);
-                card.appendChild(body);
-
-                // ✅ Открытие модального окна
-                card.addEventListener("click", () => openModal(item));
-
-                frag.appendChild(card);
-            });
-
-            cardsContainer.appendChild(frag);
-        }
-
-        function applyFilters() {
-            const search = normalizeString(activeFilters.search);
-
-            const filtered = allData.filter(item => {
-                if (search) {
-                    const name = normalizeString(item.name);
-                    const id = normalizeString(item.id);
-                    if (!name.includes(search) && !id.includes(search)) {
-                        return false;
-                    }
-                }
-
-                if (activeFilters.color.length > 0) {
-                    const value = normalizeString(item.color);
-                    if (!activeFilters.color.some(v => v === value)) {
-                        return false;
-                    }
-                }
-
-                if (activeFilters.type.length > 0) {
-                    const value = normalizeString(item.type);
-                    if (!activeFilters.type.some(v => v === value)) {
-                        return false;
-                    }
-                }
-
-                if (activeFilters.size.length > 0) {
-                    const value = normalizeString(item.size);
-                    if (!activeFilters.size.some(v => v === value)) {
-                        return false;
-                    }
-                }
-
-                return true;
-            });
-
-            renderCards(filtered);
-        }
-
-        function initMultiFilter(field) {
-            const root = document.querySelector('.multi-filter[data-field="' + field + '"]');
-            if (!root) return;
-
-            const display = root.querySelector(".multi-filter-display");
-            const dropdown = root.querySelector(".multi-filter-dropdown");
-            const searchInput = root.querySelector(".multi-filter-search input");
-            const optionsContainer = root.querySelector(".multi-filter-options");
-            const btnClear = root.querySelector(".btn-clear");
-            const btnApply = root.querySelector(".btn-apply");
-
-            const placeholderText = display.dataset.placeholder || "";
-
-            const values = uniqueSorted(allData.map(item => item[field]));
-
-            optionsContainer.innerHTML = "";
-            values.forEach(val => {
-                const valueNorm = String(val).trim();
-                if (!valueNorm) return;
-
-                const opt = document.createElement("div");
-                opt.className = "multi-filter-option";
-
-                const id = field + "_" + valueNorm;
-
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.id = id;
-                checkbox.value = valueNorm;
-
-                const label = document.createElement("label");
-                label.setAttribute("for", id);
-                label.textContent = valueNorm;
-
-                opt.appendChild(checkbox);
-                opt.appendChild(label);
-                optionsContainer.appendChild(opt);
-            });
-
-            function updateDisplay() {
-                const selected = activeFilters[field];
-                display.innerHTML = "";
-
-                if (!selected || selected.length === 0) {
-                    const span = document.createElement("span");
-                    span.className = "placeholder";
-                    span.textContent = placeholderText;
-                    display.appendChild(span);
-                    return;
-                }
-
-                selected.forEach(val => {
-                    const tag = document.createElement("span");
-                    tag.className = "tag";
-                    tag.textContent = val;
-
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.textContent = "×";
-                   
-
+</body>
+</html>
