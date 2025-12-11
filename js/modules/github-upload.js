@@ -2,7 +2,8 @@
 const GITHUB_USERNAME = "SergeyHv";
 const GITHUB_REPO = "tomato";
 const GITHUB_FOLDER = "images"; // сюда будут загружаться фото
-const GITHUB_TOKEN = "ВСТАВЬ_СВОЙ_ТОКЕН_СЮДА"; // вставь свой токен
+const GITHUB_TOKEN = ""; // токен будет храниться отдельно
+
 
 // === ФУНКЦИЯ ЗАГРУЗКИ ===
 export async function uploadImageToGitHub(file) {
