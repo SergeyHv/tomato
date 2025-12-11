@@ -17,7 +17,7 @@
     margin-bottom: 20px;
   }
 
-  /* ✅ Основной блок фильтров */
+  /* ✅ Контейнер фильтров */
   .controls {
     display: flex;
     flex-wrap: wrap;
@@ -31,11 +31,61 @@
     font-size: 14px;
   }
 
-  select {
-    padding: 6px 8px;
-    font-size: 14px;
-    flex: 1 1 150px;
-    max-width: 180px;
+  /* ✅ Кастомные фильтры */
+  .filter-box {
+    position: relative;
+    flex: 1 1 180px;
+  }
+
+  .filter-display {
+    padding: 8px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .filter-dropdown {
+    display: none;
+    position: absolute;
+    top: 110%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 8px;
+  }
+
+  .filter-dropdown.open {
+    display: block;
+  }
+
+  .filter-search {
+    width: 100%;
+    padding: 6px;
+    margin-bottom: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .filter-option {
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .filter-option:hover {
+    background: #eee;
+  }
+
+  .filter-option.selected {
+    background: #d62828;
+    color: white;
   }
 
   /* ✅ Сетка каталога */
@@ -45,7 +95,6 @@
     gap: 15px;
   }
 
-  /* ✅ Карточка */
   .card {
     background: #fff;
     border-radius: 8px;
@@ -106,12 +155,11 @@
     transition: transform 0.3s ease;
   }
 
-  @media (max-width: 600px) {
+  @media (max-width: 900px) {
     #mobileFiltersBtn {
       display: block;
     }
 
-    /* Фильтры скрыты по умолчанию */
     #filtersPanel {
       position: fixed;
       bottom: 0;
@@ -124,7 +172,6 @@
       z-index: 999;
     }
 
-    /* Когда открыты */
     #filtersPanel.open {
       transform: translateY(0);
     }
@@ -134,10 +181,14 @@
       gap: 10px;
     }
 
-    #search, select {
+    #search {
       width: 100%;
       font-size: 16px;
       padding: 12px;
+    }
+
+    .filter-box {
+      width: 100%;
     }
 
     .card img {
@@ -152,11 +203,45 @@
 
 <!-- ✅ Фильтры -->
 <div class="controls" id="filtersPanel">
+
   <input type="text" id="search" placeholder="Поиск по названию...">
-  <select id="filterColor"><option value="">Цвет</option></select>
-  <select id="filterType"><option value="">Тип</option></select>
-  <select id="filterSize"><option value="">Размер</option></select>
-  <select id="filterSeason"><option value="">Срок созревания</option></select>
+
+  <!-- ✅ Живой поиск: Цвет -->
+  <div class="filter-box" data-field="color">
+    <div class="filter-display">Цвет</div>
+    <div class="filter-dropdown">
+      <input class="filter-search" placeholder="Поиск...">
+      <div class="filter-options"></div>
+    </div>
+  </div>
+
+  <!-- ✅ Живой поиск: Тип -->
+  <div class="filter-box" data-field="type">
+    <div class="filter-display">Тип</div>
+    <div class="filter-dropdown">
+      <input class="filter-search" placeholder="Поиск...">
+      <div class="filter-options"></div>
+    </div>
+  </div>
+
+  <!-- ✅ Живой поиск: Размер -->
+  <div class="filter-box" data-field="size">
+    <div class="filter-display">Размер</div>
+    <div class="filter-dropdown">
+      <input class="filter-search" placeholder="Поиск...">
+      <div class="filter-options"></div>
+    </div>
+  </div>
+
+  <!-- ✅ Живой поиск: Срок созревания -->
+  <div class="filter-box" data-field="season">
+    <div class="filter-display">Срок созревания</div>
+    <div class="filter-dropdown">
+      <input class="filter-search" placeholder="Поиск...">
+      <div class="filter-options"></div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ✅ Кнопка фильтров для мобильных -->
@@ -168,7 +253,6 @@
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script>
 
-// ✅ Ссылка на CSV Google Таблицы
 const csvUrl =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vR1fdNIH6J3sLQDzsEXm-RRl8VlbBfWfEiPhpL_3xWHZfesBJ_qpCBEsEU0Xe4wbkAzDAntYFSP2cnQ/pub?output=csv';
 
@@ -191,7 +275,6 @@ function renderCatalog(data) {
     const card = document.createElement('div');
     card.className = 'card';
 
-    // ✅ Кликабельная карточка
     card.addEventListener('click', () => {
       window.location.href = `tomato.html?id=${t.id}`;
     });
@@ -211,42 +294,88 @@ function renderCatalog(data) {
   }
 }
 
-/* ✅ Построение фильтров */
-function buildFilters() {
-  fillFilter('filterColor', 'color');
-  fillFilter('filterType', 'type');
-  fillFilter('filterSize', 'size');
-  fillFilter('filterSeason', 'season');
-}
+/* ✅ Живой поиск внутри фильтров */
+function initLiveFilter(field) {
+  const box = document.querySelector(`.filter-box[data-field="${field}"]`);
+  const display = box.querySelector('.filter-display');
+  const dropdown = box.querySelector('.filter-dropdown');
+  const search = box.querySelector('.filter-search');
+  const optionsContainer = box.querySelector('.filter-options');
 
-function fillFilter(selectId, field) {
-  const select = document.getElementById(selectId);
-  const values = [...new Set(allData.map(t => t[field]).filter(v => v))].sort();
-  values.forEach(v => {
-    const opt = document.createElement('option');
-    opt.value = v;
-    opt.textContent = v;
-    select.appendChild(opt);
+  let values = [...new Set(allData.map(t => t[field]).filter(v => v))].sort();
+  let selected = [];
+
+  function renderOptions() {
+    optionsContainer.innerHTML = '';
+    const q = search.value.toLowerCase();
+
+    values
+      .filter(v => v.toLowerCase().includes(q))
+      .forEach(v => {
+        const div = document.createElement('div');
+        div.className = 'filter-option';
+        if (selected.includes(v)) div.classList.add('selected');
+        div.textContent = v;
+
+        div.addEventListener('click', () => {
+          if (selected.includes(v)) {
+            selected = selected.filter(x => x !== v);
+          } else {
+            selected.push(v);
+          }
+          renderOptions();
+          applyFilters();
+          updateDisplay();
+        });
+
+        optionsContainer.appendChild(div);
+      });
+  }
+
+  function updateDisplay() {
+    display.textContent = selected.length ? selected.join(', ') : display.dataset.default;
+  }
+
+  display.dataset.default = display.textContent;
+
+  display.addEventListener('click', () => {
+    dropdown.classList.toggle('open');
+    search.focus();
   });
+
+  search.addEventListener('input', renderOptions);
+
+  return () => selected;
 }
 
-/* ✅ Применение поиска + фильтров */
+/* ✅ Инициализация всех фильтров */
+let getSelectedColor, getSelectedType, getSelectedSize, getSelectedSeason;
+
+function initAllFilters() {
+  getSelectedColor = initLiveFilter('color');
+  getSelectedType = initLiveFilter('type');
+  getSelectedSize = initLiveFilter('size');
+  getSelectedSeason = initLiveFilter('season');
+}
+
+/* ✅ Применение фильтров */
 function applyFilters() {
   const q = document.getElementById('search').value.toLowerCase();
-  const fColor = document.getElementById('filterColor').value;
-  const fType = document.getElementById('filterType').value;
-  const fSize = document.getElementById('filterSize').value;
-  const fSeason = document.getElementById('filterSeason').value;
+
+  const fColor = getSelectedColor();
+  const fType = getSelectedType();
+  const fSize = getSelectedSize();
+  const fSeason = getSelectedSeason();
 
   const filtered = allData.filter(t => {
     if (!t.name) return false;
 
     return (
       t.name.toLowerCase().includes(q) &&
-      (!fColor || t.color === fColor) &&
-      (!fType || t.type === fType) &&
-      (!fSize || t.size === fSize) &&
-      (!fSeason || t.season === fSeason)
+      (fColor.length === 0 || fColor.includes(t.color)) &&
+      (fType.length === 0 || fType.includes(t.type)) &&
+      (fSize.length === 0 || fSize.includes(t.size)) &&
+      (fSeason.length === 0 || fSeason.includes(t.season))
     );
   });
 
@@ -258,23 +387,7 @@ fetch(csvUrl)
   .then(r => r.text())
   .then(text => {
     allData = Papa.parse(text, { header: true }).data;
-    buildFilters();
     renderCatalog(allData);
+    initAllFilters();
   });
 
-/* ✅ События */
-document.querySelectorAll('#search, select').forEach(el =>
-  el.addEventListener('input', applyFilters)
-);
-
-/* ✅ Мобильная кнопка фильтров */
-const filtersPanel = document.getElementById('filtersPanel');
-const mobileBtn = document.getElementById('mobileFiltersBtn');
-
-mobileBtn.addEventListener('click', () => {
-  filtersPanel.classList.toggle('open');
-});
-
-</script>
-</body>
-</html>
