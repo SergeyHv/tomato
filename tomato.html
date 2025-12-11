@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Томат — карточка сорта</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8" />
+    <title>Каталог томатов</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <style>
         body {
@@ -19,7 +19,7 @@
             color: #fff;
             position: sticky;
             top: 0;
-            z-index: 10;
+            z-index: 20;
         }
 
         header h1 {
@@ -28,82 +28,513 @@
             font-weight: 600;
         }
 
-        main {
-            max-width: 800px;
-            margin: 0 auto;
+        .search-box {
+            padding: 12px 16px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            padding: 0 16px 12px;
+            flex-wrap: wrap;
+        }
+
+        .multi-filter {
+            position: relative;
+            background: #fff;
+            border-radius: 12px;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            min-width: 140px;
+        }
+
+        .multi-filter-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .multi-filter-display .placeholder {
+            opacity: 0.6;
+        }
+
+        .tag {
+            background: #b22222;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .multi-filter-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 260px;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #ccc;
+            padding: 12px;
+            display: none;
+            z-index: 30;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .multi-filter-search input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        .multi-filter-options {
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .multi-filter-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+        }
+
+        .btns {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .btn-clear, .btn-apply {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-clear {
+            background: #eee;
+        }
+
+        .btn-apply {
+            background: #b22222;
+            color: #fff;
+        }
+
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
             padding: 16px;
         }
 
-        .back-link {
-            display: inline-block;
-            margin-bottom: 16px;
-            padding: 8px 14px;
-            background: #d32f2f;
-            color: #fff;
+        .card {
+            background: #fff;
             border-radius: 12px;
-            text-decoration: none;
-            font-size: 14px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
 
-        .card-photo {
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+
+        .card img {
             width: 100%;
-            height: 320px;
+            height: 160px;
             object-fit: cover;
-            border-radius: 16px;
-            background: #eee;
-            margin-bottom: 16px;
         }
 
-        .title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 12px;
+        .card-body {
+            padding: 12px;
         }
 
-        .meta {
-            font-size: 15px;
-            color: #555;
-            margin-bottom: 16px;
-        }
-
-        .desc {
+        .card-title {
             font-size: 16px;
-            line-height: 1.5;
-            white-space: pre-line;
+            font-weight: 600;
+            margin-bottom: 6px;
         }
 
-        .not-found {
-            font-size: 20px;
-            margin-top: 40px;
-            text-align: center;
+        .card-meta {
+            font-size: 13px;
             opacity: 0.7;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            opacity: 0.6;
         }
     </style>
 </head>
+
 <body>
 
 <header>
-    <h1>Карточка томата</h1>
+    <h1>Каталог томатов</h1>
 </header>
 
-<main>
-    <a href="catalog.html" class="back-link">← Назад в каталог</a>
+<div class="search-box">
+    <input id="searchInput" type="text" placeholder="Поиск по названию или ID">
+</div>
 
-    <img id="photo" class="card-photo" src="" alt="">
-
-    <div id="title" class="title"></div>
-    <div id="meta" class="meta"></div>
-    <div id="desc" class="desc"></div>
-
-    <div id="notFound" class="not-found" style="display:none;">
-        Сорт с таким ID не найден.
+<div class="filters">
+    <div class="multi-filter" data-field="color">
+        <div class="multi-filter-display" data-placeholder="Цвет"></div>
+        <div class="multi-filter-dropdown">
+            <div class="multi-filter-search"><input type="text" placeholder="Поиск..."></div>
+            <div class="multi-filter-options"></div>
+            <div class="btns">
+                <button class="btn-clear">Сброс</button>
+                <button class="btn-apply">Применить</button>
+            </div>
+        </div>
     </div>
-</main>
+
+    <div class="multi-filter" data-field="type">
+        <div class="multi-filter-display" data-placeholder="Тип"></div>
+        <div class="multi-filter-dropdown">
+            <div class="multi-filter-search"><input type="text" placeholder="Поиск..."></div>
+            <div class="multi-filter-options"></div>
+            <div class="btns">
+                <button class="btn-clear">Сброс</button>
+                <button class="btn-apply">Применить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="multi-filter" data-field="size">
+        <div class="multi-filter-display" data-placeholder="Размер"></div>
+        <div class="multi-filter-dropdown">
+            <div class="multi-filter-search"><input type="text" placeholder="Поиск..."></div>
+            <div class="multi-filter-options"></div>
+            <div class="btns">
+                <button class="btn-clear">Сброс</button>
+                <button class="btn-apply">Применить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="noResults" class="no-results" style="display:none;">Нет результатов</div>
+
+<div id="catalog" class="catalog-grid"></div>
 
 <script>
-весь рабочий JS
-</script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1fdNIH6J3sLQDzsEXm-RRl8VlbBfWfEiPhpL_3xWHZfesBJ_qpCBEsEU0Xe4wbkAzDAntYFSP2cnQ/pub?output=csv";
 
+let allData = [];
+const activeFilters = { search: "", color: [], type: [], size: [] };
+
+const cardsContainer = document.getElementById("catalog");
+const noResultsEl = document.getElementById("noResults");
+const searchInput = document.getElementById("searchInput");
+
+function normalizeString(s) {
+    return String(s || "").trim().toLowerCase();
+}
+
+function uniqueSorted(arr) {
+    return Array.from(new Set(arr.filter(v => v && v.trim() !== "")))
+        .sort((a, b) => a.localeCompare(b, "ru"));
+}
+
+function parseCSV(text) {
+    const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+    const header = rows[0].split(",").map(h => h.trim().toLowerCase());
+    return rows.slice(1).map(row => {
+        const cols = row.split(",");
+        const obj = {};
+        header.forEach((name, idx) => {
+            obj[name] = (cols[idx] || "").trim();
+        });
+        return obj;
+    });
+}
+
+function getPhotoUrl(item) {
+    const url = (item.mainphoto || item.photo || "").trim();
+    if (!url || url === "undefined" || url === "null") {
+        return "https://placehold.co/300x200?text=No+Photo";
+    }
+    return url;
+}
+
+function renderCards(data) {
+    cardsContainer.innerHTML = "";
+
+    if (!data || data.length === 0) {
+        noResultsEl.style.display = "block";
+        return;
+    } else {
+        noResultsEl.style.display = "none";
+    }
+
+    const frag = document.createDocumentFragment();
+
+    data.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const img = document.createElement("img");
+        img.loading = "lazy";
+        img.src = getPhotoUrl(item);
+        img.alt = item.name || item.id || "Томат";
+
+        img.onerror = () => {
+            img.onerror = null;
+            img.src = "https://placehold.co/300x200?text=No+Photo";
+        };
+
+        const body = document.createElement("div");
+        body.className = "card-body";
+
+        const title = document.createElement("div");
+        title.className = "card-title";
+        title.textContent = item.name || ("ID: " + (item.id || ""));
+
+        const meta = document.createElement("div");
+        meta.className = "card-meta";
+        const parts = [];
+        if (item.color) parts.push("Цвет: " + item.color);
+        if (item.type) parts.push("Тип: " + item.type);
+        if (item.size) parts.push("Размер: " + item.size);
+        meta.textContent = parts.join(" • ");
+
+        body.appendChild(title);
+        if (parts.length) body.appendChild(meta);
+
+        card.appendChild(img);
+        card.appendChild(body);
+
+        card.addEventListener("click", () => {
+            window.location.href = "tomato.html?id=" + item.id;
+        });
+
+        frag.appendChild(card);
+    });
+
+    cardsContainer.appendChild(frag);
+}
+
+function applyFilters() {
+    const search = normalizeString(activeFilters.search);
+
+    const filtered = allData.filter(item => {
+        const name = normalizeString(item.name);
+        const id = normalizeString(item.id);
+
+        if (search && !name.includes(search) && !id.includes(search)) {
+            return false;
+        }
+
+        if (activeFilters.color.length > 0) {
+            const value = normalizeString(item.color);
+            if (!activeFilters.color.some(v => normalizeString(v) === value)) {
+                return false;
+            }
+        }
+
+        if (activeFilters.type.length > 0) {
+            const value = normalizeString(item.type);
+            if (!activeFilters.type.some(v => normalizeString(v) === value)) {
+                return false;
+            }
+        }
+
+        if (activeFilters.size.length > 0) {
+            const value = normalizeString(item.size);
+            if (!activeFilters.size.some(v => normalizeString(v) === value)) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+    renderCards(filtered);
+}
+
+function initMultiFilter(field) {
+    const root = document.querySelector('.multi-filter[data-field="' + field + '"]');
+    if (!root) return;
+
+    const display = root.querySelector(".multi-filter-display");
+    const dropdown = root.querySelector(".multi-filter-dropdown");
+    const searchInput = root.querySelector(".multi-filter-search input");
+    const optionsContainer = root.querySelector(".multi-filter-options");
+    const btnClear = root.querySelector(".btn-clear");
+    const btnApply = root.querySelector(".btn-apply");
+
+    const placeholderText = display.dataset.placeholder || "";
+
+    const values = uniqueSorted(allData.map(item => item[field]));
+
+    optionsContainer.innerHTML = "";
+    values.forEach(val => {
+        const valueNorm = String(val || "").trim();
+        if (!valueNorm) return;
+
+        const safeId = (field + "_" + valueNorm)
+            .replace(/\s+/g, "_")
+            .replace(/[^\w\-]/g, "")
+            .toLowerCase();
+
+        const opt = document.createElement("div");
+        opt.className = "multi-filter-option";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = safeId;
+        checkbox.value = valueNorm;
+
+        const label = document.createElement("label");
+        label.setAttribute("for", safeId);
+        label.textContent = valueNorm;
+
+        opt.appendChild(checkbox);
+        opt.appendChild(label);
+        optionsContainer.appendChild(opt);
+    });
+
+    function updateDisplay() {
+        const selected = activeFilters[field];
+        display.innerHTML = "";
+
+        if (!selected || selected.length === 0) {
+            const span = document.createElement("span");
+            span.className = "placeholder";
+            span.textContent = placeholderText;
+            display.appendChild(span);
+            return;
+        }
+
+        selected.forEach(val => {
+            const tag = document.createElement("span");
+            tag.className = "tag";
+            tag.textContent = val;
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = "×";
+            btn.style.marginLeft = "4px";
+            btn.style.border = "none";
+            btn.style.background = "transparent";
+            btn.style.color = "#fff";
+            btn.style.cursor = "pointer";
+
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const idx = activeFilters[field].indexOf(val);
+                if (idx !== -1) {
+                    activeFilters[field].splice(idx, 1);
+                    const cb = optionsContainer.querySelector('input[value="' + val + '"]');
+                    if (cb) cb.checked = false;
+                    updateDisplay();
+                    applyFilters();
+                }
+            });
+
+            tag.appendChild(btn);
+            display.appendChild(tag);
+        });
+    }
+
+    display.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    });
+
+    document.addEventListener("click", () => {
+        dropdown.style.display = "none";
+    });
+
+    dropdown.addEventListener("click", (e) => {
+        e.stopPropagation();
+    });
+
+    searchInput.addEventListener("input", () => {
+        const q = normalizeString(searchInput.value);
+        const options = optionsContainer.querySelectorAll(".multi-filter-option");
+        options.forEach(opt => {
+            const label = opt.querySelector("label").textContent;
+            opt.style.display = normalizeString(label).includes(q) ? "" : "none";
+        });
+    });
+
+    btnClear.addEventListener("click", () => {
+        activeFilters[field] = [];
+        const checkboxes = optionsContainer.querySelectorAll("input[type=checkbox]");
+        checkboxes.forEach(cb => cb.checked = false);
+        updateDisplay();
+        applyFilters();
+    });
+
+    btnApply.addEventListener("click", () => {
+        const selected = [];
+        const checkboxes = optionsContainer.querySelectorAll("input[type=checkbox]");
+        checkboxes.forEach(cb => {
+            if (cb.checked) selected.push(cb.value);
+        });
+        activeFilters[field] = selected;
+        updateDisplay();
+        dropdown.style.display = "none";
+        applyFilters();
+    });
+
+    updateDisplay();
+}
+
+async function loadData() {
+    try {
+        const resp = await fetch(CSV_URL);
+        const text = await resp.text();
+        const rawData = parseCSV(text);
+
+        allData = rawData.map(row => ({
+            id: row.id,
+            name: row.name,
+            color: row.color,
+            type: row.type,
+            size: row.size,
+            mainphoto: row.mainphoto,
+            photo: row.photo,
+            desc: row.desc
+        }));
+
+        initMultiFilter("color");
+        initMultiFilter("type");
+        initMultiFilter("size");
+
+        renderCards(allData);
+    } catch (e) {
+        console.error("Ошибка загрузки данных", e);
+        noResultsEl.style.display = "block";
+        noResultsEl.textContent = "Ошибка загрузки данных";
+    }
+}
+
+searchInput.addEventListener("input", () => {
+    activeFilters.search = searchInput.value;
+    applyFilters();
+});
+
+loadData();
 </script>
 
 </body>
