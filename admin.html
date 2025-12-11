@@ -715,38 +715,7 @@
     // Вспомогательные функции
     // =======================
 
-    async function sha256Hex(str) {
-        const enc = new TextEncoder().encode(str);
-        const hashBuffer = await crypto.subtle.digest("SHA-256", enc);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-    }
-
-    function setSession() {
-        sessionStorage.setItem(SESSION_KEY, "ok");
-    }
-
-    function hasSession() {
-        return sessionStorage.getItem(SESSION_KEY) === "ok";
-    }
-
-    function clearSession() {
-        sessionStorage.removeItem(SESSION_KEY);
-    }
-
-    function showLoginError(msg) {
-        document.getElementById("loginError").textContent = msg;
-    }
-
-    function hideLogin() {
-        document.getElementById("loginOverlay").style.display = "none";
-        document.getElementById("adminMain").style.display = "block";
-    }
-
-    function showLogin() {
-        document.getElementById("loginOverlay").style.display = "flex";
-        document.getElementById("adminMain").style.display = "none";
-    }
+    
 
     // =======================
 // Вход по секретному URL
