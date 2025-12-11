@@ -31,7 +31,6 @@
             font-weight: 600;
         }
 
-        /* Поиск */
         .search-box {
             padding: 12px 16px;
         }
@@ -44,7 +43,6 @@
             font-size: 16px;
         }
 
-        /* Фильтры */
         .filters {
             display: flex;
             gap: 12px;
@@ -137,7 +135,6 @@
             color: #fff;
         }
 
-        /* Сетка карточек */
         .catalog-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -163,6 +160,7 @@
             width: 100%;
             height: 160px;
             object-fit: cover;
+            background: #f2f2f2;
         }
 
         .card-body {
@@ -180,7 +178,12 @@
             opacity: 0.7;
         }
 
-        /* Нет результатов */
+        .card-description {
+            font-size: 13px;
+            margin-top: 8px;
+            color: #444;
+        }
+
         .no-results {
             text-align: center;
             padding: 40px;
@@ -188,7 +191,6 @@
             opacity: 0.6;
         }
 
-        /* Модалка */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -207,6 +209,8 @@
             padding: 20px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.2);
             animation: fadeIn 0.2s ease;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         @keyframes fadeIn {
@@ -219,6 +223,40 @@
             cursor: pointer;
             font-size: 22px;
             opacity: 0.6;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 8px;
+        }
+
+        .modal-meta {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .modal-description {
+            font-size: 14px;
+            margin-top: 10px;
+            color: #333;
+        }
+
+        .modal img {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 16px;
+            }
+
+            .catalog-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
         }
     </style>
 </head>
@@ -240,8 +278,8 @@
             <div class="multi-filter-search"><input type="text" placeholder="Поиск..."></div>
             <div class="multi-filter-options"></div>
             <div class="btns">
-                <button class="btn-clear">Сброс</button>
-                <button class="btn-apply">Применить</button>
+                <button class="btn-clear" type="button">Сброс</button>
+                <button class="btn-apply" type="button">Применить</button>
             </div>
         </div>
     </div>
@@ -252,8 +290,8 @@
             <div class="multi-filter-search"><input type="text" placeholder="Поиск..."></div>
             <div class="multi-filter-options"></div>
             <div class="btns">
-                <button class="btn-clear">Сброс</button>
-                <button class="btn-apply">Применить</button>
+                <button class="btn-clear" type="button">Сброс</button>
+                <button class="btn-apply" type="button">Применить</button>
             </div>
         </div>
     </div>
@@ -264,8 +302,8 @@
             <div class="multi-filter-search"><input type="text" placeholder="Поиск..."></div>
             <div class="multi-filter-options"></div>
             <div class="btns">
-                <button class="btn-clear">Сброс</button>
-                <button class="btn-apply">Применить</button>
+                <button class="btn-clear" type="button">Сброс</button>
+                <button class="btn-apply" type="button">Применить</button>
             </div>
         </div>
     </div>
@@ -275,7 +313,6 @@
 
 <div id="catalog" class="catalog-grid"></div>
 
-<!-- Модалка -->
 <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
         <div class="modal-close" onclick="closeModal()">×</div>
@@ -285,20 +322,400 @@
 
 <script>
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1fdNIH6J3sLQDzsEXm-RRl8VlbBfWfEiPhpL_3xWHZfesBJ_qpCBEsEU0Xe4wbkAzDAntYFSP2cnQ/pub?output=csv";
-    /* ✅ Здесь будут твои функции:
-   - normalizeString
-   - uniqueSorted
-   - getPhotoUrl
-   - renderCards
-   - applyFilters
-   - initMultiFilter
-   - openModal
-   - closeModal
-   - загрузка TSV
-   - обработка событий
-*/
+
+let allItems = [];
+let activeFilters = {
+    color: [],
+    type: [],
+    size: []
+};
+let searchQuery = "";
+
+// Нормализация строки для поиска/сравнения
+function normalizeString(str) {
+    return (str || "")
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+}
+
+// Уникальные значения из массива с сортировкой
+function uniqueSorted(arr) {
+    return Array.from(new Set(arr.filter(Boolean))).sort((a, b) =>
+        a.localeCompare(b, "ru", { sensitivity: "base" })
+    );
+}
+
+// Получение URL фото с fallback
+function getPhotoUrl(item) {
+    const url = (item.mainphoto || "").trim();
+    if (!url) {
+        // Здесь можно указать свою заглушку
+        return "https://via.placeholder.com/400x300?text=Нет+фото";
+    }
+    return url;
+}
+
+// Рендер карточек
+function renderCards(items) {
+    const container = document.getElementById("catalog");
+    const noResultsEl = document.getElementById("noResults");
+
+    container.innerHTML = "";
+
+    if (!items.length) {
+        noResultsEl.style.display = "block";
+        return;
+    } else {
+        noResultsEl.style.display = "none";
+    }
+
+    items.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const img = document.createElement("img");
+        img.src = getPhotoUrl(item);
+        img.alt = item.name || "";
+        img.loading = "lazy";
+        img.onerror = () => {
+            img.onerror = null;
+            img.src = "https://via.placeholder.com/400x300?text=Нет+фото";
+        };
+
+        const body = document.createElement("div");
+        body.className = "card-body";
+
+        const title = document.createElement("div");
+        title.className = "card-title";
+        title.textContent = item.name || "Без названия";
+
+        const meta = document.createElement("div");
+        meta.className = "card-meta";
+        const metaParts = [];
+        if (item.color) metaParts.push(item.color);
+        if (item.type) metaParts.push(item.type);
+        if (item.size) metaParts.push(item.size);
+        if (item.season) metaParts.push(item.season);
+        meta.textContent = metaParts.join(" • ");
+
+        const shortDesc = document.createElement("div");
+        shortDesc.className = "card-description";
+        if (item.description) {
+            const d = item.description.trim();
+            shortDesc.textContent = d.length > 120 ? d.slice(0, 117) + "..." : d;
+        }
+
+        body.appendChild(title);
+        body.appendChild(meta);
+        body.appendChild(shortDesc);
+
+        card.appendChild(img);
+        card.appendChild(body);
+
+        card.addEventListener("click", () => openModal(item));
+
+        container.appendChild(card);
+    });
+}
+
+// Применение поиска и фильтров
+function applyFilters() {
+    const q = normalizeString(searchQuery);
+
+    const filtered = allItems.filter(item => {
+        if (q) {
+            const haystack = normalizeString(
+                (item.name || "") + " " + (item.id || "")
+            );
+            if (!haystack.includes(q)) {
+                return false;
+            }
+        }
+
+        if (activeFilters.color.length) {
+            if (!activeFilters.color.includes((item.color || "").trim())) {
+                return false;
+            }
+        }
+
+        if (activeFilters.type.length) {
+            if (!activeFilters.type.includes((item.type || "").trim())) {
+                return false;
+            }
+        }
+
+        if (activeFilters.size.length) {
+            if (!activeFilters.size.includes((item.size || "").trim())) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+    renderCards(filtered);
+}
+
+// Инициализация одного мульти-фильтра
+function initMultiFilter(fieldName, items) {
+    const multiFilterEl = document.querySelector(`.multi-filter[data-field="${fieldName}"]`);
+    if (!multiFilterEl) return;
+
+    const displayEl = multiFilterEl.querySelector(".multi-filter-display");
+    const dropdownEl = multiFilterEl.querySelector(".multi-filter-dropdown");
+    const searchInputEl = multiFilterEl.querySelector(".multi-filter-search input");
+    const optionsEl = multiFilterEl.querySelector(".multi-filter-options");
+    const btnClear = multiFilterEl.querySelector(".btn-clear");
+    const btnApply = multiFilterEl.querySelector(".btn-apply");
+
+    const values = uniqueSorted(items.map(it => (it[fieldName] || "").trim()));
+
+    let tempSelected = new Set(activeFilters[fieldName]);
+
+    function renderDisplay() {
+        displayEl.innerHTML = "";
+        if (!activeFilters[fieldName].length) {
+            const span = document.createElement("span");
+            span.className = "placeholder";
+            span.textContent = displayEl.getAttribute("data-placeholder") || fieldName;
+            displayEl.appendChild(span);
+            return;
+        }
+        activeFilters[fieldName].forEach(value => {
+            const tag = document.createElement("span");
+            tag.className = "tag";
+            tag.textContent = value;
+            displayEl.appendChild(tag);
+        });
+    }
+
+    function renderOptions() {
+        const searchQuery = normalizeString(searchInputEl.value);
+        optionsEl.innerHTML = "";
+
+        values
+            .filter(val => {
+                if (!searchQuery) return true;
+                return normalizeString(val).includes(searchQuery);
+            })
+            .forEach(val => {
+                const option = document.createElement("label");
+                option.className = "multi-filter-option";
+
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = tempSelected.has(val);
+                checkbox.addEventListener("change", () => {
+                    if (checkbox.checked) {
+                        tempSelected.add(val);
+                    } else {
+                        tempSelected.delete(val);
+                    }
+                });
+
+                const span = document.createElement("span");
+                span.textContent = val;
+
+                option.appendChild(checkbox);
+                option.appendChild(span);
+                optionsEl.appendChild(option);
+            });
+    }
+
+    multiFilterEl.addEventListener("click", (e) => {
+        if (e.target.closest(".multi-filter-dropdown")) {
+            return;
+        }
+        const isVisible = dropdownEl.style.display === "block";
+        document.querySelectorAll(".multi-filter-dropdown").forEach(dd => dd.style.display = "none");
+        if (!isVisible) {
+            tempSelected = new Set(activeFilters[fieldName]);
+            renderOptions();
+            dropdownEl.style.display = "block";
+        }
+    });
+
+    searchInputEl.addEventListener("input", () => {
+        renderOptions();
+    });
+
+    btnClear.addEventListener("click", (e) => {
+        e.stopPropagation();
+        tempSelected.clear();
+    });
+
+    btnApply.addEventListener("click", (e) => {
+        e.stopPropagation();
+        activeFilters[fieldName] = Array.from(tempSelected);
+        renderDisplay();
+        dropdownEl.style.display = "none";
+        applyFilters();
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!multiFilterEl.contains(e.target)) {
+            dropdownEl.style.display = "none";
+        }
+    });
+
+    renderDisplay();
+}
+
+// Открытие модалки
+function openModal(item) {
+    const overlay = document.getElementById("modalOverlay");
+    const content = document.getElementById("modalContent");
+
+    content.innerHTML = "";
+
+    const title = document.createElement("h2");
+    title.className = "modal-title";
+    title.textContent = item.name || "Без названия";
+
+    const meta = document.createElement("div");
+    meta.className = "modal-meta";
+    const metaParts = [];
+    if (item.color) metaParts.push(item.color);
+    if (item.type) metaParts.push(item.type);
+    if (item.size) metaParts.push(item.size);
+    if (item.season) metaParts.push(item.season);
+    meta.textContent = metaParts.join(" • ");
+
+    const imgUrl = getPhotoUrl(item);
+    if (imgUrl) {
+        const img = document.createElement("img");
+        img.src = imgUrl;
+        img.alt = item.name || "";
+        img.onerror = () => {
+            img.onerror = null;
+            img.src = "https://via.placeholder.com/600x400?text=Нет+фото";
+        };
+        content.appendChild(img);
+    }
+
+    const desc = document.createElement("div");
+    desc.className = "modal-description";
+    desc.textContent = item.description || "";
+
+    content.appendChild(title);
+    content.appendChild(meta);
+    content.appendChild(desc);
+
+    overlay.style.display = "flex";
+}
+
+function closeModal() {
+    const overlay = document.getElementById("modalOverlay");
+    overlay.style.display = "none";
+}
+
+window.closeModal = closeModal;
+
+// Простой CSV-парсер (учитывает кавычки)
+function parseCSV(text) {
+    const rows = [];
+    let current = "";
+    let row = [];
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (char === '"' && inQuotes && next === '"') {
+            current += '"';
+            i++;
+        } else if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+            row.push(current);
+            current = "";
+        } else if ((char === "\n" || char === "\r") && !inQuotes) {
+            if (current !== "" || row.length > 0) {
+                row.push(current);
+                rows.push(row);
+                row = [];
+                current = "";
+            }
+        } else {
+            current += char;
+        }
+    }
+
+    if (current !== "" || row.length > 0) {
+        row.push(current);
+        rows.push(row);
+    }
+
+    return rows;
+}
+
+// Загрузка CSV и инициализация
+async function loadData() {
+    try {
+        const resp = await fetch(CSV_URL);
+        if (!resp.ok) {
+            throw new Error("Ошибка загрузки CSV: " + resp.status);
+        }
+        const text = await resp.text();
+        const rows = parseCSV(text);
+
+        if (!rows.length) {
+            throw new Error("Пустой CSV");
+        }
+
+        const header = rows[0].map(h => h.trim());
+        const items = rows.slice(1).map(cols => {
+            const obj = {};
+            header.forEach((key, i) => {
+                obj[key] = cols[i] !== undefined ? cols[i] : "";
+            });
+            return {
+                id: obj.id || "",
+                name: obj.name || "",
+                description: obj.description || "",
+                mainphoto: obj.mainphoto || "",
+                color: obj.color || "",
+                type: obj.type || "",
+                size: obj.size || "",
+                season: obj.season || "",
+                gallery_photos: obj.gallery_photos || ""
+            };
+        });
+
+        allItems = items;
+
+        initMultiFilter("color", allItems);
+        initMultiFilter("type", allItems);
+        initMultiFilter("size", allItems);
+
+        renderCards(allItems);
+    } catch (err) {
+        console.error(err);
+        const noResultsEl = document.getElementById("noResults");
+        noResultsEl.textContent = "Ошибка загрузки данных";
+        noResultsEl.style.display = "block";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("searchInput");
+    searchInput.addEventListener("input", () => {
+        searchQuery = searchInput.value;
+        applyFilters();
+    });
+
+    document.getElementById("modalOverlay").addEventListener("click", (e) => {
+        if (e.target.id === "modalOverlay") {
+            closeModal();
+        }
+    });
+
+    loadData();
+});
 </script>
 
 </body>
 </html>
-
