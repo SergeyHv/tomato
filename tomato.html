@@ -101,10 +101,34 @@
 </main>
 
 <script>
-(async function() {
-    const CSV_URL =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0kK2Vq1bW0LZgXn7XjvBzW4WkXoUe8VbOue0N9hE4Uu9s7sR0/export?format=tsv&gid=0";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1fdNIH6J3sLQDzsEXm-RRl8VlbBfWfEiPhpL_3xWHZfesBJ_qpCBEsEU0Xe4wbkAzDAntYFSP2cnQ/pub?output=csv";
 
+function normalize(s) {
+    return String(s || "").trim().toLowerCase();
+}
+
+function parseCSV(text) {
+    const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+    const header = rows[0].split(",").map(h => h.trim().toLowerCase());
+    return rows.slice(1).map(row => {
+        const cols = row.split(",");
+        const obj = {};
+        header.forEach((name, idx) => {
+            obj[name] = (cols[idx] || "").trim();
+        });
+        return obj;
+    });
+}
+
+function getPhotoUrl(item) {
+    const url = (item.mainphoto || item.photo || "").trim();
+    if (!url || url === "undefined" || url === "null") {
+        return "https://placehold.co/600x400?text=No+Photo";
+    }
+    return url;
+}
+
+(async function() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
 
@@ -119,12 +143,42 @@
         return;
     }
 
-    function normalize(s) {
-        return (s || "").trim().toLowerCase();
-    }
+    try {
+        const res = await fetch(CSV_URL);
+        const text = await res.text();
+        const data = parseCSV(text);
 
-    function parseTSV(text) {
-        const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
-        const header = rows[0].split("\t").map(h => h.trim());
-        return rows.slice(1).map(row => {
-            const cols = row.split("\t");
+        const item = data.find(row => normalize(row.id) === normalize(id));
+
+        if (!item) {
+            notFoundEl.style.display = "block";
+            return;
+        }
+
+        // Фото
+        photoEl.src = getPhotoUrl(item);
+        photoEl.alt = item.name || item.id || "Томат";
+
+        // Заголовок
+        titleEl.textContent = item.name || ("ID: " + item.id);
+
+        // Метаданные
+        const parts = [];
+        if (item.color) parts.push("Цвет: " + item.color);
+        if (item.type) parts.push("Тип: " + item.type);
+        if (item.size) parts.push("Размер: " + item.size);
+        metaEl.textContent = parts.join(" • ");
+
+        // Описание
+        descEl.textContent = item.desc || item.description || "";
+
+    } catch (e) {
+        console.error("Ошибка загрузки", e);
+        notFoundEl.style.display = "block";
+        notFoundEl.textContent = "Ошибка загрузки данных";
+    }
+})();
+</script>
+
+</body>
+</html>
