@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Тест мобильной версии</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+  }
+
+  /* ✅ Показываем цвет фона в зависимости от ширины */
+  body {
+    background: #e0f7fa;
+  }
+
+  @media (max-width: 600px) {
+    body {
+      background: #ffeb3b; /* Жёлтый фон — если мобильная версия работает */
+    }
+
+    #mobileMessage {
+      display: block;
+    }
+  }
+
+  #mobileMessage {
+    display: none;
+    margin-top: 20px;
+    padding: 15px;
+    background: #d32f2f;
+    color: white;
+    border-radius: 8px;
+    font-size: 18px;
+    text-align: center;
+  }
+
+  #testButton {
+    margin-top: 30px;
+    padding: 15px 25px;
+    font-size: 18px;
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Тест мобильной версии</h1>
+
+<div id="mobileMessage">✅ Мобильная версия активна</div>
+
+<button id="testButton">Нажми меня</button>
+
+<script>
+  document.getElementById('testButton').addEventListener('click', () => {
+    alert("JS работает!");
+  });
+</script>
+
+</body>
+</html>
