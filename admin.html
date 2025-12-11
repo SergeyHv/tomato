@@ -784,6 +784,74 @@ window.addEventListener("load", checkAccessByURL);
 
     let editingRowIndex = null; // индекс в tomatoesData для редактирования
 
+   // =======================
+// Инициализация админки
+// =======================
+
+function initAdmin() {
+    headerInfo.textContent = "CSV: загружается…";
+    loadCSV();
+}
+
+// =======================
+// Загрузка CSV
+// =======================
+
+async function loadCSV() {
+    try {
+        const response = await fetch(CSV_URL);
+        const text = await response.text();
+
+        // простейший парсер CSV
+        const rows = text.trim().split("\n").map(r => r.split(","));
+        const headers = rows[0];
+        const dataRows = rows.slice(1);
+
+        tomatoesData = dataRows.map(r => {
+            let obj = {};
+            headers.forEach((h, i) => obj[h.trim()] = r[i].trim());
+            return obj;
+        });
+
+        headerInfo.textContent = "CSV: загружено " + tomatoesData.length + " записей";
+        renderTable();
+        updateStats();
+
+    } catch (e) {
+        headerInfo.textContent = "Ошибка загрузки CSV";
+        console.error(e);
+    }
+}
+
+// =======================
+// Рендер таблицы
+// =======================
+
+function renderTable() {
+    tableBody.innerHTML = "";
+    tomatoesData.forEach((tomato, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><img src="${tomato.photo || ""}" style="width:50px;height:50px;object-fit:cover"></td>
+            <td>${tomato.name || ""}</td>
+            <td>${tomato.color || ""}</td>
+            <td>${tomato.type || ""}</td>
+            <td>${tomato.origin || ""}</td>
+            <td>${tomato.id || idx+1}</td>
+            <td><button onclick="editTomato(${idx})">✎</button></td>
+        `;
+        tableBody.appendChild(tr);
+    });
+}
+
+// =======================
+// Статистика
+// =======================
+
+function updateStats() {
+    nextIdBadge.textContent = "ID: " + (tomatoesData.length + 1);
+}
+
     // =======================
     // CSV загрузка и парсинг
     // =======================
