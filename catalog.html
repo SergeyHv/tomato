@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Каталог коллекционных томатов</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: #f4f4f4;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  /* ✅ Компактные и адаптивные фильтры */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  #search {
+    flex: 1 1 200px;
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  select {
+    padding: 6px 8px;
+    font-size: 14px;
+    flex: 1 1 150px;
+    max-width: 180px;
+  }
+
+  /* ✅ Сетка каталога */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 15px;
+  }
+
+  /* ✅ Карточка */
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    transition: 0.2s;
+    cursor: pointer;
+  }
+
+  .card:hover {
+    transform: scale(1.03);
+  }
+
+  .card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 5px;
+  }
+
+  .card h2 {
+    font-size: 18px;
+    margin: 10px 0 5px;
+  }
+
+  .card p {
+    font-size: 14px;
+    color: #555;
+    flex-grow: 1;
+  }
+
+  .tags {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #333;
+  }
+
+  /* ✅ Адаптация под смартфоны */
+  @media (max-width: 600px) {
+    .controls {
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #search, select {
+      width: 100%;
+      max-width: 100%;
+      font-size: 16px;
+      padding: 10px;
+    }
+
+    .card img {
+      height: 140px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Каталог коллекционных томатов</h1>
+
+<!-- ✅ Фильтры -->
+<div class="controls">
+  <input type="text" id="search" placeholder="Поиск по названию...">
+  <select id="filterColor"><option value="">Цвет</option></select>
+  <select id="filterType"><option value="">Тип</option></select>
+  <select id="filterSize"><option value="">Размер</option></select>
+  <select id="filterSeason"><option value="">Срок созревания</option></select>
+</div>
+
+<!-- ✅ Каталог -->
+<div class="grid" id="catalog"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+
+// ✅ Ссылка на CSV Google Таблицы
+const csvUrl =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vR1fdNIH6J3sLQDzsEXm-RRl8VlbBfWfEiPhpL_3xWHZfesBJ_qpCBEsEU0Xe4wbkAzDAntYFSP2cnQ/pub?output=csv';
+
+let allData = [];
+
+/* ✅ Рендер каталога */
+function renderCatalog(data) {
+  const catalog = document.getElementById('catalog');
+  catalog.innerHTML = '';
+
+  for (const t of data) {
+    if (!t.name) continue;
+
+    let img = 'https://via.placeholder.com/300x200';
+
+    if (t.mainphoto && t.mainphoto.trim() !== '') {
+      img = t.mainphoto.trim();
+    }
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    // ✅ Кликабельная карточка (готово для tomato.html)
+    card.addEventListener('click', () => {
+      window.location.href = `tomato.html?id=${t.id}`;
+    });
+
+    card.innerHTML = `
+      <img src="${img}" alt="${t.name}" loading="lazy">
+      <h2>${t.name}</h2>
+      <p>${t.description || ''}</p>
+      <div class="tags">
+        <b>Цвет:</b> ${t.color || '-'}<br>
+        <b>Тип:</b> ${t.type || '-'}<br>
+        <b>Размер:</b> ${t.size || '-'}<br>
+        <b>Срок:</b> ${t.season || '-'}
+      </div>
+    `;
+    catalog.appendChild(card);
+  }
+}
+
+/* ✅ Построение фильтров */
+function buildFilters() {
+  fillFilter('filterColor', 'color');
+  fillFilter('filterType', 'type');
+  fillFilter('filterSize', 'size');
+  fillFilter('filterSeason', 'season');
+}
+
+function fillFilter(selectId, field) {
+  const select = document.getElementById(selectId);
+  const values = [...new Set(allData.map(t => t[field]).filter(v => v))].sort();
+  values.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    select.appendChild(opt);
+  });
+}
+
+/* ✅ Применение поиска + фильтров */
+function applyFilters() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const fColor = document.getElementById('filterColor').value;
+  const fType = document.getElementById('filterType').value;
+  const fSize = document.getElementById('filterSize').value;
+  const fSeason = document.getElementById('filterSeason').value;
+
+  const filtered = allData.filter(t => {
+    if (!t.name) return false;
+
+    return (
+      t.name.toLowerCase().includes(q) &&
+      (!fColor || t.color === fColor) &&
+      (!fType || t.type === fType) &&
+      (!fSize || t.size === fSize) &&
+      (!fSeason || t.season === fSeason)
+    );
+  });
+
+  renderCatalog(filtered);
+}
+
+/* ✅ Загрузка CSV */
+fetch(csvUrl)
+  .then(r => r.text())
+  .then(text => {
+    allData = Papa.parse(text, { header: true }).data;
+    buildFilters();
+    renderCatalog(allData);
+  });
+
+/* ✅ События */
+document.querySelectorAll('#search, select').forEach(el =>
+  el.addEventListener('input', applyFilters)
+);
+
+</script>
+</body>
+</html>
