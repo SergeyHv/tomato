@@ -3,17 +3,47 @@ import { renderList } from "./list.js";
 import { openForm, initForm } from "./form.js";
 import { initUpload } from "./upload.js";
 
-initUpload((url) => {
-  document.getElementById("mainphoto").value = url;
-});
+async function start() {
+    console.log("Админка запускается...");
 
-initForm();
+    try {
+        // 1. Инициализируем загрузку фото
+        // Мы передаем функцию, которая сработает после успешной загрузки
+        initUpload((url) => {
+            const photoInput = document.getElementById("mainphoto");
+            if (photoInput) {
+                photoInput.value = url;
+                console.log("Ссылка на фото вставлена в форму:", url);
+            }
+        });
 
-document.getElementById("add-new").onclick = () => openForm();
+        // 2. Инициализируем форму (события кнопок Сохранить/Отмена)
+        initForm();
 
-async function init() {
-  const data = await listItems();
-  renderList(data.items);
+        // 3. Привязываем кнопку "Добавить новый сорт"
+        const addNewBtn = document.getElementById("add-new");
+        if (addNewBtn) {
+            addNewBtn.onclick = () => {
+                console.log("Открываем форму для нового сорта");
+                openForm();
+            };
+        }
+
+        // 4. Загружаем и отображаем список томатов
+        console.log("Загружаем список из Google Таблиц...");
+        const data = await listItems();
+        if (data && data.items) {
+            renderList(data.items);
+        }
+
+    } catch (err) {
+        console.error("Критическая ошибка при запуске:", err);
+    }
 }
 
-init();
+// Запускаем всё только после полной загрузки страницы
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start);
+} else {
+    start();
+}
