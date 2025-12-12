@@ -1,61 +1,67 @@
-export function initUpload(onUploaded) {
-  const modal = document.getElementById("upload-modal");
-  const openBtn = document.getElementById("upload-photo-btn");
-  const closeBtn = document.getElementById("upload-close");
-  const startBtn = document.getElementById("upload-start");
-  const fileInput = document.getElementById("upload-file");
-  const result = document.getElementById("upload-result");
-  const urlInput = document.getElementById("upload-url");
-  const copyBtn = document.getElementById("upload-copy");
+import { uploadImage } from "./api.js";
 
-  openBtn.onclick = () => {
-    modal.classList.remove("hidden");
-    result.classList.add("hidden");
-    fileInput.value = "";
-  };
+export function initUpload(onSuccess) {
+    const modal = document.getElementById("upload-modal");
+    const openBtn = document.getElementById("upload-photo-btn"); // Кнопка в форме
+    const closeBtn = document.getElementById("upload-close");
+    const startBtn = document.getElementById("upload-start");
+    const fileInput = document.getElementById("upload-file");
+    const resultDiv = document.getElementById("upload-result");
+    const urlInput = document.getElementById("upload-url");
 
-  closeBtn.onclick = () => {
-    modal.classList.add("hidden");
-  };
+    if (!openBtn || !modal) {
+        console.error("Кнопка загрузки или модальное окно не найдены в HTML");
+        return;
+    }
 
-  startBtn.onclick = async () => {
-    const file = fileInput.files[0];
-    if (!file) return alert("Выберите файл");
+    // 1. ОТКРЫТИЕ МОДАЛКИ
+    openBtn.onclick = (e) => {
+        e.preventDefault(); // Чтобы форма не вздумала отправиться
+        modal.classList.remove("hidden");
+        resultDiv.classList.add("hidden");
+        fileInput.value = ""; // Очищаем выбор файла
+    };
 
-    const fileName = Date.now() + "-" + file.name;
-    const githubPath = `images/${fileName}`;
+    // 2. ЗАКРЫТИЕ
+    closeBtn.onclick = () => modal.classList.add("hidden");
 
-    const content = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(content)));
+    // Закрытие при клике мимо окна
+    window.onclick = (event) => {
+        if (event.target == modal) modal.classList.add("hidden");
+    };
 
-    const res = await fetch(
-      "https://api.github.com/repos/SergeyHv/tomato/contents/" + githubPath,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": ""
+    // 3. ЗАГРУЗКА
+    startBtn.onclick = async () => {
+        const file = fileInput.files[0];
+        if (!file) {
+            alert("Сначала выберите фото на компьютере!");
+            return;
+        }
 
-        },
-        body: JSON.stringify({
-          message: "Upload image",
-          content: base64
-        })
-      }
-    );
+        startBtn.disabled = true;
+        startBtn.textContent = "Секунду, отправляю...";
 
-    const data = await res.json();
+        try {
+            const data = await uploadImage(file);
 
-    const rawUrl = `https://raw.githubusercontent.com/SergeyHv/tomato/main/${githubPath}`;
-
-    urlInput.value = rawUrl;
-    result.classList.remove("hidden");
-
-    onUploaded(rawUrl);
-  };
-
-  copyBtn.onclick = () => {
-    navigator.clipboard.writeText(urlInput.value);
-    alert("Ссылка скопирована");
-  };
+            if (data.url) {
+                resultDiv.classList.remove("hidden");
+                urlInput.value = data.url;
+                
+                // Передаем ссылку в основную форму автоматически
+                if (onSuccess) onSuccess(data.url);
+                
+                alert("Фото успешно сохранено!");
+                modal.classList.add("hidden"); // Закрываем после успеха
+            } else {
+                throw new Error(data.error || "Не удалось получить ссылку");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Ошибка загрузки: " + err.message);
+        } finally {
+            startBtn.disabled = false;
+            startBtn.textContent = "Начать загрузку";
+        }
+    };
 }
