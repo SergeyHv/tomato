@@ -34,7 +34,8 @@ export function initUpload(onUploaded) {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer YOUR_GITHUB_TOKEN"
+          "Authorization": ""
+
         },
         body: JSON.stringify({
           message: "Upload image",
