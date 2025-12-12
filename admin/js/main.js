@@ -1,6 +1,11 @@
 import { listItems } from "./api.js";
 import { renderList } from "./list.js";
 import { openForm, initForm } from "./form.js";
+import { initUpload } from "./upload.js";
+
+initUpload((url) => {
+  document.getElementById("mainphoto").value = url;
+});
 
 initForm();
 
