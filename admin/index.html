@@ -12,10 +12,13 @@
   <div id="container">
 
     <div id="list-panel">
-      <h2>Список сортов</h2>
-      <button id="add-new">Добавить сорт</button>
-      <div id="items"></div>
-    </div>
+  <h2>Ваша коллекция</h2>
+  <div class="controls">
+    <input type="text" id="search-input" placeholder="Найти сорт по названию (например, ЗУЗИ)..." oninput="handleSearch(this.value)">
+    <button id="add-new">+ Добавить новый сорт</button>
+  </div>
+  <div id="items"></div>
+</div>
 
     <div id="form-panel" class="hidden">
       <h2 id="form-title">Добавить сорт</h2>
