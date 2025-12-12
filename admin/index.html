@@ -32,6 +32,8 @@
 
         <label>Главное фото (URL)</label>
         <input id="mainphoto">
+        <button type="button" id="upload-photo-btn">Загрузить фото</button>
+
 
         <label>Цвет</label>
         <input id="color">
@@ -61,5 +63,20 @@
   </div>
 
   <script type="module" src="js/main.js"></script>
+  <div id="upload-modal" class="hidden modal">
+  <div class="modal-content">
+    <h3>Загрузка фото</h3>
+    <input type="file" id="upload-file" accept="image/*">
+    <button id="upload-start">Загрузить</button>
+    <button id="upload-close">Закрыть</button>
+
+    <div id="upload-result" class="hidden">
+      <p>Фото загружено!</p>
+      <input id="upload-url" readonly>
+      <button id="upload-copy">Скопировать ссылку</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
