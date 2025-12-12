@@ -1,0 +1,29 @@
+body {
+  font-family: sans-serif;
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.upload-box {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+#result {
+  margin-top: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+input[type="file"] {
+  flex: 1;
+}
+
+#imageUrl {
+  width: 100%;
+  margin: 10px 0;
+}
