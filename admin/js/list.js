@@ -1,47 +1,56 @@
 import { deleteItem, listItems } from "./api.js";
 import { openForm } from "./form.js";
 
+let allItems = []; // Храним все сорта здесь
+
 export function renderList(items) {
+    if (items) allItems = items; // Сохраняем для поиска
+    
     const container = document.getElementById("items");
     container.innerHTML = "";
 
-    if (!items || items.length === 0) {
-        container.innerHTML = "<div style='grid-column: 1/-1; text-align: center; padding: 50px;'>У вас пока нет сортов. Нажмите «Добавить сорт»!</div>";
-        return;
-    }
+    // Фильтруем пустые строки (как та последняя в вашем JSON)
+    const validItems = allItems.filter(item => item.name && item.name.trim() !== "");
 
-    // Идем в обратном порядке, чтобы новые добавленные были сверху
-    [...items].reverse().forEach(item => {
-        // Если фото нет, ставим заглушку
-        const photoUrl = item.mainphoto || "https://via.placeholder.com/300x200?text=Нет+фото";
+    validItems.forEach(item => {
+        const photo = item.mainphoto || "https://via.placeholder.com/300x250?text=Нет+фото";
         
         const card = document.createElement("div");
-        card.className = "item";
+        card.className = "item-card";
         card.innerHTML = `
-            <img src="${photoUrl}" class="item-img" alt="${item.name}">
-            <div class="item-content">
+            <img src="${photo}" class="item-img" loading="lazy">
+            <div class="item-info">
+                <span class="item-tag">${item.type || 'Сорт'}</span>
                 <div class="item-name">${item.name}</div>
-                <div class="item-details">
-                    <strong>Тип:</strong> ${item.type || '—'}<br>
-                    <strong>Цвет:</strong> ${item.color || '—'}<br>
-                    <strong>Размер:</strong> ${item.size || '—'}
+                <div style="font-size: 0.9rem; color: #666;">
+                    🎨 Цвет: ${item.color || '—'}<br>
+                    📏 Размер: ${item.size || '—'}
                 </div>
             </div>
             <div class="item-btns">
-                <button class="edit-btn">Изменить</button>
-                <button class="del-btn">Удалить</button>
+                <button class="edit-btn">✏️ Изменить</button>
+                <button class="del-btn">🗑️ Удалить</button>
             </div>
         `;
 
         card.querySelector(".edit-btn").onclick = () => openForm(item);
         card.querySelector(".del-btn").onclick = async () => {
-            if (confirm(`Удалить сорт "${item.name}"? Это действие нельзя отменить.`)) {
+            if (confirm(`Вы уверены, что хотите удалить сорт "${item.name}"?`)) {
                 await deleteItem(item.id);
-                const updated = await listItems();
-                renderList(updated.items);
+                const data = await listItems();
+                renderList(data.items);
             }
         };
 
         container.appendChild(card);
     });
 }
+
+// Функция поиска
+window.handleSearch = (query) => {
+    const filtered = allItems.filter(item => 
+        item.name.toLowerCase().includes(query.toLowerCase()) || 
+        (item.description && item.description.toLowerCase().includes(query.toLowerCase()))
+    );
+    renderList(filtered);
+};
