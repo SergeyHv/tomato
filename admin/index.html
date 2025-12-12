@@ -2,24 +2,64 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Tomato Admin — загрузка фото</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Админка томатов</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <h1>Загрузка фото в каталог</h1>
+  <h1>Админка сортов томатов</h1>
 
-  <div class="upload-box">
-    <input type="file" id="fileInput" accept="image/*">
-    <button id="uploadBtn">Загрузить</button>
+  <div id="container">
+
+    <div id="list-panel">
+      <h2>Список сортов</h2>
+      <button id="add-new">Добавить сорт</button>
+      <div id="items"></div>
+    </div>
+
+    <div id="form-panel" class="hidden">
+      <h2 id="form-title">Добавить сорт</h2>
+
+      <form id="tomato-form">
+        <input type="hidden" id="id">
+        <input type="hidden" id="version">
+
+        <label>Название</label>
+        <input id="name" required>
+
+        <label>Описание</label>
+        <textarea id="description"></textarea>
+
+        <label>Главное фото (URL)</label>
+        <input id="mainphoto">
+
+        <label>Цвет</label>
+        <input id="color">
+
+        <label>Тип</label>
+        <input id="type">
+
+        <label>Размер</label>
+        <input id="size">
+
+        <label>Сезон</label>
+        <input id="season">
+
+        <label>Галерея (через запятую)</label>
+        <input id="gallery_photos">
+
+        <label>Происхождение</label>
+        <input id="origin">
+
+        <div class="buttons">
+          <button type="submit" id="save-btn">Сохранить</button>
+          <button type="button" id="cancel-btn">Отмена</button>
+        </div>
+      </form>
+    </div>
+
   </div>
 
-  <div id="result" class="hidden">
-    <p>Фото загружено!</p>
-    <input id="imageUrl" readonly>
-    <button id="copyBtn">Скопировать ссылку</button>
-  </div>
-
-  <script src="script.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
