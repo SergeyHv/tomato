@@ -31,3 +31,16 @@ export async function deleteItem(id) {
   });
   return res.json();
 }
+// Путь для загрузки фото (без /sheets)
+const UPLOAD_BASE = "https://tomato-admin-api-2.vercel.app/api/upload-image";
+
+export async function uploadImage(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(UPLOAD_BASE, {
+    method: "POST",
+    body: formData // Заголовок Content-Type браузер поставит сам для FormData
+  });
+  return res.json();
+}
