@@ -35,21 +35,19 @@ async function start() {
         }
 
         // 4. *** АКТИВАЦИЯ ЗАГРУЗКИ СПИСКА ***
-        console.log("Загружаем список из Google Таблиц...");
-        const data = await listItems();
-        if (data && data.items) {
-            renderList(data.items);
-        }
+console.log("Загружаем список из Google Таблиц...");
+const data = await listItems();
 
-    } catch (err) {
-        console.error("Критическая ошибка при запуске:", err);
-        // Отображение ошибки для пользователя (например, если не удалось загрузить список)
-        const listContainer = document.getElementById('list-container');
-        if(listContainer) {
-            listContainer.innerHTML = `<div style="color: red; padding: 20px;">
-                Ошибка загрузки данных! Проверьте, что Google Sheets API и Vercel API работают.
-                <br>Детали: ${err.message}
-            </div>`;
+if (data && data.items && data.items.length > 0) {
+    console.log(`✅ Успешно загружено ${data.items.length} элементов.`);
+    console.log("Начинаем рендеринг списка...");
+    renderList(data.items);
+    console.log("Рендеринг списка завершен.");
+} else if (data && data.items && data.items.length === 0) {
+    console.warn("API вернул пустой список (0 элементов).");
+} else {
+    console.error("API вернул данные не в ожидаемом формате:", data);
+}>`;
         }
     }
 }
