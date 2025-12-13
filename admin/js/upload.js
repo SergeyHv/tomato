@@ -3,18 +3,14 @@
 // ===================================================================
 
 // Импортируем функцию загрузки из api.js
-// Она должна быть экспортирована с помощью 'export' в api.js
 import { uploadImage } from "./api.js"; 
 
 /**
  * Главная функция инициализации, которая привязывает обработчики к модальному окну загрузки.
- * * @param {function(string): void} onSuccess - Колбэк, вызываемый после успешной загрузки,
+ * @param {function(string): void} onSuccess - Колбэк, вызываемый после успешной загрузки,
  * передавая URL загруженного изображения.
- * * ***************************************************************
- * ЭКСПОРТ: initUpload - Инициализирует все обработчики загрузки
- * ***************************************************************
  */
-export function initUpload(onSuccess) {
+export function initUpload(onSuccess) { // <-- КЛЮЧЕВОЕ СЛОВО EXPORT ДОЛЖНО БЫТЬ ЗДЕСЬ
     
     // 1. Получение всех элементов DOM (Используем ФАКТИЧЕСКИЕ ID из index.html)
     const openModalBtn = document.getElementById('upload-photo-btn'); 
@@ -41,7 +37,6 @@ export function initUpload(onSuccess) {
         startBtn.classList.add('disabled');
         statusDiv.textContent = 'Ожидание выбора файла...';
         fileInput.value = ''; // Очищаем поле файла
-        // Скрываем возможную ошибку, которая могла появиться ранее
         statusDiv.style.color = 'inherit'; 
     };
 
@@ -70,7 +65,7 @@ export function initUpload(onSuccess) {
         const file = fileInput.files[0];
         if (!file) return;
 
-        // Создаем FormData здесь
+        // Создаем FormData
         const formData = new FormData();
         formData.append('file', file); 
 
@@ -84,7 +79,7 @@ export function initUpload(onSuccess) {
             const result = await uploadImage(formData); 
             
             if (result && result.url) {
-                // Успех: Вызываем колбэк из main.js, который обновит поле mainphoto
+                // Успех
                 onSuccess(result.url); 
                 statusDiv.textContent = `Успешно! URL передан в форму.`;
                 startBtn.textContent = 'Завершено!';
