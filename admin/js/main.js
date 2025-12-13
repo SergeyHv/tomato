@@ -47,7 +47,7 @@ if (data && data.items && data.items.length > 0) {
     console.warn("API вернул пустой список (0 элементов).");
 } else {
     console.error("API вернул данные не в ожидаемом формате:", data);
-}>`;
+}`;
         }
     }
 }
