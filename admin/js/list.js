@@ -1,13 +1,13 @@
 // ===================================================================
-// Файл: js/list.js (ИСПРАВЛЕННЫЙ ЭКСПОРТ)
+// Файл: js/list.js (ИСПРАВЛЕННЫЙ ЭКСПОРТ ДЛЯ РЕНДЕРИНГА)
 // ===================================================================
 
-import { openForm } from "./form.js"; // Предполагаем, что вам нужен openForm для кнопки "Редактировать"
+import { openForm } from "./form.js"; 
 
 const listContainer = document.getElementById('list-container');
 const emptyMessage = document.getElementById('empty-list-message');
 
-// Функция, которая делает функцию renderList доступной для импорта
+// КЛЮЧЕВОЙ МОМЕНТ: Добавлено слово 'export' для устранения SyntaxError
 export function renderList(items) {
     if (!listContainer) {
         console.error("Контейнер списка (list-container) не найден.");
@@ -45,10 +45,7 @@ export function renderList(items) {
             const itemToEdit = items.find(item => String(item.id) === String(idToEdit));
             
             if (itemToEdit) {
-                console.log(`Нажата кнопка Редактировать для ID: ${idToEdit}`);
                 openForm(itemToEdit);
-            } else {
-                console.error(`Элемент с ID ${idToEdit} не найден в списке.`);
             }
         });
     });
