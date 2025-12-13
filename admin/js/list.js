@@ -1,56 +1,61 @@
-import { deleteItem, listItems } from "./api.js";
-import { openForm } from "./form.js";
+// ===================================================================
+// Файл: api/sheets/list.js (ФИНАЛЬНЫЙ CJS ФОРМАТ VERCEL с CORS)
+// ===================================================================
 
-let allItems = []; // Храним все сорта здесь
+const { getSheetsClient } = require("../lib/googleClient"); 
 
-export function renderList(items) {
-    if (items) allItems = items; // Сохраняем для поиска
+module.exports = async (req, res) => {
     
-    const container = document.getElementById("items");
-    container.innerHTML = "";
+    // --- 1. Настройка CORS-заголовков ---
+    res.setHeader('Access-Control-Allow-Origin', '*'); 
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    // Фильтруем пустые строки (как та последняя в вашем JSON)
-    const validItems = allItems.filter(item => item.name && item.name.trim() !== "");
+    // Обработка Preflight-запроса (OPTIONS)
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+    
+    if (req.method !== 'GET') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
 
-    validItems.forEach(item => {
-        const photo = item.mainphoto || "https://via.placeholder.com/300x250?text=Нет+фото";
+    try {
+        const sheets = await getSheetsClient();
+        const spreadsheetId = "1XFeUWj0H0ztlTIGZVSNMeumfsGjjKfGYHkPw3A1xdKo";
+        const sheetName = "_Tomato_Sait - Лист1"; 
         
-        const card = document.createElement("div");
-        card.className = "item-card";
-        card.innerHTML = `
-            <img src="${photo}" class="item-img" loading="lazy">
-            <div class="item-info">
-                <span class="item-tag">${item.type || 'Сорт'}</span>
-                <div class="item-name">${item.name}</div>
-                <div style="font-size: 0.9rem; color: #666;">
-                    🎨 Цвет: ${item.color || '—'}<br>
-                    📏 Размер: ${item.size || '—'}
-                </div>
-            </div>
-            <div class="item-btns">
-                <button class="edit-btn">✏️ Изменить</button>
-                <button class="del-btn">🗑️ Удалить</button>
-            </div>
-        `;
+        // Чтение данных (от A до K, включая заголовки)
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: `'${sheetName}'!A:K`, 
+        });
 
-        card.querySelector(".edit-btn").onclick = () => openForm(item);
-        card.querySelector(".del-btn").onclick = async () => {
-            if (confirm(`Вы уверены, что хотите удалить сорт "${item.name}"?`)) {
-                await deleteItem(item.id);
-                const data = await listItems();
-                renderList(data.items);
-            }
-        };
+        const rows = response.data.values;
+        if (!rows || rows.length === 0) {
+            return res.status(200).json({ items: [] });
+        }
 
-        container.appendChild(card);
-    });
-}
+        // Первую строку (заголовки) используем как ключи
+        const headers = rows[0]; 
+        // Остальные строки - данные
+        const dataRows = rows.slice(1); 
 
-// Функция поиска
-window.handleSearch = (query) => {
-    const filtered = allItems.filter(item => 
-        item.name.toLowerCase().includes(query.toLowerCase()) || 
-        (item.description && item.description.toLowerCase().includes(query.toLowerCase()))
-    );
-    renderList(filtered);
+        // Маппинг (преобразование) массива данных в массив объектов
+        const items = dataRows.map(row => {
+            const item = {};
+            // Убеждаемся, что row существует и обрабатываем
+            headers.forEach((header, index) => {
+                item[header] = (row && row[index]) !== undefined ? row[index] : ""; 
+            });
+            return item;
+        });
+
+        return res.status(200).json({ items });
+
+    } catch (error) {
+        console.error('Ошибка в list.js:', error);
+        return res.status(500).json({ error: 'Server error fetching data: ' + error.message });
+    }
 };
