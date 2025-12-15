@@ -1,116 +1,25 @@
-import { promises as fs } from 'fs';
-import path from 'path';
-
-// Вспомогательная функция для загрузки в GitHub
-async function uploadFileToGitHub(fileBuffer, fileName, token, owner, repo, dir) {
-  const filePath = `${dir}/${fileName}`;
-  const content = fileBuffer.toString('base64');
-
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      message: `Upload ${fileName} via admin panel`,
-      content: content,
-    }),
-  });
-
-  const result = await response.json();
-
-  if (!response.ok) {
-    console.error('GitHub API Error:', result);
-    throw new Error(`GitHub upload failed: ${result.message || 'Unknown error'}`);
-  }
-
-  if (!result.content || !result.content.download_url) {
-    throw new Error('GitHub API returned unexpected response structure');
-  }
-
-  // Возвращаем только имя файла, а не полный URL
-  // Полный URL будет формироваться на фронтенде или в других API роутах
-  return fileName;
-}
-
-export default async function handler(req, res) {
-  // CORS для GitHub Pages
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', 'https://sergeyhv.github.io');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  // Проверяем наличие токена
-  if (!process.env.GITHUB_TOKEN) {
-    console.error('GITHUB_TOKEN не найден');
-    return res.status(500).json({ error: 'Server configuration error: GITHUB_TOKEN missing' });
-  }
-
-  // Обработка multipart/form-data
-  const formidable = (await import('formidable')).default;
-
-  const form = formidable({
-    multiples: false,
-    keepExtensions: true,
-    maxFileSize: 8 * 1024 * 1024, // 8MB
-    uploadDir: '/tmp',
-  });
-
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      console.error('Form parsing error:', err);
-      return res.status(400).json({ error: 'Error parsing file upload' });
-    }
-
-    const file = Array.isArray(files.file) ? files.file[0] : files.file;
-    if (!file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-
-    // Валидация файла (простой пример)
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!allowedTypes.includes(file.mimetype)) {
-      return res.status(400).json({ error: 'Invalid file type. Only image files are allowed.' });
-    }
-
-    try {
-      const fileBuffer = await fs.readFile(file.filepath);
-
-      // Генерируем имя файла (пример: id-сорта-timestamp.ext)
-      // В реальности, возможно, id будет приходить из формы
-      const originalExt = path.extname(file.originalFilename).toLowerCase();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}${originalExt}`;
-
-      const filenameOnGitHub = await uploadFileToGitHub(
-        fileBuffer,
-        fileName,
-        process.env.GITHUB_TOKEN,
-        process.env.GITHUB_USERNAME,
-        process.env.GITHUB_REPO,
-        process.env.GITHUB_IMAGES_DIR
-      );
-
-      // Возвращаем только имя файла, как и договаривались
-      res.status(200).json({ filename: filenameOnGitHub });
-    } catch (error) {
-      console.error('API /upload-image error:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-}
-
-export const config = {
-  api: {
-    bodyParser: false,
+{
+  "name": "tomato-backend-vercel",
+  "version": "1.0.0",
+  "description": "Backend for tomato admin panel",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
-};
+  "keywords": ["tomato", "admin", "api", "vercel"],
+  "author": "SergeyHv",
+  "license": "MIT",
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "googleapis": "^120.0.0",
+    "formidable": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0"
+  }
+}
