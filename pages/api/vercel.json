@@ -1,7 +1,6 @@
 {
-  "name": "tomato-backend-vercel",
-  "version": "1.0.0",
-  "dependencies": {
-    "google-spreadsheet": "^3.3.0"
-  }
+  "version": 2,
+  "builds": [
+    { "src": "pages/api/*.js", "use": "@vercel/node" }
+  ]
 }
