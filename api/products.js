@@ -14,9 +14,15 @@ export default async function handler(req, res) {
     const rows = await sheet.getRows();
 
     const products = rows.map(row => ({
-      name: row.Name,
-      price: row.Price,
-      category: row.Category,
+      id: row.id,
+      title: row.title,
+      price: row.price,
+      images: row.images,
+      category: row.category,
+      tags: row.tags,
+      description: row.description,
+      stock: row.stock,
+      props: row.props,
     }));
 
     res.status(200).json(products);
