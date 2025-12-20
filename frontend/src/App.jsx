@@ -13,13 +13,17 @@ export default function App() {
       });
   }, []);
 
-  return (
+return (
+  <div>
+    <Header />
+    <Filters onSearch={(value) => console.log("search:", value)} />
+
     <div style={{ padding: 20 }}>
       <h1>Томатный Рай — новый фронтенд</h1>
       <p>Тестовая загрузка данных из backend:</p>
 
       <pre>{JSON.stringify(products, null, 2)}</pre>
     </div>
-  );
-}
+  </div>
+);
 
