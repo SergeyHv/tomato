@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Header from "./components/Header";
 import Filters from "./components/Filters";
+import { adaptProduct } from "./utils/adapter";
 
 export default function App() {
   const [products, setProducts] = useState([]);
