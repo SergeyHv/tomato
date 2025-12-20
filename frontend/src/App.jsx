@@ -12,13 +12,14 @@ export default function App() {
 
   // ✅ Загружаем данные из backend и адаптируем
   useEffect(() => {
-    fetch("/api/products")
-      .then(res => res.json())
-      .then(data => {
-        const adapted = data.map(adaptProduct);
-        setProducts(adapted);
-      });
-  }, []);
+  fetch("https://tomato-backend-vercel.vercel.app/api/products")
+    .then(res => res.json())
+    .then(data => {
+      const adapted = data.map(adaptProduct);
+      setProducts(adapted);
+    });
+}, []);
+
 
   // ✅ Маппер категории (backend → frontend)
   function mapCategory(cat) {
