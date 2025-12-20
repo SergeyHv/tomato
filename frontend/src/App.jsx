@@ -8,7 +8,9 @@ export default function App() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
+  const [sort, setSort] = useState("");
 
+  // ✅ Загружаем данные из backend и адаптируем
   useEffect(() => {
     fetch("/api/products")
       .then(res => res.json())
@@ -18,6 +20,7 @@ export default function App() {
       });
   }, []);
 
+  // ✅ Маппер категории (backend → frontend)
   function mapCategory(cat) {
     switch (cat) {
       case "tomatoes":
@@ -31,21 +34,41 @@ export default function App() {
     }
   }
 
-  const filteredProducts = products.filter((p) => {
+  // ✅ Фильтрация + сортировка
+  let filtered = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = category ? p.type === mapCategory(category) : true;
     return matchesSearch && matchesCategory;
   });
 
+  // ✅ Сортировка
+  if (sort === "price-asc") {
+    filtered = [...filtered].sort((a, b) => a.price - b.price);
+  }
+
+  if (sort === "price-desc") {
+    filtered = [...filtered].sort((a, b) => b.price - a.price);
+  }
+
+  if (sort === "name-asc") {
+    filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  if (sort === "name-desc") {
+    filtered = [...filtered].sort((a, b) => b.name.localeCompare(a.name));
+  }
+
   return (
     <div>
       <Header />
+
       <Filters
         onSearch={(value) => setSearch(value)}
         onCategory={(value) => setCategory(value)}
+        onSort={(value) => setSort(value)}
       />
 
-      <ProductGrid products={filteredProducts} />
+      <ProductGrid products={filtered} />
     </div>
   );
 }
