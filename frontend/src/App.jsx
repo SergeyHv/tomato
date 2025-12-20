@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Filters from "./components/Filters";
 
 export default function App() {
   const [products, setProducts] = useState([]);
