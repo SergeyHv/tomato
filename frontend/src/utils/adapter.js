@@ -1,3 +1,19 @@
+// ✅ URL твоего backend
+const API_URL = "https://tomato-backend-vercel.vercel.app/api/products";
+
+// ✅ Загружаем данные с backend
+export async function loadProducts() {
+  const res = await fetch(API_URL);
+
+  if (!res.ok) {
+    throw new Error("Ошибка загрузки данных: " + res.status);
+  }
+
+  const data = await res.json();
+  return data.map(adaptProduct);
+}
+
+// ✅ Адаптация одного товара
 export function adaptProduct(p) {
   return {
     id: p.id,
@@ -12,6 +28,7 @@ export function adaptProduct(p) {
   };
 }
 
+// ✅ Маппинг категории → тип
 function mapCategoryToType(category) {
   switch (category) {
     case "tomatoes":
@@ -25,6 +42,7 @@ function mapCategoryToType(category) {
   }
 }
 
+// ✅ Маппинг тегов → цвет
 function mapTagsToColor(tags) {
   if (!tags) return "Неизвестно";
   const t = tags.toLowerCase();
@@ -38,6 +56,7 @@ function mapTagsToColor(tags) {
   return "Неизвестно";
 }
 
+// ✅ Маппинг тегов → спелость
 function mapTagsToMaturity(tags) {
   if (!tags) return "Неизвестно";
   const t = tags.toLowerCase();
