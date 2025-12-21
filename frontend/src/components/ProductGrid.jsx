@@ -1,5 +1,5 @@
 import React from "react";
-import ProductCard from "./ProductCard";
+import ProductCard from "./ProductCard.jsx";
 
 export default function ProductGrid({ products = [] }) {
   const list = Array.isArray(products) ? products : [];
