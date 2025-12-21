@@ -3,25 +3,23 @@ import Header from "./Header";
 import FiltersShell from "./FiltersShell";
 import ProductGrid from "./ProductGrid";
 
-export default function App({ products }) {
+export default function App({ products = [] }) {
   const [selectedColor, setSelectedColor] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [sort, setSort] = useState("popularity");
   const [search, setSearch] = useState("");
 
-  // Динамические значения из таблицы (с защитой)
   const colorOptions = useMemo(
-    () => ["all", ...new Set((products || []).map(p => p.color).filter(Boolean))],
+    () => ["all", ...new Set(products.map(p => p.color).filter(Boolean))],
     [products]
   );
   const typeOptions = useMemo(
-    () => ["all", ...new Set((products || []).map(p => p.type).filter(Boolean))],
+    () => ["all", ...new Set(products.map(p => p.type).filter(Boolean))],
     [products]
   );
 
-  // Фильтрация и сортировка (с защитой)
   const filtered = useMemo(() => {
-    let result = products || [];
+    let result = Array.isArray(products) ? products : [];
 
     if (selectedColor !== "all") {
       result = result.filter(p => p.color === selectedColor);
