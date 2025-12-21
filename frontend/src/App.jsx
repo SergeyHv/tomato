@@ -1,51 +1,76 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Header from "./components/Header.jsx";
 import ProductGrid from "./components/ProductGrid.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import { fetchProducts } from "./services/apiClient.js";
+import { ProductListSchema } from "./domain/productSchema.js";
+import { mapRawToProduct } from "./domain/mapProduct.js";
+
+const BUILD_VERSION = import.meta.env?.VITE_BUILD_VERSION ?? "dev";
 
 export default function App() {
   const [products, setProducts] = useState([]);
+  const [state, setState] = useState({ loading: true, error: null, query: "" });
 
-  // 🔎 Проверка: выводим значение переменной окружения в консоль
-  console.log("VITE_API_URL =", import.meta.env.VITE_API_URL);
+  const filtered = useMemo(() => {
+    const q = state.query.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => {
+      const hay = `${p.name} ${p.type ?? ""} ${p.color ?? ""} ${Array.isArray(p.tags) ? p.tags.join(" ") : p.tags ?? ""}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [products, state.query]);
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL;
+    console.log("Boot: version =", BUILD_VERSION);
+    console.log("Env: VITE_API_URL =", import.meta.env.VITE_API_URL);
 
-    if (!apiUrl) {
-      console.error("❌ VITE_API_URL не задан. Проверь настройки переменных окружения в Vercel.");
-      return;
-    }
+    (async () => {
+      try {
+        const raw = await fetchProducts();
+        const mapped = raw.filter(Boolean).map(mapRawToProduct);
 
-    fetch(`${apiUrl}/api/products`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Ошибка запроса: ${res.status}`);
+        const parsed = ProductListSchema.safeParse(mapped);
+        if (!parsed.success) {
+          console.error("Schema validation failed:", parsed.error.flatten());
+          throw new Error("Данные не соответствуют схеме продукта");
         }
-        return res.json();
-      })
-      .then((data) => {
-        const safeProducts = Array.isArray(data)
-          ? data.map((p) => ({
-              id: p.id || "",
-              name: p.title || "",
-              type: p.category || "",
-              color: p.props?.color || "",
-              price: Number(p.price) || 0,
-              image: p.images || "",
-              description: p.description || "",
-              stock: p.stock || 0,
-              tags: p.tags || "",
-            }))
-          : [];
-        setProducts(safeProducts);
-      })
-      .catch((err) => console.error("Ошибка загрузки:", err));
+
+        setProducts(parsed.data);
+        setState((s) => ({ ...s, loading: false, error: null }));
+      } catch (err) {
+        console.error("Load products failed:", err);
+        setState((s) => ({ ...s, loading: false, error: err.message || String(err) }));
+      }
+    })();
   }, []);
 
+  const onSearch = (q) => setState((s) => ({ ...s, query: q }));
+
+  if (state.loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header onSearch={onSearch} cartCount={0} />
+        <div className="container-xl py-12 text-gray-600">Загружаем товары…</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="pt-[90px] bg-gray-50 min-h-screen">
-      <Header onSearch={() => {}} cartCount={0} />
-      <ProductGrid products={products} />
-    </div>
+    <ErrorBoundary>
+      <div className="pt-[90px] bg-gray-50 min-h-screen">
+        <Header onSearch={onSearch} cartCount={0} />
+        {state.error ? (
+          <div className="container-xl py-12 text-red-600">
+            Ошибка загрузки: {state.error}
+          </div>
+        ) : (
+          <ProductGrid products={filtered} />
+        )}
+        <footer className="container-xl pb-12 text-xs text-gray-400">
+          Версия сборки: {BUILD_VERSION}
+        </footer>
+      </div>
+    </ErrorBoundary>
   );
 }
