@@ -1,16 +1,64 @@
-import ProductGrid from "./components/ProductGrid";
+import React, { useState, useMemo } from "react";
+import Header from "./Header";
+import FiltersShell from "./FiltersShell";
+import ProductGrid from "./ProductGrid";
 
-import Header from "./components/Header";
-return (
-  <div>
-    <Header />
+export default function App({ products }) {
+  const [selectedColor, setSelectedColor] = useState("all");
+  const [selectedType, setSelectedType] = useState("all");
+  const [sort, setSort] = useState("popularity");
+  const [search, setSearch] = useState("");
 
-    <div style={{ padding: 20 }}>
-      <h1>Томатный Рай — новый фронтенд</h1>
-      <p>Тестовая загрузка данных из backend:</p>
+  // Динамические значения из таблицы
+  const colorOptions = useMemo(
+    () => ["all", ...new Set(products.map(p => p.color).filter(Boolean))],
+    [products]
+  );
+  const typeOptions = useMemo(
+    () => ["all", ...new Set(products.map(p => p.type).filter(Boolean))],
+    [products]
+  );
 
-      <ProductGrid products={products} />
+  // Фильтрация и сортировка
+  const filtered = useMemo(() => {
+    let result = products;
+
+    if (selectedColor !== "all") {
+      result = result.filter(p => p.color === selectedColor);
+    }
+    if (selectedType !== "all") {
+      result = result.filter(p => p.type === selectedType);
+    }
+    if (search) {
+      result = result.filter(p =>
+        p.name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    if (sort === "price-asc") result = [...result].sort((a, b) => a.price - b.price);
+    if (sort === "price-desc") result = [...result].sort((a, b) => b.price - a.price);
+    if (sort === "name-asc") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    if (sort === "name-desc") result = [...result].sort((a, b) => b.name.localeCompare(a.name));
+
+    return result;
+  }, [products, selectedColor, selectedType, sort, search]);
+
+  return (
+    <div className="pt-[90px]">
+      <Header onSearch={setSearch} cartCount={0} />
+
+      <FiltersShell
+        selectedColor={selectedColor}
+        setSelectedColor={setSelectedColor}
+        selectedType={selectedType}
+        setSelectedType={setSelectedType}
+        sort={sort}
+        setSort={setSort}
+        colorOptions={colorOptions}
+        typeOptions={typeOptions}
+      />
+
+      <ProductGrid products={filtered} />
     </div>
-  </div>
-);
-
+  );
+}
