@@ -7,7 +7,9 @@ export default function FiltersShell({
   selectedType,
   setSelectedType,
   sort,
-  setSort
+  setSort,
+  colorOptions = [],
+  typeOptions = []
 }) {
   const [open, setOpen] = useState(false);
 
@@ -60,6 +62,8 @@ export default function FiltersShell({
             setSelectedType={setSelectedType}
             sort={sort}
             setSort={setSort}
+            colorOptions={colorOptions}
+            typeOptions={typeOptions}
           />
         </div>
       </aside>
