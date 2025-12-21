@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Header from "./components/Header";
-import ProductGrid from "./ProductGrid";
+import ProductGrid from "./components/ProductGrid.jsx";
 
 export default function App() {
   const [products, setProducts] = useState([]);
