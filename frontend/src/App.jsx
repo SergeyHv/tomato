@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import Header from "./components/Header";
+import Header from "./components/Header.jsx";
 import ProductGrid from "./components/ProductGrid.jsx";
 
 export default function App() {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    fetch("/api/products")
+    // Используем полный URL к бэкенду
+    fetch("https://tomato-backend-vercel.vercel.app/api/products")
       .then(res => res.json())
       .then(data => {
         const safeProducts = Array.isArray(data)
