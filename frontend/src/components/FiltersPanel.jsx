@@ -6,26 +6,10 @@ export default function FiltersPanel({
   selectedType,
   setSelectedType,
   sort,
-  setSort
+  setSort,
+  colorOptions,
+  typeOptions
 }) {
-  const colors = [
-    { value: "all", label: "Все цвета" },
-    { value: "красный", label: "Красный" },
-    { value: "желтый", label: "Желтый" },
-    { value: "черный", label: "Черный/Коричневый" },
-    { value: "биколор", label: "Биколор" },
-    { value: "зеленый", label: "Зеленоплодный" }
-  ];
-
-  const types = [
-    { value: "all", label: "Все типы" },
-    { value: "биф", label: "Биф-томат" },
-    { value: "обычный", label: "Обычная форма" },
-    { value: "слива", label: "Слива" },
-    { value: "черри", label: "Черри" },
-    { value: "паста", label: "Паста (Roma)" }
-  ];
-
   return (
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-rose-100 space-y-10">
 
@@ -34,19 +18,18 @@ export default function FiltersPanel({
         <h4 className="text-[11px] font-bold text-gray-400 mb-4 uppercase tracking-[0.2em]">
           Цвет плода
         </h4>
-
         <div className="flex flex-wrap gap-2">
-          {colors.map((c) => (
+          {colorOptions.map(c => (
             <button
-              key={c.value}
-              onClick={() => setSelectedColor(c.value)}
+              key={c}
+              onClick={() => setSelectedColor(c)}
               className={`px-4 py-2 rounded-full text-xs transition-all border ${
-                selectedColor === c.value
+                selectedColor === c
                   ? "bg-rose-500 border-rose-500 text-white font-bold shadow-sm"
                   : "bg-white border-rose-100 text-gray-600 hover:border-rose-300"
               }`}
             >
-              {c.label}
+              {c}
             </button>
           ))}
         </div>
@@ -57,19 +40,18 @@ export default function FiltersPanel({
         <h4 className="text-[11px] font-bold text-gray-400 mb-4 uppercase tracking-[0.2em]">
           Тип томата
         </h4>
-
         <div className="flex flex-wrap gap-2">
-          {types.map((t) => (
+          {typeOptions.map(t => (
             <button
-              key={t.value}
-              onClick={() => setSelectedType(t.value)}
+              key={t}
+              onClick={() => setSelectedType(t)}
               className={`px-4 py-2 rounded-full text-xs transition-all border ${
-                selectedType === t.value
+                selectedType === t
                   ? "bg-rose-500 border-rose-500 text-white font-bold shadow-sm"
                   : "bg-white border-rose-100 text-gray-600 hover:border-rose-300"
               }`}
             >
-              {t.label}
+              {t}
             </button>
           ))}
         </div>
@@ -80,7 +62,6 @@ export default function FiltersPanel({
         <h4 className="text-[11px] font-bold text-gray-400 mb-4 uppercase tracking-[0.2em]">
           Сортировка
         </h4>
-
         <select
           className="px-4 py-2 border border-rose-200 rounded-lg text-sm bg-white shadow-sm"
           value={sort}
