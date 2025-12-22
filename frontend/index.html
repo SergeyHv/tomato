@@ -1,12 +1,179 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Томатный Рай</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Коллекционные томаты — Магазин семян</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans" x-data="tomatoStore()" x-init="fetchProducts()">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-3xl">🍅</span>
+                <h1 class="text-xl font-bold tracking-tight text-gray-800">Tomato Garden</h1>
+            </div>
+            
+            <button @click="showCart = true" class="relative p-2 bg-red-50 rounded-full hover:bg-red-100 transition">
+                <span class="text-2xl">🛒</span>
+                <template x-if="cart.length > 0">
+                    <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full" x-text="cart.length"></span>
+                </template>
+            </button>
+        </div>
+    </header>
+
+    <section class="bg-red-600 py-8 text-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold mb-4">Более 2000 сортов коллекционных томатов</h2>
+            <div class="max-w-xl mx-auto relative text-gray-900">
+                <input type="text" x-model="searchQuery" placeholder="Начните вводить название сорта..." 
+                       class="w-full p-4 rounded-xl shadow-lg outline-none focus:ring-4 focus:ring-red-300 transition">
+            </div>
+        </div>
+    </section>
+
+    <main class="container mx-auto px-4 py-10">
+        <div class="flex flex-col md:flex-row gap-8">
+            
+            <div class="flex-1">
+                <div x-show="loading" class="text-center py-20 text-gray-500">
+                    <p class="text-xl animate-pulse">Загрузка каталога...</p>
+                </div>
+
+                <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                    <template x-for="product in filteredProducts" :key="product.id">
+                        <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col">
+                            <div class="relative aspect-square overflow-hidden bg-gray-200">
+                                <img :src="product.images[0] || 'https://via.placeholder.com/400?text=Нет+фото'" 
+                                     class="w-full h-full object-cover hover:scale-110 transition duration-500">
+                                <template x-if="!product.stock">
+                                    <div class="absolute inset-0 bg-white/60 flex items-center justify-center">
+                                        <span class="bg-gray-800 text-white px-3 py-1 rounded-full text-sm">Нет в наличии</span>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="p-4 flex flex-col flex-1">
+                                <h3 class="font-bold text-gray-800 mb-1 leading-tight h-10 overflow-hidden" x-text="product.title"></h3>
+                                <div class="text-xs text-gray-500 mb-3" x-text="product.category"></div>
+                                <div class="mt-auto flex items-center justify-between">
+                                    <span class="text-lg font-bold text-red-600" x-text="product.price + ' €'"></span>
+                                    <button @click="addToCart(product)" 
+                                            :disabled="!product.stock"
+                                            class="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 disabled:bg-gray-300 transition">
+                                        ➕
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div x-show="showCart" x-cloak class="fixed inset-0 z-[100] overflow-hidden">
+        <div class="absolute inset-0 bg-black/50 transition-opacity" @click="showCart = false"></div>
+        <div class="absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-2xl flex flex-col">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Корзина</h2>
+                <button @click="showCart = false" class="text-4xl">&times;</button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6">
+                <template x-if="cart.length === 0">
+                    <p class="text-center text-gray-500 py-10">В корзине пока пусто</p>
+                </template>
+                <div class="space-y-4">
+                    <template x-for="(item, index) in cart" :key="index">
+                        <div class="flex gap-4 border-b pb-4">
+                            <img :src="item.images[0]" class="w-16 h-16 object-cover rounded-lg">
+                            <div class="flex-1">
+                                <p class="font-bold text-sm" x-text="item.title"></p>
+                                <p class="text-red-600 font-bold" x-text="item.price + ' €'"></p>
+                            </div>
+                            <button @click="removeFromCart(index)" class="text-gray-400 hover:text-red-500 transition">🗑️</button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            <div class="p-6 border-t bg-gray-50" x-show="cart.length > 0">
+                <div class="flex justify-between text-xl font-bold mb-6">
+                    <span>Итого:</span>
+                    <span x-text="totalPrice + ' €'"></span>
+                </div>
+                <button @click="checkout()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition shadow-lg">
+                    Оформить через Telegram
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function tomatoStore() {
+            return {
+                loading: true,
+                products: [],
+                searchQuery: '',
+                cart: JSON.parse(localStorage.getItem('cart') || '[]'),
+                showCart: false,
+
+                async fetchProducts() {
+                    try {
+                        const response = await fetch('/api/products');
+                        this.products = await response.json();
+                    } catch (e) {
+                        console.error("Ошибка загрузки:", e);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                get filteredProducts() {
+                    if (!this.searchQuery) return this.products;
+                    const q = this.searchQuery.toLowerCase();
+                    return this.products.filter(p => 
+                        p.title.toLowerCase().includes(q) || 
+                        p.category.toLowerCase().includes(q) ||
+                        (p.tags && p.tags.some(t => t.toLowerCase().includes(q)))
+                    );
+                },
+
+                addToCart(product) {
+                    this.cart.push(product);
+                    this.saveCart();
+                },
+
+                removeFromCart(index) {
+                    this.cart.splice(index, 1);
+                    this.saveCart();
+                },
+
+                saveCart() {
+                    localStorage.setItem('cart', JSON.stringify(this.cart));
+                },
+
+                get totalPrice() {
+                    return this.cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
+                },
+
+                checkout() {
+                    let message = "Здравствуйте! Хочу заказать семена:\n\n";
+                    this.cart.forEach((item, i) => {
+                        message += `${i+1}. ${item.title} — ${item.price}€\n`;
+                    });
+                    message += `\nИтого: ${this.totalPrice}€`;
+                    
+                    const encoded = encodeURIComponent(message);
+                    // Замените YOUR_PHONE на номер телефона жены (в формате 79991234567)
+                    window.open(`https://wa.me/79000000000?text=${encoded}`, '_blank');
+                }
+            }
+        }
+    </script>
+</body>
 </html>
