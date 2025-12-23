@@ -3,25 +3,14 @@ import { JWT } from 'google-auth-library';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
   const { password, product } = req.body;
 
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return res.status(403).json({ error: 'Неверный пароль' });
-  }
+  if (password !== process.env.ADMIN_PASSWORD) return res.status(403).json({ error: 'Неверный пароль' });
 
   try {
-    // ПРОВЕРКА НАЛИЧИЯ КЛЮЧЕЙ
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY;
-    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-
-    if (!privateKey || !clientEmail) {
-      throw new Error("Отсутствуют настройки Google API (ключ или email) в Vercel Environment Variables");
-    }
-
     const serviceAccountAuth = new JWT({
-      email: clientEmail,
-      key: privateKey.replace(/\\n/g, '\n'), // Теперь тут не упадет
+      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
@@ -30,35 +19,27 @@ export default async function handler(req, res) {
     const sheet = doc.sheetsByIndex[0];
     const rows = await sheet.getRows();
 
-    // Дальше ваш код поиска и сохранения...
-    const existingRow = rows.find(r => r.get('id') === product.id);
-
-    const rowData = {
-      id: product.id,
-      title: product.title || '',
-      price: product.price || '',
-      images: product.images || '',
-      category: product.category || '',
-      description: product.description || '',
-      stock: product.stock || 'TRUE',
-      color: product.color || '',
-      growth_type: product.growth_type || '',
-      shape: product.shape || '',
-      maturity: product.maturity || '',
-      status: product.status || 'active'
-    };
+    // Поиск строки по ID
+    const existingRow = rows.find(r => String(r.get('id')) === String(product.id));
 
     if (existingRow) {
-      Object.assign(existingRow, rowData);
-      await existingRow.save();
-      return res.status(200).json({ message: 'Updated' });
+        // Обновляем каждое поле точечно
+        existingRow.set('title', product.title || '');
+        existingRow.set('price', product.price || '');
+        existingRow.set('images', product.images || '');
+        existingRow.set('description', product.description || '');
+        existingRow.set('color', product.color || '');
+        existingRow.set('growth_type', product.growth_type || '');
+        existingRow.set('shape', product.shape || '');
+        existingRow.set('maturity', product.maturity || '');
+        existingRow.set('status', product.status || 'active');
+        await existingRow.save();
+        return res.status(200).json({ message: 'Success Update' });
     } else {
-      await sheet.addRow(rowData);
-      return res.status(200).json({ message: 'Added' });
+        await sheet.addRow(product);
+        return res.status(200).json({ message: 'Success Add' });
     }
-
   } catch (error) {
-    console.error('SERVER ERROR:', error.message);
     return res.status(500).json({ error: error.message });
   }
 }
