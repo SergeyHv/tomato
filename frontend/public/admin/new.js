@@ -32,7 +32,7 @@ if (!form) {
             // 1. Загрузка фото
             if (file) {
                 console.log("📸 Загружаем фото:", file.name);
-                const safeName = Date.now() + '-' + file.name.replace(/[а-яё]/gi, 'x');
+                const safeName = Date.now() + '-' + file.name.toLowerCase().replace(/[^a-z0-9.]/g, '-');
                 const uploadRes = await fetch(`/api/admin/upload?filename=${safeName}`, {
                     method: 'POST',
                     body: file,
