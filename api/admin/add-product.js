@@ -5,59 +5,47 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const { password, product } = req.body;
 
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return res.status(403).json({ error: 'Неверный пароль' });
-  }
-
   try {
-    let privateKey = process.env.GOOGLE_PRIVATE_KEY;
-    
-    // ОЧИСТКА КЛЮЧА: убираем возможные лишние кавычки и исправляем переносы строк
-    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-        privateKey = privateKey.substring(1, privateKey.length - 1);
+    const pKey = process.env.GOOGLE_PRIVATE_KEY;
+    const pEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const pSheetId = process.env.GOOGLE_SHEET_ID;
+
+    // ПРОВЕРКА: Если хотя бы одной переменной нет, мы не вызываем .replace(), а выдаем текст
+    if (!pKey || !pEmail || !pSheetId) {
+      let missing = [];
+      if (!pKey) missing.push("GOOGLE_PRIVATE_KEY");
+      if (!pEmail) missing.push("GOOGLE_SERVICE_ACCOUNT_EMAIL");
+      if (!pSheetId) missing.push("GOOGLE_SHEET_ID");
+      return res.status(500).json({ error: `В Vercel не найдены: ${missing.join(', ')}` });
     }
-    const formattedKey = privateKey.replace(/\\n/g, '\n');
 
     const serviceAccountAuth = new JWT({
-      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: formattedKey,
+      email: pEmail,
+      key: pKey.replace(/\\n/g, '\n'),
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
-    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, serviceAccountAuth);
+    const doc = new GoogleSpreadsheet(pSheetId, serviceAccountAuth);
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
-    
-    // Загружаем заголовки, чтобы точно знать, куда писать
     await sheet.loadHeaderRow();
-    const headers = sheet.headerValues;
-
+    
     const rows = await sheet.getRows();
-    // Ищем строку по ID (приводим оба к строке для надежности)
     const existingRow = rows.find(r => String(r.get('id')) === String(product.id));
 
     if (existingRow) {
-      // ОБНОВЛЕНИЕ
-      headers.forEach(h => {
-        if (product[h] !== undefined) {
-          existingRow.set(h, product[h]);
-        }
+      sheet.headerValues.forEach(h => {
+        if (product[h] !== undefined) existingRow.set(h, product[h]);
       });
       await existingRow.save();
       return res.status(200).json({ message: 'Updated' });
     } else {
-      // СОЗДАНИЕ
-      // Формируем объект только из тех полей, которые есть в таблице
       const newRow = {};
-      headers.forEach(h => {
-        newRow[h] = product[h] || '';
-      });
+      sheet.headerValues.forEach(h => { newRow[h] = product[h] || ''; });
       await sheet.addRow(newRow);
       return res.status(200).json({ message: 'Added' });
     }
   } catch (error) {
-    console.error('SERVER_ERROR:', error);
-    // Отправляем подробности ошибки на фронтенд
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: "Ошибка: " + error.message });
   }
 }
