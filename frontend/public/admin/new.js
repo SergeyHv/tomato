@@ -1,14 +1,13 @@
 let allProducts = [];
 let isEditing = false;
+let selectedId = null; // Для подсветки
 
-// 1. Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
     const savedPass = localStorage.getItem('tomato_admin_pass');
     if (savedPass) document.getElementById('adminPassword').value = savedPass;
-    loadProducts(); // Загружаем список товаров сразу
+    loadProducts();
 });
 
-// 2. Загрузка товаров из таблицы
 async function loadProducts() {
     const listContainer = document.getElementById('productList');
     try {
@@ -20,7 +19,6 @@ async function loadProducts() {
     }
 }
 
-// 3. Отрисовка списка слева
 function renderList(products) {
     const listContainer = document.getElementById('productList');
     listContainer.innerHTML = '';
@@ -44,7 +42,9 @@ function renderList(products) {
 
     filtered.reverse().forEach(p => {
         const div = document.createElement('div');
-        div.className = 'bg-white border rounded-lg p-2 flex items-center gap-3 cursor-pointer hover:shadow-md transition shadow-sm';
+        // Добавляем класс active-card если ID совпадает с выбранным
+        const isActive = p.id === selectedId ? 'active-card shadow-inner' : 'bg-white';
+        div.className = `${isActive} border rounded-lg p-2 flex items-center gap-3 cursor-pointer hover:shadow-md transition shadow-sm`;
         div.onclick = () => startEdit(p);
         
         div.innerHTML = `
@@ -61,19 +61,19 @@ function renderList(products) {
     });
 }
 
-// 4. Поиск и фильтрация (живая)
 document.getElementById('searchInput').addEventListener('input', () => renderList(allProducts));
 document.getElementById('filterGrowth').addEventListener('change', () => renderList(allProducts));
 document.getElementById('filterColor').addEventListener('change', () => renderList(allProducts));
 
-// 5. Переход в режим редактирования
 function startEdit(product) {
     isEditing = true;
+    selectedId = product.id; // Запоминаем ID для подсветки
+    renderList(allProducts); // Перерисовываем список, чтобы применить стиль
+
     document.getElementById('formTitle').innerText = '📝 Редактировать сорт';
     document.getElementById('submitBtn').innerText = '💾 Сохранить изменения';
     document.getElementById('cancelEdit').classList.remove('hidden');
 
-    // Заполняем поля
     document.getElementById('editId').value = product.id;
     document.getElementById('title').value = product.title;
     document.getElementById('price').value = product.price;
@@ -84,27 +84,41 @@ function startEdit(product) {
     document.getElementById('shape').value = product.shape || '';
     document.getElementById('maturity').value = product.maturity || '';
     
-    // Превью фото
     if (product.images) {
         document.getElementById('preview').innerHTML = `<img src="${product.images}" class="h-20 w-20 object-cover rounded shadow">`;
     }
 }
 
-// 6. Отмена редактирования
 document.getElementById('cancelEdit').onclick = () => {
+    resetForm();
+};
+
+function resetForm() {
     isEditing = false;
+    selectedId = null;
     document.getElementById('productForm').reset();
     document.getElementById('formTitle').innerText = 'Добавить новый сорт';
     document.getElementById('submitBtn').innerText = '🚀 Опубликовать';
     document.getElementById('cancelEdit').classList.add('hidden');
     document.getElementById('preview').innerHTML = '';
-};
+    renderList(allProducts);
+}
 
-// 7. Обработка отправки формы
 document.getElementById('productForm').onsubmit = async (e) => {
     e.preventDefault();
     const password = document.getElementById('adminPassword').value;
-    localStorage.setItem('tomato_admin_pass', password);
+    if (!password) return alert("Введите пароль!");
+    
+    const title = document.getElementById('title').value.trim();
+
+    // ЗАЩИТА ОТ ДУБЛЕЙ (только при создании нового)
+    if (!isEditing) {
+        const duplicate = allProducts.find(p => p.title.toLowerCase() === title.toLowerCase() && p.status !== 'archived');
+        if (duplicate) {
+            alert(`🛑 Ошибка! Сорт с названием "${title}" уже есть в списке.`);
+            return;
+        }
+    }
 
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
@@ -115,7 +129,6 @@ document.getElementById('productForm').onsubmit = async (e) => {
         const fileInput = document.getElementById('imageUpload');
         const file = fileInput.files[0];
 
-        // Если выбрали новое фото
         if (file) {
             const safeName = Date.now() + '-' + file.name.toLowerCase().replace(/[^a-z0-9.]/g, '-');
             const uploadRes = await fetch(`/api/admin/upload?filename=${safeName}`, { method: 'POST', body: file });
@@ -125,7 +138,7 @@ document.getElementById('productForm').onsubmit = async (e) => {
 
         const productData = {
             id: isEditing ? document.getElementById('editId').value : Date.now().toString(),
-            title: document.getElementById('title').value,
+            title: title,
             price: document.getElementById('price').value,
             category: document.getElementById('category').value,
             description: document.getElementById('description').value,
@@ -134,7 +147,8 @@ document.getElementById('productForm').onsubmit = async (e) => {
             shape: document.getElementById('shape').value,
             maturity: document.getElementById('maturity').value,
             images: imageUrl,
-            status: 'active'
+            status: 'active',
+            stock: 'TRUE'
         };
 
         const res = await fetch('/api/admin/add-product', {
@@ -145,10 +159,12 @@ document.getElementById('productForm').onsubmit = async (e) => {
 
         if (res.ok) {
             alert(isEditing ? '✅ Изменено!' : '🍅 Добавлено!');
-            location.reload(); // Перезагружаем для обновления списка
+            // Вместо полной перезагрузки страницы, обновляем данные локально
+            await loadProducts();
+            resetForm();
         } else {
             const err = await res.json();
-            alert('Ошибка: ' + err.error);
+            alert('Ошибка: ' + (err.error || 'Доступ запрещен'));
         }
     } catch (error) {
         alert('Ошибка: ' + error.message);
@@ -157,32 +173,39 @@ document.getElementById('productForm').onsubmit = async (e) => {
     }
 };
 
-// 8. Отправка в архив (удаление)
 async function archiveProduct(event, id) {
-    event.stopPropagation(); // Чтобы не сработало нажатие на саму карточку
-    if (!confirm('Отправить сорт в архив? Он перестанет отображаться в каталоге.')) return;
+    event.stopPropagation();
+    if (!confirm('Отправить сорт в архив?')) return;
 
     const password = document.getElementById('adminPassword').value;
-    const product = allProducts.find(p => p.id === id);
-    product.status = 'archived';
+    if (!password) return alert("Введите пароль для подтверждения!");
+
+    // Находим актуальные данные товара из массива
+    const sourceProduct = allProducts.find(p => p.id === id);
+    if (!sourceProduct) return;
+
+    // Создаем копию объекта и меняем статус
+    const updatedProduct = { ...sourceProduct, status: 'archived' };
 
     try {
         const res = await fetch('/api/admin/add-product', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password, product })
+            body: JSON.stringify({ password, product: updatedProduct })
         });
+        
         if (res.ok) {
-            loadProducts();
+            await loadProducts();
+            if (selectedId === id) resetForm();
         } else {
-            alert('Не удалось заархивировать');
+            const err = await res.json();
+            alert('Не удалось заархивировать: ' + (err.error || 'ошибка сервера'));
         }
     } catch (e) {
-        alert('Ошибка связи');
+        alert('Ошибка связи с сервером');
     }
 }
 
-// Превью фото при выборе
 document.getElementById('imageUpload').onchange = (e) => {
     const file = e.target.files[0];
     if (file) {
