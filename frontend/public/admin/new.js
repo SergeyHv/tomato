@@ -1,4 +1,5 @@
-// 1. Сразу при загрузке страницы пытаемся достать пароль из памяти браузера
+console.log("✅ Скрипт админки загружен и готов!");
+
 document.addEventListener('DOMContentLoaded', () => {
     const savedPass = localStorage.getItem('tomato_admin_pass');
     if (savedPass) {
@@ -8,85 +9,82 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const form = document.getElementById('productForm');
-const imageUpload = document.getElementById('imageUpload');
-const preview = document.getElementById('preview');
 
-// Превью фото
-imageUpload.addEventListener('change', () => {
-    const file = imageUpload.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = e => {
-            preview.innerHTML = `<img src="${e.target.result}" class="max-h-48 rounded shadow-lg" alt="preview">`;
-        };
-        reader.readAsDataURL(file);
-    }
-});
+if (!form) {
+    console.error("❌ Форма 'productForm' не найдена на странице!");
+} else {
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log("🚀 Кнопка нажата, начинаем отправку...");
 
-form.addEventListener('submit', async e => {
-    e.preventDefault();
-    
-    // 1. Берем пароль и СРАЗУ сохраняем его в память
-    const password = document.getElementById('adminPassword').value; // Оставляем CONST тут
-    localStorage.setItem('tomato_admin_pass', password); 
+        const password = document.getElementById('adminPassword').value;
+        localStorage.setItem('tomato_admin_pass', password);
 
-    const submitBtn = e.target.querySelector('button');
-    submitBtn.disabled = true;
-    submitBtn.innerText = '⏳ Загрузка...';
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = '⏳ Загрузка...';
 
-    try {
-        let imageUrl = '';
-        const file = imageUpload.files[0];
+        try {
+            let imageUrl = '';
+            const fileInput = document.getElementById('imageUpload');
+            const file = fileInput ? fileInput.files[0] : null;
 
-        // Загрузка фото
-        if (file) {
-            // Очищаем имя файла от русских букв (заменяем на 'photo')
-            const safeName = Date.now() + '-' + file.name.replace(/[а-яё]/gi, 'x');
-            const uploadRes = await fetch(`/api/admin/upload?filename=${safeName}`, {
+            // 1. Загрузка фото
+            if (file) {
+                console.log("📸 Загружаем фото:", file.name);
+                const safeName = Date.now() + '-' + file.name.replace(/[а-яё]/gi, 'x');
+                const uploadRes = await fetch(`/api/admin/upload?filename=${safeName}`, {
+                    method: 'POST',
+                    body: file,
+                });
+
+                if (!uploadRes.ok) {
+                    const errorText = await uploadRes.text();
+                    throw new Error(`Ошибка загрузки фото: ${errorText}`);
+                }
+
+                const blob = await uploadRes.json();
+                imageUrl = blob.url;
+                console.log("✅ Фото загружено:", imageUrl);
+            }
+
+            // 2. Сбор данных
+            const product = {
+                id: Date.now().toString(),
+                title: document.getElementById('title').value,
+                category: document.getElementById('category').value,
+                price: document.getElementById('price').value,
+                description: document.getElementById('description').value,
+                tags: document.getElementById('tags').value,
+                images: imageUrl,
+                stock: "TRUE"
+            };
+
+            // 3. Отправка в таблицу
+            console.log("📝 Отправляем данные в таблицу...");
+            const res = await fetch('/api/admin/add-product', {
                 method: 'POST',
-                body: file,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password, product })
             });
-            
-            if (!uploadRes.ok) throw new Error('Ошибка при загрузке фото');
-            
-            const blob = await uploadRes.json();
-            imageUrl = blob.url;
+
+            if (res.ok) {
+                alert('🍅 Сорт успешно добавлен!');
+                form.reset();
+                document.getElementById('adminPassword').value = password;
+                const preview = document.getElementById('preview');
+                if (preview) preview.innerHTML = '';
+            } else {
+                const err = await res.json();
+                throw new Error(err.error || 'Ошибка при сохранении в таблицу');
+            }
+
+        } catch (error) {
+            console.error("❌ Ошибка:", error);
+            alert('Ошибка: ' + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = '🚀 Опубликовать на сайт';
         }
-
-        // Данные для таблицы
-        const product = {
-            id: Date.now().toString(),
-            title: document.getElementById('title').value,
-            category: document.getElementById('category').value,
-            price: document.getElementById('price').value,
-            description: document.getElementById('description').value,
-            tags: document.getElementById('tags').value,
-            images: imageUrl,
-            stock: "TRUE"
-        };
-
-        // 2. ОТПРАВКА В ТАБЛИЦУ
-        // ВАЖНО: Тут слово 'const' перед password НЕ ПИШЕМ, так как она уже создана выше
-        const res = await fetch('/api/admin/add-product', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password, product }) // Используем ту же переменную
-        });
-
-        if (res.ok) {
-            alert('🍅 Сорт успешно добавлен!');
-            form.reset();
-            document.getElementById('adminPassword').value = password; // Возвращаем пароль в поле
-            preview.innerHTML = '';
-        } else {
-            const err = await res.json();
-            alert('Ошибка: ' + err.error);
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка: ' + error.message);
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = '🚀 Опубликовать на сайт';
-    }
-});
+    });
+}
