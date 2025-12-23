@@ -216,3 +216,28 @@ document.getElementById('imageUpload').onchange = (e) => {
         reader.readAsDataURL(file);
     }
 };
+// Функция ПОЛНОГО удаления (для дубликатов)
+async function deleteForever(event, id) {
+    event.stopPropagation();
+    if (!confirm('⚠️ ВНИМАНИЕ! Это удалит сорт из таблицы НАВСЕГДА. Вы уверены?')) return;
+
+    const password = document.getElementById('adminPassword').value;
+    
+    try {
+        const res = await fetch('/api/admin/delete-product', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password, id })
+        });
+        
+        if (res.ok) {
+            alert('Удалено безвозвратно');
+            loadProducts();
+            resetForm();
+        } else {
+            alert('Ошибка при удалении');
+        }
+    } catch (e) {
+        alert('Ошибка связи');
+    }
+}
