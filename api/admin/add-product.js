@@ -3,20 +3,22 @@ import { JWT } from 'google-auth-library';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  
   const { password, product } = req.body;
 
-  try {
-    const pKey = process.env.GOOGLE_PRIVATE_KEY;
-    const pEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const pSheetId = process.env.GOOGLE_SHEET_ID;
+  // 1. ПРОВЕРКА ПАРОЛЯ
+  if (!password || password !== process.env.ADMIN_PASSWORD) {
+    return res.status(403).json({ error: 'Неверный пароль' });
+  }
 
-    // ПРОВЕРКА: Если хотя бы одной переменной нет, мы не вызываем .replace(), а выдаем текст
-    if (!pKey || !pEmail || !pSheetId) {
-      let missing = [];
-      if (!pKey) missing.push("GOOGLE_PRIVATE_KEY");
-      if (!pEmail) missing.push("GOOGLE_SERVICE_ACCOUNT_EMAIL");
-      if (!pSheetId) missing.push("GOOGLE_SHEET_ID");
-      return res.status(500).json({ error: `В Vercel не найдены: ${missing.join(', ')}` });
+  try {
+    // Используем ТЕ ЖЕ имена, что и в api/products.js
+    const pKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY; 
+    const pEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
+    const pSheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+
+    if (!pKey) {
+      return res.status(500).json({ error: "Ошибка настроек: GOOGLE_SHEETS_PRIVATE_KEY не найден" });
     }
 
     const serviceAccountAuth = new JWT({
@@ -28,24 +30,35 @@ export default async function handler(req, res) {
     const doc = new GoogleSpreadsheet(pSheetId, serviceAccountAuth);
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
-    await sheet.loadHeaderRow();
     
+    await sheet.loadHeaderRow();
     const rows = await sheet.getRows();
-    const existingRow = rows.find(r => String(r.get('id')) === String(product.id));
+
+    const productId = String(product.id).trim();
+    const existingRow = rows.find(r => String(r.get('id')).trim() === productId);
 
     if (existingRow) {
+      // ОБНОВЛЕНИЕ
       sheet.headerValues.forEach(h => {
-        if (product[h] !== undefined) existingRow.set(h, product[h]);
+        if (product[h] !== undefined) {
+          // Если это массив (например, картинки), превращаем в строку для таблицы
+          const value = Array.isArray(product[h]) ? product[h].join(', ') : product[h];
+          existingRow.set(h, value);
+        }
       });
       await existingRow.save();
       return res.status(200).json({ message: 'Updated' });
     } else {
+      // СОЗДАНИЕ
       const newRow = {};
-      sheet.headerValues.forEach(h => { newRow[h] = product[h] || ''; });
+      sheet.headerValues.forEach(h => {
+        const val = product[h];
+        newRow[h] = Array.isArray(val) ? val.join(', ') : (val || '');
+      });
       await sheet.addRow(newRow);
       return res.status(200).json({ message: 'Added' });
     }
   } catch (error) {
-    return res.status(500).json({ error: "Ошибка: " + error.message });
+    return res.status(500).json({ error: "Ошибка таблицы: " + error.message });
   }
 }
