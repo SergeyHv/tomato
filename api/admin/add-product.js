@@ -10,13 +10,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Имена переменных строго как в api/products.js
-    const pKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
-    const pEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
-    const pSheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+    // СИСТЕМНАЯ ПРОВЕРКА: Пробуем все варианты имен переменных
+    const pKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY || process.env.GOOGLE_PRIVATE_KEY;
+    const pEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const pSheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID || process.env.GOOGLE_SHEET_ID;
 
-    if (!pKey || !pEmail || !pSheetId) {
-      throw new Error("Отсутствуют настройки Google API в Vercel Environment Variables");
+    if (!pKey) {
+      return res.status(500).json({ error: "Ключ GOOGLE_SHEETS_PRIVATE_KEY не найден в настройках Vercel" });
     }
 
     const serviceAccountAuth = new JWT({
@@ -31,11 +31,10 @@ export default async function handler(req, res) {
     await sheet.loadHeaderRow();
     const rows = await sheet.getRows();
 
-    // Подготовка данных для записи
-    const productId = String(product.id).trim();
+    // Синхронизируем поля с таблицей
     const rowData = { ...product };
-
-    // Сборка строки props для совместимости с парсером сайта
+    
+    // Собираем свойства в строку props для совместимости
     const propsParts = [];
     if (product.growth_type) propsParts.push(`growth_type=${product.growth_type}`);
     if (product.shape) propsParts.push(`shape=${product.shape}`);
@@ -43,23 +42,24 @@ export default async function handler(req, res) {
     if (product.color) propsParts.push(`color=${product.color}`);
     rowData.props = propsParts.join('; ');
 
+    const productId = String(product.id).trim();
     const existingRow = rows.find(r => String(r.get('id')).trim() === productId);
 
     if (existingRow) {
       sheet.headerValues.forEach(h => {
         if (rowData[h] !== undefined) {
-          // Если картинки пришли массивом, превращаем в строку
           const val = Array.isArray(rowData[h]) ? rowData[h].join(', ') : rowData[h];
           existingRow.set(h, val);
         }
       });
       await existingRow.save();
-      return res.status(200).json({ message: 'Success Update' });
+      return res.status(200).json({ message: 'Обновлено' });
     } else {
       await sheet.addRow(rowData);
-      return res.status(200).json({ message: 'Success Add' });
+      return res.status(200).json({ message: 'Добавлено' });
     }
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.error("ОШИБКА:", error.message);
+    return res.status(500).json({ error: "Ошибка таблицы: " + error.message });
   }
 }
