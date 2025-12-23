@@ -2,41 +2,58 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Метод не разрешен' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { password, product } = req.body;
 
-  // Проверка пароля (добавьте ADMIN_PASSWORD в настройки Vercel)
   if (password !== process.env.ADMIN_PASSWORD) {
-    return res.status(403).json({ error: 'Неверный пароль администратора' });
+    return res.status(403).json({ error: 'Неверный пароль' });
   }
 
   try {
     const serviceAccountAuth = new JWT({
-      email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-      key: process.env.GOOGLE_SHEETS_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
-    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_SPREADSHEET_ID, serviceAccountAuth);
+    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, serviceAccountAuth);
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
+    const rows = await sheet.getRows();
 
-    // Добавляем новую строку в таблицу
-    await sheet.addRow({
+    // 1. Ищем, есть ли уже такой товар (по ID)
+    const existingRow = rows.find(r => r.get('id') === product.id);
+
+    // Подготавливаем данные (важно, чтобы ключи совпадали с шапкой таблицы)
+    const rowData = {
       id: product.id,
-      title: product.title,
-      price: product.price || "1.5",
-      images: product.images,
-      category: product.category,
-      tags: product.tags,
-      description: product.description,
-      stock: "TRUE",
-      props: product.props
-    });
+      title: product.title || '',
+      price: product.price || '',
+      images: product.images || '',
+      category: product.category || '',
+      description: product.description || '',
+      stock: product.stock || 'TRUE',
+      color: product.color || '',
+      growth_type: product.growth_type || '',
+      shape: product.shape || '',
+      maturity: product.maturity || '',
+      status: product.status || 'active'
+    };
 
-    return res.status(200).json({ success: true });
+    if (existingRow) {
+      // ОБНОВЛЕНИЕ (Редактирование или Архив)
+      Object.assign(existingRow, rowData);
+      await existingRow.save();
+      return res.status(200).json({ message: 'Updated successfully' });
+    } else {
+      // СОЗДАНИЕ НОВОГО
+      await sheet.addRow(rowData);
+      return res.status(200).json({ message: 'Added successfully' });
+    }
+
   } catch (error) {
+    console.error('Ошибка таблицы:', error);
     return res.status(500).json({ error: error.message });
   }
 }
