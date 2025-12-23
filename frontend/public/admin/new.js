@@ -26,17 +26,13 @@ imageUpload.addEventListener('change', () => {
 form.addEventListener('submit', async e => {
     e.preventDefault();
     
-    // Сразу сохраняем пароль, как только нажата кнопка
-    const password = document.getElementById('adminPassword').value;
+    // 1. Берем пароль и СРАЗУ сохраняем его в память
+    const password = document.getElementById('adminPassword').value; // Оставляем CONST тут
     localStorage.setItem('tomato_admin_pass', password); 
 
     const submitBtn = e.target.querySelector('button');
     submitBtn.disabled = true;
     submitBtn.innerText = '⏳ Загрузка...';
-
-    // Сохраняем пароль в память, чтобы не вводить снова
-    const password = document.getElementById('adminPassword').value;
-    localStorage.setItem('tomato_admin_pass', password);
 
     try {
         let imageUrl = '';
@@ -44,11 +40,15 @@ form.addEventListener('submit', async e => {
 
         // Загрузка фото
         if (file) {
-            const fileName = Date.now() + '-' + file.name;
-            const uploadRes = await fetch(`/api/admin/upload?filename=${fileName}`, {
+            // Очищаем имя файла от русских букв (заменяем на 'photo')
+            const safeName = Date.now() + '-' + file.name.replace(/[а-яё]/gi, 'x');
+            const uploadRes = await fetch(`/api/admin/upload?filename=${safeName}`, {
                 method: 'POST',
                 body: file,
             });
+            
+            if (!uploadRes.ok) throw new Error('Ошибка при загрузке фото');
+            
             const blob = await uploadRes.json();
             imageUrl = blob.url;
         }
@@ -65,24 +65,26 @@ form.addEventListener('submit', async e => {
             stock: "TRUE"
         };
 
+        // 2. ОТПРАВКА В ТАБЛИЦУ
+        // ВАЖНО: Тут слово 'const' перед password НЕ ПИШЕМ, так как она уже создана выше
         const res = await fetch('/api/admin/add-product', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password, product })
+            body: JSON.stringify({ password, product }) // Используем ту же переменную
         });
 
         if (res.ok) {
             alert('🍅 Сорт успешно добавлен!');
             form.reset();
-            // Снова подставляем пароль после очистки формы
-            document.getElementById('adminPassword').value = password;
+            document.getElementById('adminPassword').value = password; // Возвращаем пароль в поле
             preview.innerHTML = '';
         } else {
             const err = await res.json();
             alert('Ошибка: ' + err.error);
         }
     } catch (error) {
-        alert('Ошибка связи с сервером');
+        console.error(error);
+        alert('Ошибка: ' + error.message);
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerText = '🚀 Опубликовать на сайт';
