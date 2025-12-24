@@ -3,8 +3,9 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
 
     const submitBtn = e.target.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
-    submitBtn.innerText = '⏳ Загрузка данных...';
+    submitBtn.innerText = '⏳ Сохранение...';
 
+    // Сбор данных
     const password = document.getElementById('adminPassword').value;
     const title = document.getElementById('title').value;
     const category = document.getElementById('category').value;
@@ -17,7 +18,7 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     try {
         let imageUrl = '';
 
-        // 1. Загрузка изображения в Vercel Blob
+        // 1. Загрузка фото в Vercel Blob (путь к API остается полным!)
         if (imageFile) {
             submitBtn.innerText = '📸 Загрузка фото...';
             const uploadRes = await fetch('/api/admin/upload', {
@@ -28,13 +29,13 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
                 }
             });
             
-            if (!uploadRes.ok) throw new Error('Ошибка при загрузке фото');
+            if (!uploadRes.ok) throw new Error('Ошибка загрузки фото');
             
             const uploadData = await uploadRes.json();
             imageUrl = uploadData.url;
         }
 
-        // 2. Отправка данных в Google Таблицу
+        // 2. Отправка в Google Таблицу (путь к API остается полным!)
         submitBtn.innerText = '📝 Запись в таблицу...';
         const response = await fetch('/api/admin/add-product', {
             method: 'POST',
@@ -65,7 +66,7 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Превью картинки
+// Превью
 document.getElementById('imageUpload').addEventListener('change', function(e) {
     const file = e.target.files[0];
     const preview = document.getElementById('preview');
