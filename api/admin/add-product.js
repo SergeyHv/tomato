@@ -3,12 +3,12 @@ import { JWT } from 'google-auth-library';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Метод не разрешен. Используйте POST.' });
+    return res.status(405).json({ error: 'Метод не разрешен' });
   }
 
   const { password, title, category, price, description, tags, images, props } = req.body;
 
-  // Проверка пароля
+  // Проверка пароля из настроек Vercel
   if (password !== process.env.ADMIN_PASSWORD) {
     return res.status(403).json({ error: 'Неверный пароль администратора' });
   }
@@ -24,11 +24,11 @@ export default async function handler(req, res) {
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
 
-    // Добавляем строку. Ключи должны строго совпадать с заголовками в таблице!
+    // Добавляем строку. Названия ключей должны СТРОГО совпадать с первой строкой в таблице
     await sheet.addRow({
       id: Date.now().toString(),
       title: title || "",
-      price: price || "1.5",
+      price: price || "0",
       images: images || "",
       category: category || "",
       tags: tags || "",
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    console.error("Ошибка API:", error);
+    console.error("Google Sheets Error:", error);
     return res.status(500).json({ details: error.message });
   }
 }
