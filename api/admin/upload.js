@@ -1,26 +1,26 @@
-import { put } from '@vercel/blob';
+// ВАЖНО: Установите библиотеку: npm install cloudinary
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 export const config = {
-  api: {
-    bodyParser: false, // Отключаем стандартный парсер, чтобы передать файл как поток
-  },
+  api: { bodyParser: { sizeLimit: '10mb' } },
 };
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
   try {
-    const { searchParams } = new URL(req.url, `https://${req.headers.host}`);
-    const filename = searchParams.get('filename') || 'image.jpg';
-
-    // Прямая загрузка из тела запроса (req) в хранилище
-    const blob = await put(filename, req, {
-      access: 'public',
+    const fileStr = req.body.file; // Если отправляете base64, или используйте formidable для FormData
+    const uploadResponse = await cloudinary.uploader.upload(fileStr, {
+      upload_preset: 'tomato_presets',
     });
-
-    return res.status(200).json(blob);
+    res.status(200).json({ url: uploadResponse.secure_url });
   } catch (error) {
-    console.error('Blob upload error:', error);
-    return res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Ошибка загрузки фото' });
   }
 }
