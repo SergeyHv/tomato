@@ -1,10 +1,7 @@
 {
-  "name": "tomato-backend",
+  "name": "tomato-catalog-admin",
   "version": "1.0.0",
-  "private": true,
   "dependencies": {
-    "@vercel/blob": "^0.27.0",
-    "google-auth-library": "^9.4.1",
-    "google-spreadsheet": "^4.1.1"
+    "@vercel/blob": "^0.27.0"
   }
 }
