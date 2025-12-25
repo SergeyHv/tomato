@@ -1,17 +1,14 @@
 import { put } from '@vercel/blob';
 
-export default async function handler(req, res) {
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== process.env.ADMIN_SECRET_KEY) return res.status(401).end();
+export const config = { api: { bodyParser: false } };
 
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).end();
   try {
-    const filename = req.headers['x-filename'] || 'tomato.jpg';
-    const blob = await put(`images/${filename}`, req, {
-      access: 'public',
-      contentType: req.headers['content-type']
-    });
-    res.status(200).json(blob);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+    const filename = req.headers['x-filename'] || 'photo.jpg';
+    const blob = await put(`products/${filename}`, req, { access: 'public' });
+    return res.status(200).json(blob);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 }
