@@ -2,55 +2,89 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="catalog.css">
-    <title>Админка Дачницы</title>
+    <title>Панель управления сортами</title>
 </head>
 <body>
     <div class="sidebar">
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Поиск томатов..." oninput="renderList()">
+            <input type="text" id="searchInput" placeholder="🔍 Поиск по названию или ID..." oninput="renderList()">
+            <button onclick="resetForm()" class="btn-add-new" title="Добавить новый">+</button>
         </div>
-        <div id="productList" class="product-list"></div>
+        <div id="productList" class="product-list">
+            </div>
     </div>
 
     <div class="main-content">
-        <h2 id="formTitle">Новый сорт</h2>
-        <form id="productForm">
-            <div class="form-group">
-                <label>ID (Артикул)</label>
-                <input type="text" id="id" placeholder="Например: 3476-zuzi">
+        <div class="header-form">
+            <h2 id="formTitle">Новый сорт</h2>
+            <hr>
+        </div>
+
+        <form id="productForm" onsubmit="event.preventDefault();">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Артикул (ID)</label>
+                    <input type="text" id="id" placeholder="3476-ot-zuzi-001">
+                </div>
+                <div class="form-group">
+                    <label>Название сорта</label>
+                    <input type="text" id="title" placeholder="Напр: 3476 от Zuzi">
+                </div>
             </div>
-            <div class="form-group">
-                <label>Название сорта</label>
-                <input type="text" id="title" required>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Цена (₽)</label>
+                    <input type="number" id="price" step="0.01" placeholder="1.5">
+                </div>
+                <div class="form-group">
+                    <label>Категория</label>
+                    <select id="category">
+                        <option value="tomatoes">Томаты</option>
+                        <option value="peppers">Перцы</option>
+                        <option value="other">Другое</option>
+                    </select>
+                </div>
             </div>
+
             <div class="form-group">
-                <label>Цена</label>
-                <input type="number" id="price" step="0.01">
+                <label>Изображение (URL)</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="images" placeholder="https://..." style="flex-grow: 1;">
+                    <button type="button" onclick="triggerUpload()" class="btn-upload">📁 Загрузить фото</button>
+                </div>
+                <small id="imageStatus" style="color: #6b8e23; font-weight: bold;"></small>
             </div>
-            <div class="form-group">
-                <label>Фото (ссылка)</label>
-                <input type="text" id="images">
-            </div>
-            <div class="form-group">
-                <label>Категория</label>
-                <select id="category">
-                    <option value="tomatoes">Томаты</option>
-                    <option value="peppers">Перцы</option>
-                </select>
-            </div>
+
             <div class="form-group">
                 <label>Описание</label>
-                <textarea id="description" rows="4"></textarea>
+                <textarea id="description" rows="3" placeholder="Тестовое описание товара..."></textarea>
             </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Теги (через запятую)</label>
+                    <input type="text" id="tags" placeholder="ранний, теплица">
+                </div>
+                <div class="form-group">
+                    <label>Наличие</label>
+                    <select id="stock">
+                        <option value="TRUE">В наличии</option>
+                        <option value="FALSE">Нет в наличии</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="form-group">
-                <label>Наличие</label>
-                <select id="stock">
-                    <option value="TRUE">Есть в наличии</option>
-                    <option value="FALSE">Нет в наличии</option>
-                </select>
+                <label>Свойства (props)</label>
+                <input type="text" id="props" placeholder="height=120 см; weight=30 г">
             </div>
-            <button type="button" class="btn-save" onclick="saveProduct()">Сохранить сорт</button>
+
+            <div style="margin-top: 30px;">
+                <button type="button" class="btn-save" onclick="saveProduct()">💾 Сохранить изменения</button>
+            </div>
         </form>
     </div>
 
