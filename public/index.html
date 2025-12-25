@@ -2,92 +2,78 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель Томатов</title>
     <link rel="stylesheet" href="catalog.css">
-    <title>Панель управления сортами</title>
+    <style>
+        .admin-panel { max-width: 800px; margin: 20px auto; font-family: sans-serif; }
+        .form-add { background: #f4f4f4; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .btn-del { color: red; cursor: pointer; border: none; background: none; }
+    </style>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="🔍 Поиск по названию или ID..." oninput="renderList()">
-            <button onclick="resetForm()" class="btn-add-new" title="Добавить новый">+</button>
-        </div>
-        <div id="productList" class="product-list">
-            </div>
-    </div>
+    <div class="admin-panel">
+        <h1>Управление коллекцией</h1>
 
-    <div class="main-content">
-        <div class="header-form">
-            <h2 id="formTitle">Новый сорт</h2>
-            <hr>
+        <div class="form-add">
+            <h3>Добавить новый сорт</h3>
+            <input type="text" id="newName" placeholder="Название сорта">
+            <input type="text" id="newPrice" placeholder="Цена">
+            <button onclick="addItem()">Добавить в базу</button>
         </div>
 
-        <form id="productForm" onsubmit="event.preventDefault();">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Артикул (ID)</label>
-                    <input type="text" id="id" placeholder="3476-ot-zuzi-001">
-                </div>
-                <div class="form-group">
-                    <label>Название сорта</label>
-                    <input type="text" id="title" placeholder="Напр: 3476 от Zuzi">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Цена (₽)</label>
-                    <input type="number" id="price" step="0.01" placeholder="1.5">
-                </div>
-                <div class="form-group">
-                    <label>Категория</label>
-                    <select id="category">
-                        <option value="tomatoes">Томаты</option>
-                        <option value="peppers">Перцы</option>
-                        <option value="other">Другое</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Изображение (URL)</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="images" placeholder="https://..." style="flex-grow: 1;">
-                    <button type="button" onclick="triggerUpload()" class="btn-upload">📁 Загрузить фото</button>
-                </div>
-                <small id="imageStatus" style="color: #6b8e23; font-weight: bold;"></small>
-            </div>
-
-            <div class="form-group">
-                <label>Описание</label>
-                <textarea id="description" rows="3" placeholder="Тестовое описание товара..."></textarea>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Теги (через запятую)</label>
-                    <input type="text" id="tags" placeholder="ранний, теплица">
-                </div>
-                <div class="form-group">
-                    <label>Наличие</label>
-                    <select id="stock">
-                        <option value="TRUE">В наличии</option>
-                        <option value="FALSE">Нет в наличии</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Свойства (props)</label>
-                <input type="text" id="props" placeholder="height=120 см; weight=30 г">
-            </div>
-
-            <div style="margin-top: 30px;">
-                <button type="button" class="btn-save" onclick="saveProduct()">💾 Сохранить изменения</button>
-            </div>
-        </form>
+        <table id="table">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Цена</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
     </div>
 
-    <script src="admin.js"></script>
+    <script>
+        // 1. Загрузка данных
+        async function load() {
+            const res = await fetch('/api/admin/products');
+            const data = await res.json();
+            const tbody = document.getElementById('tbody');
+            tbody.innerHTML = data.map(item => `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.price}</td>
+                    <td><button class="btn-del" onclick="deleteItem(${item.id})">❌ Удалить</button></td>
+                </tr>
+            `).join('');
+        }
+
+        // 2. Добавление данных
+        async function addItem() {
+            const name = document.getElementById('newName').value;
+            const price = document.getElementById('newPrice').value;
+            
+            await fetch('/api/admin/add-product', {
+                method: 'POST',
+                body: JSON.stringify({ name, price })
+            });
+            
+            document.getElementById('newName').value = '';
+            document.getElementById('newPrice').value = '';
+            load(); // Перерисовать таблицу
+        }
+
+        // 3. Удаление
+        async function deleteItem(id) {
+            if(confirm('Удалить?')) {
+                await fetch(`/api/admin/delete-product?id=${id}`);
+                load();
+            }
+        }
+
+        load();
+    </script>
 </body>
 </html>
