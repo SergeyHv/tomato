@@ -1,26 +1,41 @@
-import { put, list } from '@vercel/blob';
+import { GoogleSpreadsheet } from 'google-spreadsheet';
+import { JWT } from 'google-auth-library';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
-  
-  // Парсим входящие данные
-  const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-  
-  const { blobs } = await list();
-  const dbBlob = blobs.find(b => b.pathname === 'database.json');
-  
-  let products = [];
-  if (dbBlob) {
-    const response = await fetch(dbBlob.url);
-    products = await response.json();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Используйте POST' });
+
+  const { password, title, category, price, description, tags, images, props } = req.body;
+
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(403).json({ error: 'Неверный пароль' });
   }
 
-  products.push({ ...body, id: Date.now() });
+  try {
+    const auth = new JWT({
+      email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+      key: process.env.GOOGLE_SHEETS_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
 
-  await put('database.json', JSON.stringify(products), {
-    access: 'public',
-    addRandomSuffix: false
-  });
+    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_SPREADSHEET_ID, auth);
+    await doc.loadInfo();
+    const sheet = doc.sheetsByIndex[0];
 
-  res.status(200).json({ success: true });
+    await sheet.addRow({
+      id: Date.now().toString(),
+      title: title || "",
+      price: price || "0",
+      images: images || "",
+      category: category || "",
+      tags: tags || "",
+      description: description || "",
+      stock: "TRUE",
+      props: props || ""
+    });
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ details: error.message });
+  }
 }
