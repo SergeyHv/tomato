@@ -1,19 +1,16 @@
 import { put, list } from '@vercel/blob';
 
 export default async function handler(req, res) {
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== process.env.ADMIN_SECRET_KEY) return res.status(401).end();
-
   const { id } = req.query;
   const { blobs } = await list();
-  const db = blobs.find(b => b.pathname === 'products.json');
+  const dbBlob = blobs.find(b => b.pathname === 'database.json');
   
-  if (db) {
-    const response = await fetch(db.url);
+  if (dbBlob) {
+    const response = await fetch(dbBlob.url);
     let products = await response.json();
-    products = products.filter(p => p.id !== id);
+    products = products.filter(p => p.id !== parseInt(id));
     
-    await put('products.json', JSON.stringify(products), {
+    await put('database.json', JSON.stringify(products), {
       access: 'public',
       addRandomSuffix: false
     });
