@@ -1,9 +1,11 @@
 import { put, list } from '@vercel/blob';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+  if (req.method !== 'POST') return res.status(405).end();
   
-  const newProduct = req.body; // Ожидаем объект { name, description, ... }
+  // Парсим входящие данные
+  const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  
   const { blobs } = await list();
   const dbBlob = blobs.find(b => b.pathname === 'database.json');
   
@@ -13,7 +15,7 @@ export default async function handler(req, res) {
     products = await response.json();
   }
 
-  products.push({ ...newProduct, id: Date.now() });
+  products.push({ ...body, id: Date.now() });
 
   await put('database.json', JSON.stringify(products), {
     access: 'public',
