@@ -1,99 +1,17 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #f5f5f5;
-  margin: 0;
-  padding: 20px;
-}
-h1 {
-  margin-bottom: 10px;
-}
-.controls {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-.controls button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 5px;
-  background: #e63946;
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.controls button:hover {
-  background: #d62839;
-}
-.controls input, .controls select {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-.controls input {
-  flex: 1;
-  min-width: 200px;
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-}
-.card {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-.card:hover {
-  transform: translateY(-5px);
-}
-.card img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-}
-.card-content {
-  padding: 15px;
-}
-.card-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0 0 10px;
-}
-.card-tags {
-  font-size: 14px;
-  color: #555;
-}
-/* Модальное окно */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6);
-  justify-content: center;
-  align-items: center;
-}
-.modal-content {
-  background: #fff;
-  border-radius: 10px;
-  max-width: 600px;
-  width: 90%;
-  padding: 20px;
-  position: relative;
-}
-.modal-content img {
-  width: 100%;
-  border-radius: 10px;
-  margin-bottom: 15px;
-}
-.close {
-  position: absolute;
-  top: 10px; right: 15px;
-  font-size: 24px;
-  cursor: pointer;
-}
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f1; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+/* Левая панель: Список */
+.sidebar { width: 400px; background: white; border-right: 2px solid #e0e6d9; display: flex; flex-direction: column; }
+.search-box { padding: 15px; background: #6b8e23; color: white; }
+.search-box input { width: 100%; padding: 10px; border-radius: 5px; border: none; box-sizing: border-box; }
+.product-list { flex-grow: 1; overflow-y: auto; }
+.product-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; cursor: pointer; }
+.product-item:hover { background: #f0fdf4; }
+.product-item img { width: 50px; height: 50px; border-radius: 5px; margin-right: 10px; object-fit: cover; }
+
+/* Правая панель: Форма */
+.main-content { flex-grow: 1; padding: 30px; overflow-y: auto; background: white; margin: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+.form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+.btn-save { background: #2e7d32; color: white; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; }
+.btn-save:hover { background: #1b5e20; }
