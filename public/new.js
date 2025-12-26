@@ -1,3 +1,26 @@
+// ПРОВЕРКА ДОСТУПА ПРИ ЗАГРУЗКЕ
+const checkAccess = () => {
+    const pathParts = window.location.pathname.split('/');
+    const password = pathParts[pathParts.length - 1];
+
+    if (password !== 'khvalla74') {
+        // Если пароля нет или он неверный, очищаем экран и пишем "Доступ запрещен"
+        document.body.innerHTML = `
+            <div class="h-screen flex items-center justify-center bg-gray-900 text-white flex-col">
+                <h1 class="text-6xl mb-4 text-red-500">🔒 403</h1>
+                <p class="text-xl">Доступ ограничен. Обратитесь к администратору.</p>
+            </div>
+        `;
+        return false;
+    }
+    return true;
+};
+
+if (!checkAccess()) {
+    throw new Error("Unauthorized access"); // Останавливаем выполнение скрипта
+}
+
+// ... далее идет весь остальной ваш код (loadProducts и т.д.)
 let allProducts = [];
 
 // Достаем пароль из URL (из части /new/khvalla74)
