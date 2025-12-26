@@ -1,18 +1,18 @@
 (function() {
     console.log("🟢 Скрипт new.js успешно загружен"); // Маячок для консоли
 
-    const SECRET = 'khvalla74';
-    const pathParts = window.location.pathname.split('/');
-    const currentPass = pathParts[pathParts.length - 1];
+const SECRET = 'khvalla74';
+const ACCESS_KEY = 'tomato_admin_access';
 
-    // Если пароль неверный - блокируем экран
-    if (currentPass !== SECRET) {
-        console.error("🔴 Ошибка доступа: Неверный ключ в URL");
+if (!sessionStorage.getItem(ACCESS_KEY)) {
+    const pass = prompt('🔐 Введите ключ доступа');
+    if (pass !== SECRET) {
         document.body.innerHTML = '<div style="background:#111;color:white;height:100vh;display:flex;align-items:center;justify-content:center;font-family:sans-serif;font-size:24px">🔒 Доступ ограничен</div>';
-        return;
+        throw new Error('Access denied');
     }
+    sessionStorage.setItem(ACCESS_KEY, '1');
+}
 
-    let allProducts = [];
 
     // Универсальная транслитерация для ID
     const createSlug = (t) => {
