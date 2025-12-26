@@ -1,45 +1,62 @@
 (function () {
+  console.log("🍅 Tomato Admin загружен");
+
   const SECRET = 'khvalla74';
+  const ACCESS_KEY = 'tomato_admin_access';
   let allProducts = [];
+  let editId = null;
 
-  const createSlug = t =>
+  /* ---------- ПРОСТАЯ ЗАЩИТА ---------- */
+  if (!sessionStorage.getItem(ACCESS_KEY)) {
+    const pass = prompt('🔐 Введите ключ доступа');
+    if (pass !== SECRET) {
+      document.body.innerHTML = '<h1 style="padding:50px">🔒 Доступ запрещён</h1>';
+      throw new Error('Access denied');
+    }
+    sessionStorage.setItem(ACCESS_KEY, '1');
+  }
+
+  /* ---------- SLUG (ID) ---------- */
+  const slug = (t) =>
     t.toLowerCase()
-     .replace(/[^a-zа-я0-9]+/g, '-')
-     .replace(/(^-|-$)/g, '');
+      .replace(/ё/g, 'е')
+      .replace(/[^a-zа-я0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
 
+  /* ---------- ЗАГРУЗКА ТАБЛИЦЫ ---------- */
   async function loadProducts() {
     const res = await fetch('/api/admin/get-products');
     allProducts = await res.json();
-    render(allProducts);
-    countInfo.innerText = `Всего сортов: ${allProducts.length}`;
+    renderList(allProducts);
   }
 
-  function render(list) {
-    productList.innerHTML = list.map(p => `
-      <div class="p-3 bg-white border rounded-xl flex justify-between items-center">
-        <div>
-          <b>${p.title}</b>
-          <div class="text-sm text-gray-500">${p.category}</div>
-        </div>
-        <button onclick="edit('${p.id}')" title="Редактировать">✏️</button>
+  /* ---------- СПИСОК СОРТОВ ---------- */
+  function renderList(list) {
+    const box = document.getElementById('productList');
+    box.innerHTML = list.map(p => `
+      <div class="p-3 bg-white rounded-xl shadow flex justify-between items-center">
+        <span class="truncate">${p.title}</span>
+        <button onclick="editProduct('${p.id}')" title="Редактировать">✏️</button>
       </div>
     `).join('');
   }
 
-  window.edit = id => {
+  /* ---------- РЕДАКТИРОВАНИЕ ---------- */
+  window.editProduct = (id) => {
     const p = allProducts.find(x => x.id === id);
     if (!p) return;
 
+    editId = p.id;
+
     title.value = p.title;
-    category.value = p.category;
     price.value = p.price;
+    category.value = p.category;
     tags.value = p.tags;
     description.value = p.description;
-    stock.checked = p.stock === 'TRUE';
 
     const map = {};
-    (p.props || '').split(';').forEach(x => {
-      const [k, v] = x.split('=');
+    (p.props || '').split(';').forEach(i => {
+      const [k, v] = i.split('=');
       if (k) map[k] = v;
     });
 
@@ -47,52 +64,67 @@
     prop_height.value = map['Высота'] || '';
     prop_weight.value = map['Вес'] || '';
 
+    document.getElementById('formTitle').innerText = '✏️ Редактирование сорта';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  productForm.onsubmit = async e => {
+  /* ---------- СОХРАНЕНИЕ ---------- */
+  productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.innerText = '⏳ Сохранение...';
+
+    let imageUrl = '';
+
+    const file = imageUpload.files[0];
+    if (file) {
+      const up = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: { 'x-filename': encodeURIComponent(file.name) },
+        body: file
+      });
+      const r = await up.json();
+      imageUrl = r.url;
+    } else if (editId) {
+      imageUrl = allProducts.find(p => p.id === editId)?.images || '';
+    }
 
     const props =
       `Срок=${prop_term.value};` +
       `Высота=${prop_height.value};` +
       `Вес=${prop_weight.value}`;
 
-    const res = await fetch('/api/admin/add-product', {
+    await fetch('/api/admin/add-product', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         password: SECRET,
-        id: createSlug(title.value),
+        id: editId || slug(title.value),
         title: title.value,
-        category: category.value,
         price: price.value,
+        images: imageUrl,
+        category: category.value,
         tags: tags.value,
         description: description.value,
-        images: '',
-        stock: stock.checked ? 'TRUE' : 'FALSE',
+        stock: "TRUE",
         props
       })
     });
 
-    if (res.ok) {
-      alert('Сорт сохранён 🌱');
-      productForm.reset();
-      loadProducts();
-    } else {
-      alert('Ошибка сохранения');
-    }
-  };
+    alert('✅ Сохранено!');
+    productForm.reset();
+    editId = null;
+    document.getElementById('formTitle').innerText = '➕ Новый сорт';
+    submitBtn.disabled = false;
+    submitBtn.innerText = '🚀 Сохранить';
+    loadProducts();
+  });
 
-  searchInput.oninput = e =>
-    render(allProducts.filter(p =>
-      p.title.toLowerCase().includes(e.target.value.toLowerCase())
-    ));
-
-  filterCategory.onchange = e =>
-    render(allProducts.filter(p =>
-      !e.target.value || p.category === e.target.value
-    ));
+  /* ---------- ПОИСК ---------- */
+  searchInput.addEventListener('input', e => {
+    const t = e.target.value.toLowerCase();
+    renderList(allProducts.filter(p => p.title.toLowerCase().includes(t)));
+  });
 
   loadProducts();
 })();
