@@ -28,14 +28,16 @@ export default async function handler(req, res) {
     const filename =
       decodeURIComponent(req.headers['x-filename'] || 'image.jpg');
 
-    const blob = await put(filename, req, {
-      access: 'public'
-    });
+    const blob = await put(
+      `products/${Date.now()}-${filename}`,
+      req,
+      { access: 'public' }
+    );
 
     return res.status(200).json({ url: blob.url });
 
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error('UPLOAD ERROR:', err);
+    return res.status(500).json({ error: err.message });
   }
 }
