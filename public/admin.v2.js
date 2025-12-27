@@ -2,6 +2,7 @@
 
   let allProducts = [];
   let editId = null;
+  let lastUploadedImage = ''; // ← ВАЖНО
 
   const $ = id => document.getElementById(id);
 
@@ -31,7 +32,7 @@
     if (!toast) return alert(text);
     toast.innerText = text;
     toast.className =
-      `fixed bottom-5 right-5 px-6 py-4 rounded-xl text-white text-lg shadow-lg ${
+      `fixed bottom-5 right-5 px-6 py-4 rounded-xl text-white ${
         ok ? 'bg-green-600' : 'bg-red-600'
       }`;
     toast.classList.remove('hidden');
@@ -40,6 +41,7 @@
 
   function resetForm() {
     editId = null;
+    lastUploadedImage = '';
     productForm.reset();
     if (imagePreview) imagePreview.classList.add('hidden');
     if (formTitle) formTitle.innerText = '➕ Новый сорт';
@@ -51,18 +53,16 @@
 
     productList.innerHTML = allProducts.map(p => `
       <div class="p-2 border rounded-xl flex items-center gap-3 bg-white">
-
-        <div class="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center text-xl">
-          ${p.images ? `<img src="${p.images}" class="w-12 h-12 rounded-lg object-cover">` : '🍅'}
+        <div class="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center">
+          ${p.images
+            ? `<img src="${p.images}" class="w-12 h-12 rounded-lg object-cover">`
+            : '🍅'}
         </div>
-
         <div class="flex-1 truncate">
           <div class="font-semibold text-sm">${p.title}</div>
           <div class="text-xs text-gray-500">${p.category || ''}</div>
         </div>
-
         <button onclick="edit('${p.id}')">✏️</button>
-        <button onclick="del('${p.id}')">🗑</button>
       </div>
     `).join('');
   }
@@ -72,8 +72,9 @@
     if (!p) return;
 
     editId = id;
-    if (formTitle) formTitle.innerText = '✏️ Редактирование сорта';
+    lastUploadedImage = p.images || '';
 
+    formTitle.innerText = '✏️ Редактирование сорта';
     titleInput.value = p.title || '';
     categoryInput.value = p.category || '';
     priceInput.value = p.price || '';
@@ -96,34 +97,14 @@
     }
   };
 
-  window.del = async id => {
-    const p = allProducts.find(x => x.id === id);
-    if (!p) return;
-    if (!confirm(`Удалить сорт «${p.title}»?`)) return;
-
-    await fetch('/api/admin/delete-product', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
-    });
-
-    toastMsg('🗑 Сорт удалён');
-    resetForm();
-    loadProducts();
-  };
-
   productForm.onsubmit = async e => {
     e.preventDefault();
 
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerText = '⏳ Сохраняем…';
-    }
+    submitBtn.disabled = true;
+    submitBtn.innerText = '⏳ Сохраняем…';
 
     try {
-      let imageUrl = '';
-
-      if (imageUpload && imageUpload.files[0]) {
+      if (imageUpload.files[0]) {
         const up = await fetch('/api/admin/upload', {
           method: 'POST',
           headers: {
@@ -131,9 +112,7 @@
           },
           body: imageUpload.files[0]
         });
-        imageUrl = (await up.json()).url;
-      } else if (editId) {
-        imageUrl = allProducts.find(p => p.id === editId)?.images || '';
+        lastUploadedImage = (await up.json()).url;
       }
 
       const props =
@@ -148,7 +127,7 @@
           id: savedId,
           title: titleInput.value,
           price: priceInput.value,
-          images: imageUrl,
+          images: lastUploadedImage, // ← ВСЕГДА
           category: categoryInput.value,
           tags: tagsInput.value,
           description: descInput.value,
@@ -157,18 +136,16 @@
         })
       });
 
-      toastMsg(editId ? '✅ Сорт обновлён' : '✅ Сорт добавлен');
+      toastMsg(editId ? '✅ Обновлено' : '✅ Добавлено');
       resetForm();
       loadProducts();
 
     } catch (err) {
       console.error(err);
-      toastMsg('❌ Ошибка сохранения', false);
+      toastMsg('❌ Ошибка', false);
     } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerText = '💾 Сохранить сорт';
-      }
+      submitBtn.disabled = false;
+      submitBtn.innerText = '💾 Сохранить сорт';
     }
   };
 
