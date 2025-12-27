@@ -34,15 +34,23 @@
         ok ? 'bg-green-600' : 'bg-red-600'
       }`;
     toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 2500);
+    setTimeout(() => toast.classList.add('hidden'), 2000);
   }
 
-  async function loadProducts() {
+  function resetFormToAddMode() {
+    editId = null;
+    productForm.reset();
+    if (imagePreview) imagePreview.classList.add('hidden');
+    if (formTitle) formTitle.innerText = '➕ Новый сорт';
+  }
+
+  async function loadProducts(highlightId = null) {
     const res = await fetch('/api/admin/get-products');
     allProducts = await res.json();
 
     productList.innerHTML = allProducts.map(p => `
-      <div class="p-2 border rounded-xl flex items-center gap-3 bg-white">
+      <div class="p-2 border rounded-xl flex items-center gap-3 bg-white
+        ${p.id === highlightId ? 'bg-green-50 border-green-400' : ''}">
 
         <img
           src="${p.images || 'https://via.placeholder.com/48x48?text=🍅'}"
@@ -86,12 +94,14 @@
       imagePreview.src = p.images;
       imagePreview.classList.remove('hidden');
     }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   window.del = async id => {
     const p = allProducts.find(x => x.id === id);
     if (!p) return;
-    if (!confirm(`Удалить сорт "${p.title}"?`)) return;
+    if (!confirm(`Удалить сорт «${p.title}»?`)) return;
 
     await fetch('/api/admin/delete-product', {
       method: 'POST',
@@ -99,53 +109,71 @@
       body: JSON.stringify({ password: SECRET, id })
     });
 
-    toastMsg('🗑 Удалено');
+    toastMsg('🗑 Сорт удалён');
+    if (editId === id) resetFormToAddMode();
     loadProducts();
   };
 
   productForm.onsubmit = async e => {
     e.preventDefault();
 
-    let imageUrl = '';
-    if (imageUpload && imageUpload.files[0]) {
-      const up = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: {
-          'x-filename': encodeURIComponent(imageUpload.files[0].name),
-          'x-admin-password': SECRET
-        },
-        body: imageUpload.files[0]
-      });
-      imageUrl = (await up.json()).url;
-    } else if (editId) {
-      imageUrl = allProducts.find(p => p.id === editId)?.images || '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerText = '⏳ Сохраняем…';
     }
 
-    const props =
-      `Срок=${propTerm.value};Высота=${propHeight.value};Вес=${propWeight.value}`;
+    try {
+      let imageUrl = '';
 
-    await fetch('/api/admin/add-product', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        password: SECRET,
-        id: editId || slug(titleInput.value),
-        title: titleInput.value,
-        price: priceInput.value,
-        images: imageUrl,
-        category: categoryInput.value,
-        tags: tagsInput.value,
-        description: descInput.value,
-        stock: 'TRUE',
-        props
-      })
-    });
+      if (imageUpload && imageUpload.files[0]) {
+        const up = await fetch('/api/admin/upload', {
+          method: 'POST',
+          headers: {
+            'x-filename': encodeURIComponent(imageUpload.files[0].name),
+            'x-admin-password': SECRET
+          },
+          body: imageUpload.files[0]
+        });
+        imageUrl = (await up.json()).url;
+      } else if (editId) {
+        imageUrl = allProducts.find(p => p.id === editId)?.images || '';
+      }
 
-    toastMsg(editId ? '✅ Обновлено' : '✅ Добавлено');
-    editId = null;
-    productForm.reset();
-    if (imagePreview) imagePreview.classList.add('hidden');
-    loadProducts();
+      const props =
+        `Срок=${propTerm.value};Высота=${propHeight.value};Вес=${propWeight.value}`;
+
+      const savedId = editId || slug(titleInput.value);
+
+      await fetch('/api/admin/add-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: SECRET,
+          id: savedId,
+          title: titleInput.value,
+          price: priceInput.value,
+          images: imageUrl,
+          category: categoryInput.value,
+          tags: tagsInput.value,
+          description: descInput.value,
+          stock: 'TRUE',
+          props
+        })
+      });
+
+      toastMsg(editId ? '✅ Сорт обновлён' : '✅ Сорт добавлен');
+      resetFormToAddMode();
+      loadProducts(savedId);
+
+    } catch (err) {
+      console.error(err);
+      toastMsg('❌ Ошибка сохранения', false);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = '💾 Сохранить сорт';
+      }
+    }
   };
 
   loadProducts();
