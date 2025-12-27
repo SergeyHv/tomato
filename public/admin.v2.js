@@ -148,14 +148,14 @@
         `Высота=${propHeight.value};` +
         `Вес=${propWeight.value}`;
 
-      await fetch('/api/admin/save-product', {
+      await fetch('/api/admin/add-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id,
           title: titleInput.value,
-          category: categoryInput.value,
           price: priceInput.value,
+          category: categoryInput.value,
           tags: tagsInput.value,
           description: descInput.value,
           props,
