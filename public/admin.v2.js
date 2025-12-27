@@ -22,7 +22,6 @@
   const submitBtn     = $('submitBtn');
   const formTitle     = $('formTitle');
 
-  /* ===== НОРМАЛЬНАЯ ТРАНСЛИТЕРАЦИЯ ===== */
   const translit = str => {
     const map = {
       а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',
@@ -77,11 +76,11 @@
 
     formTitle.innerText = '✏️ Редактирование сорта';
 
-    titleInput.value = p.title;
-    categoryInput.value = p.category;
-    priceInput.value = p.price;
-    tagsInput.value = p.tags;
-    descInput.value = p.description;
+    titleInput.value = p.title || '';
+    categoryInput.value = p.category || '';
+    priceInput.value = p.price || '';
+    tagsInput.value = p.tags || '';
+    descInput.value = p.description || '';
 
     const map = {};
     (p.props || '').split(';').forEach(x => {
@@ -146,4 +145,36 @@
 
       const props =
         `Срок=${propTerm.value};` +
-        `Высота=${propHeight.value
+        `Высота=${propHeight.value};` +
+        `Вес=${propWeight.value}`;
+
+      await fetch('/api/admin/save-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          title: titleInput.value,
+          category: categoryInput.value,
+          price: priceInput.value,
+          tags: tagsInput.value,
+          description: descInput.value,
+          props,
+          images: imageUrl
+        })
+      });
+
+      resetForm();
+      await loadProducts();
+
+    } catch (err) {
+      alert('Ошибка сохранения');
+      console.error(err);
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.innerText = '💾 Сохранить';
+  };
+
+  loadProducts();
+
+})();
