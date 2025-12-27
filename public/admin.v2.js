@@ -22,11 +22,12 @@
   const submitBtn     = $('submitBtn');
   const formTitle     = $('formTitle');
 
+  /* ===== SLUG (ТОЛЬКО ДЛЯ НОВЫХ) ===== */
   const slug = t =>
     t.toLowerCase()
-     .replace(/ё/g,'е')
-     .replace(/[^a-zа-я0-9]+/g,'-')
-     .replace(/^-+|-+$/g,'');
+     .replace(/ё/g, 'е')
+     .replace(/[^a-z0-9]+/g, '-')
+     .replace(/^-+|-+$/g, '');
 
   function resetForm() {
     editId = null;
@@ -44,18 +45,20 @@
     productList.innerHTML = allProducts.map(p => `
       <div class="p-2 border rounded-xl flex items-center gap-3 bg-white">
         <div class="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center">
-          ${p.images ? `<img src="${p.images}" class="w-12 h-12 rounded-lg object-cover">` : '🍅'}
+          ${p.images
+            ? `<img src="${p.images}" class="w-12 h-12 rounded-lg object-cover">`
+            : '🍅'}
         </div>
         <div class="flex-1 truncate">
           <div class="font-semibold text-sm">${p.title}</div>
           <div class="text-xs text-gray-500">${p.category || ''}</div>
         </div>
-        <button onclick="edit('${p.id}')">✏️</button>
+        <button onclick="editProduct('${p.id}')">✏️</button>
       </div>
     `).join('');
   }
 
-  window.edit = id => {
+  window.editProduct = id => {
     const p = allProducts.find(x => x.id === id);
     if (!p) return;
 
@@ -64,15 +67,16 @@
     imageName = '';
 
     formTitle.innerText = '✏️ Редактирование сорта';
-    titleInput.value = p.title;
-    categoryInput.value = p.category;
-    priceInput.value = p.price;
-    tagsInput.value = p.tags;
-    descInput.value = p.description;
+
+    titleInput.value = p.title || '';
+    categoryInput.value = p.category || '';
+    priceInput.value = p.price || '';
+    tagsInput.value = p.tags || '';
+    descInput.value = p.description || '';
 
     const map = {};
     (p.props || '').split(';').forEach(x => {
-      const [k,v] = x.split('=');
+      const [k, v] = x.split('=');
       if (k) map[k] = v;
     });
 
@@ -108,6 +112,26 @@
     submitBtn.innerText = '⏳ Сохраняем…';
 
     try {
+      /* ===== ID: ЖЁСТКАЯ ЛОГИКА ===== */
+      let id;
+
+      if (editId) {
+        // 🔒 редактирование — ID ТОЛЬКО из таблицы
+        id = editId;
+      } else {
+        // ➕ новый сорт — генерируем
+        id = slug(titleInput.value);
+
+        // 🚫 защита от кириллицы
+        if (!/^[a-z0-9-]+$/.test(id)) {
+          alert('Ошибка: ID должен быть латиницей');
+          submitBtn.disabled = false;
+          submitBtn.innerText = '💾 Сохранить сорт';
+          return;
+        }
+      }
+
+      /* ===== ФОТО ===== */
       let imageUrl = '';
 
       if (imageBase64) {
@@ -119,15 +143,17 @@
             base64: imageBase64
           })
         });
-        imageUrl = (await up.json()).url;
+
+        const r = await up.json();
+        imageUrl = r.url;
       } else if (editId) {
         imageUrl = allProducts.find(p => p.id === editId)?.images || '';
       }
 
       const props =
-        `Срок=${propTerm.value};Высота=${propHeight.value};Вес=${propWeight.value}`;
-
-      const id = editId || slug(titleInput.value);
+        `Срок=${propTerm.value};` +
+        `Высота=${propHeight.value};` +
+        `Вес=${propWeight.value}`;
 
       await fetch('/api/admin/add-product', {
         method: 'POST',
@@ -148,9 +174,9 @@
       resetForm();
       loadProducts();
 
-    } catch (e) {
+    } catch (err) {
+      console.error(err);
       alert('Ошибка сохранения');
-      console.error(e);
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerText = '💾 Сохранить сорт';
