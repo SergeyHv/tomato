@@ -26,8 +26,8 @@
   const slug = t =>
     t.toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9]+/g,'-').replace(/^-+|-+$/g,'');
 
-  function notify(text, ok = true) {
-    if (!toast) { alert(text); return; }
+  function toastMsg(text, ok = true) {
+    if (!toast) return alert(text);
     toast.innerText = text;
     toast.className =
       `fixed bottom-5 right-5 px-6 py-4 rounded-xl text-white text-lg shadow-lg ${
@@ -37,13 +37,12 @@
     setTimeout(() => toast.classList.add('hidden'), 2500);
   }
 
-  async function loadProducts(highlightId = null) {
+  async function loadProducts() {
     const res = await fetch('/api/admin/get-products');
     allProducts = await res.json();
 
     productList.innerHTML = allProducts.map(p => `
-      <div class="p-2 border rounded-xl flex items-center gap-3
-        ${p.id === highlightId ? 'bg-green-50 border-green-400' : 'bg-white'}">
+      <div class="p-2 border rounded-xl flex items-center gap-3 bg-white">
 
         <img
           src="${p.images || 'https://via.placeholder.com/48x48?text=🍅'}"
@@ -54,24 +53,24 @@
           <div class="text-xs text-gray-500">${p.category || ''}</div>
         </div>
 
-        <button onclick="window.__edit('${p.id}')" title="Редактировать">✏️</button>
-        <button onclick="window.__delete('${p.id}')" title="Удалить">🗑</button>
+        <button onclick="edit('${p.id}')">✏️</button>
+        <button onclick="del('${p.id}')">🗑</button>
       </div>
     `).join('');
   }
 
-  window.__edit = id => {
+  window.edit = id => {
     const p = allProducts.find(x => x.id === id);
     if (!p) return;
 
     editId = id;
     if (formTitle) formTitle.innerText = '✏️ Редактирование сорта';
 
-    titleInput.value    = p.title || '';
+    titleInput.value = p.title || '';
     categoryInput.value = p.category || '';
-    priceInput.value    = p.price || '';
-    tagsInput.value     = p.tags || '';
-    descInput.value     = p.description || '';
+    priceInput.value = p.price || '';
+    tagsInput.value = p.tags || '';
+    descInput.value = p.description || '';
 
     const map = {};
     (p.props || '').split(';').forEach(x => {
@@ -79,7 +78,7 @@
       if (k) map[k] = v;
     });
 
-    propTerm.value   = map['Срок'] || '';
+    propTerm.value = map['Срок'] || '';
     propHeight.value = map['Высота'] || '';
     propWeight.value = map['Вес'] || '';
 
@@ -87,15 +86,12 @@
       imagePreview.src = p.images;
       imagePreview.classList.remove('hidden');
     }
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  window.__delete = async id => {
+  window.del = async id => {
     const p = allProducts.find(x => x.id === id);
     if (!p) return;
-
-    if (!confirm(`Удалить сорт:\n\n${p.title}\n\nБезвозвратно?`)) return;
+    if (!confirm(`Удалить сорт "${p.title}"?`)) return;
 
     await fetch('/api/admin/delete-product', {
       method: 'POST',
@@ -103,36 +99,12 @@
       body: JSON.stringify({ password: SECRET, id })
     });
 
-    notify('🗑 Сорт удалён');
-    if (editId === id) {
-      productForm.reset();
-      if (imagePreview) imagePreview.classList.add('hidden');
-      editId = null;
-      if (formTitle) formTitle.innerText = '➕ Новый сорт';
-    }
+    toastMsg('🗑 Удалено');
     loadProducts();
   };
 
-  if (imageUpload && imagePreview) {
-    imageUpload.onchange = () => {
-      const f = imageUpload.files[0];
-      if (!f) return;
-      const r = new FileReader();
-      r.onload = e => {
-        imagePreview.src = e.target.result;
-        imagePreview.classList.remove('hidden');
-      };
-      r.readAsDataURL(f);
-    };
-  }
-
   productForm.onsubmit = async e => {
     e.preventDefault();
-
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerText = '⏳ Сохраняем…';
-    }
 
     let imageUrl = '';
     if (imageUpload && imageUpload.files[0]) {
@@ -150,13 +122,31 @@
     }
 
     const props =
-      `Срок=${propTerm.value};` +
-      `Высота=${propHeight.value};` +
-      `Вес=${propWeight.value}`;
+      `Срок=${propTerm.value};Высота=${propHeight.value};Вес=${propWeight.value}`;
 
     await fetch('/api/admin/add-product', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         password: SECRET,
-        id: editId
+        id: editId || slug(titleInput.value),
+        title: titleInput.value,
+        price: priceInput.value,
+        images: imageUrl,
+        category: categoryInput.value,
+        tags: tagsInput.value,
+        description: descInput.value,
+        stock: 'TRUE',
+        props
+      })
+    });
+
+    toastMsg(editId ? '✅ Обновлено' : '✅ Добавлено');
+    editId = null;
+    productForm.reset();
+    if (imagePreview) imagePreview.classList.add('hidden');
+    loadProducts();
+  };
+
+  loadProducts();
+})();
