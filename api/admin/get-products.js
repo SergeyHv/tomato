@@ -1,9 +1,24 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 
+/* ===== BASIC AUTH ===== */
+function checkAuth(req) {
+  const auth = req.headers.authorization || '';
+  if (!auth.startsWith('Basic ')) return false;
+
+  const decoded = Buffer.from(auth.split(' ')[1], 'base64').toString();
+  const [user, pass] = decoded.split(':');
+
+  return (
+    user === process.env.ADMIN_USER &&
+    pass === process.env.ADMIN_PASSWORD
+  );
+}
+
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'GET only' });
+  if (!checkAuth(req)) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
+    return res.status(401).end('Unauthorized');
   }
 
   try {
@@ -13,28 +28,31 @@ export default async function handler(req, res) {
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
-    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_SPREADSHEET_ID, auth);
-    await doc.loadInfo();
+    const doc = new GoogleSpreadsheet(
+      process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+      auth
+    );
 
+    await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
     const rows = await sheet.getRows();
 
-    const get = (row, key) => String(row.get(key) || '').trim();
-
     const products = rows.map(row => ({
-      id: get(row, 'id'),
-      title: get(row, 'title'),
-      price: get(row, 'price'),
-      images: get(row, 'images'),
-      category: get(row, 'category'),
-      tags: get(row, 'tags'),
-      description: get(row, 'description'),
-      props: get(row, 'props')
+      id: row.get('id') || '',
+      title: row.get('title') || '',
+      price: row.get('price') || '',
+      images: row.get('images') || '',
+      category: row.get('category') || '',
+      tags: row.get('tags') || '',
+      description: row.get('description') || '',
+      stock: row.get('stock') || '',
+      props: row.get('props') || ''
     }));
 
-    res.status(200).json(products);
+    return res.status(200).json(products);
 
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
   }
 }
