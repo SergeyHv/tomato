@@ -1,41 +1,10 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 
-/* ===== BASIC AUTH ===== */
-function checkAuth(req) {
-  const auth = req.headers.authorization || '';
-  if (!auth.startsWith('Basic ')) return false;
-
-  const decoded = Buffer.from(auth.split(' ')[1], 'base64').toString();
-  const [user, pass] = decoded.split(':');
-
-  return (
-    user === process.env.ADMIN_USER &&
-    pass === process.env.ADMIN_PASSWORD
-  );
-}
-
 export default async function handler(req, res) {
-  if (!checkAuth(req)) {
-    res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
-    return res.status(401).end('Unauthorized');
-  }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'POST only' });
   }
-
-  const {
-    id,
-    title,
-    category,
-    price,
-    description,
-    tags,
-    images,   // ⚠️ может быть ""
-    stock,
-    props
-  } = req.body;
 
   try {
     const auth = new JWT({
@@ -50,45 +19,27 @@ export default async function handler(req, res) {
     );
 
     await doc.loadInfo();
-    const sheet = doc.sheetsByIndex[0];
-    const rows = await sheet.getRows();
 
-    const existingRow = rows.find(r => r.get('id') === id);
+    // 🔥 ЯВНО УКАЗЫВАЕМ ЛИСТ
+    const sheet = doc.sheetsByTitle['Sheet1'] || doc.sheetsByIndex[0];
 
-    const baseData = {
-      id,
-      title,
-      category,
-      price: price || '',
-      tags: tags || '',
-      description: description || '',
-      stock: stock || 'TRUE',
-      props: props || ''
-    };
-
-    if (existingRow) {
-      // 🔒 ВАЖНО: images обновляем ТОЛЬКО если оно реально пришло
-      Object.assign(existingRow, baseData);
-
-      if (images && images.trim() !== '') {
-        existingRow.images = images;
-      }
-
-      await existingRow.save();
-
-      return res.status(200).json({ success: true, mode: 'updated' });
-    }
-
-    // ➕ новый сорт — images пишем как есть
+    // 🧪 ЖЁСТКАЯ ТЕСТОВАЯ ЗАПИСЬ
     await sheet.addRow({
-      ...baseData,
-      images: images || ''
+      id: 'TEST-ID',
+      title: 'TEST TITLE',
+      price: '123',
+      images: 'https://TEST-IMAGE-URL',
+      category: 'TEST',
+      tags: 'TEST',
+      description: 'TEST DESC',
+      stock: 'TRUE',
+      props: 'TEST'
     });
 
-    return res.status(200).json({ success: true, mode: 'added' });
+    return res.status(200).json({ success: true });
 
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: error.message });
+  } catch (e) {
+    console.error('ADD ERROR:', e);
+    return res.status(500).json({ error: e.message });
   }
 }
