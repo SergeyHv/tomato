@@ -33,7 +33,6 @@ const formTitle = $('formTitle');
 
 let cancelBtn = null;
 
-/* ===== TRANSLIT ===== */
 const translit = str => {
   const map = {
     а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',
@@ -41,17 +40,13 @@ const translit = str => {
     р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'c',
     ч:'ch',ш:'sh',щ:'sch',ы:'y',э:'e',ю:'yu',я:'ya'
   };
-
-  return str
-    .toLowerCase()
-    .split('')
+  return str.toLowerCase().split('')
     .map(ch => map[ch] || ch)
     .join('')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 };
 
-/* ===== UI ===== */
 const ui = {
   render(list) {
     renderDesktop(productListDesktop, list);
@@ -59,10 +54,8 @@ const ui = {
   }
 };
 
-/* ===== IMAGE ===== */
 bindImageUpload(imageUpload, imagePreview, state);
 
-/* ===== EXIT EDIT ===== */
 function exitEditMode() {
   state.editId = null;
   state.imageBase64 = '';
@@ -70,18 +63,15 @@ function exitEditMode() {
   productForm.reset();
   imagePreview.classList.add('hidden');
   formTitle.innerText = '➕ Новый сорт';
-
   if (cancelBtn) {
     cancelBtn.remove();
     cancelBtn = null;
   }
 }
 
-/* ===== LIST ===== */
 bindListActions(productListDesktop, {
   onEdit(id) {
     if (isMobile()) return;
-
     const p = state.allProducts.find(x => x.id === id);
     if (!p) return;
 
@@ -119,8 +109,6 @@ bindListActions(productListDesktop, {
       cancelBtn.onclick = exitEditMode;
       submitBtn.after(cancelBtn);
     }
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 
   async onDelete(id) {
@@ -132,10 +120,8 @@ bindListActions(productListDesktop, {
   }
 });
 
-/* ===== SAVE ===== */
 productForm.onsubmit = async e => {
   e.preventDefault();
-
   submitBtn.disabled = true;
   submitBtn.innerText = '⏳ Сохраняем…';
 
@@ -159,23 +145,14 @@ productForm.onsubmit = async e => {
     );
 
     exitEditMode();
+    await loadAll(state, ui);
 
-    // 🔴 даже если это упадёт — кнопка всё равно вернётся
-    try {
-      await loadAll(state, ui);
-    } catch (e) {
-      console.warn('Не удалось обновить список', e);
-    }
-
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
     showToast(toast, 'Ошибка сохранения', false);
-  } finally {
-    // 🔥 КЛЮЧЕВОЕ МЕСТО
-    submitBtn.disabled = false;
-    submitBtn.innerText = '💾 Сохранить сорт';
   }
+
+  submitBtn.disabled = false;
+  submitBtn.innerText = '💾 Сохранить сорт';
 };
 
-/* ===== INIT ===== */
 loadAll(state, ui);
