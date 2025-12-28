@@ -98,7 +98,7 @@
     searchMobile.addEventListener('input', e => filterProducts(e.target.value));
   }
 
-  /* ===== РЕДАКТИРОВАНИЕ / УДАЛЕНИЕ (ПК) ===== */
+  /* ===== РЕДАКТИРОВАНИЕ ===== */
 
   window.editProduct = id => {
     if (isMobile()) return;
@@ -137,13 +137,11 @@
 
   window.deleteProduct = async id => {
     if (!confirm('Удалить сорт?')) return;
-
     await fetch('/api/admin/delete-product', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id })
     });
-
     await loadProducts();
   };
 
@@ -176,6 +174,7 @@
       const id = editId || translit(titleInput.value);
       let imageUrl = '';
 
+      // 🔴 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: если выбрали новое фото — всегда грузим
       if (imageBase64) {
         const up = await fetch('/api/admin/upload', {
           method: 'POST',
