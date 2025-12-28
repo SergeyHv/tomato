@@ -2,47 +2,41 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>🍅 MINIMAL ADMIN</title>
+  <title>🍅 Мгновенная Админка</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-5">
-<div id="app" class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+<body class="bg-gray-50 p-4 font-sans">
+<div id="app" class="max-w-md mx-auto">
 
-  <section>
-    <h2 class="text-xl font-bold mb-4">Сорта ({{ products.length }})</h2>
-    <div class="space-y-2">
-      <div v-for="p in products" :key="p.id" class="p-3 bg-white shadow rounded-xl flex justify-between items-center">
-        <div>
-          <div class="font-bold">{{ p.title }}</div>
-          <div class="text-xs text-gray-400">{{ p.category }}</div>
-        </div>
-        <button @click="remove(p.id)" class="text-red-500 font-bold p-2">УДАЛИТЬ</button>
+  <h1 class="text-2xl font-black text-red-600 mb-6 uppercase tracking-tighter">🍅 Управление</h1>
+
+  <div class="bg-white p-6 rounded-3xl shadow-xl mb-8 border border-red-50">
+    <input v-model="title" placeholder="Название сорта..." 
+           class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-red-500 text-lg mb-4">
+    
+    <button @click="fastAdd" :disabled="!title"
+            class="w-full bg-red-600 text-white py-4 rounded-2xl font-bold text-lg active:scale-95 transition-all shadow-lg shadow-red-200">
+      ДОБАВИТЬ СЕЙЧАС
+    </button>
+  </div>
+
+  <div class="space-y-3">
+    <div v-for="p in products" :key="p.id" 
+         class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center animate-in fade-in duration-300">
+      <div>
+        <div class="font-bold text-gray-800">{{ p.title }}</div>
+        <div class="text-[10px] text-gray-400 uppercase">{{ p.id }}</div>
       </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="bg-white p-6 rounded-2xl shadow-lg sticky top-5">
-      <h2 class="text-xl font-bold mb-4">Добавить сорт</h2>
-      <input v-model="form.title" placeholder="Название" class="w-full p-3 border rounded-xl mb-3 outline-none focus:ring-2 focus:ring-red-500">
-      
-      <select v-model="form.category" class="w-full p-3 border rounded-xl mb-3">
-        <option value="Dwarf">Гном</option>
-        <option value="Det">Низкий</option>
-        <option value="Indet">Высокий</option>
-      </select>
-
-      <button @click="add" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold hover:bg-red-700 active:scale-95 transition">
-        ДОБАВИТЬ МГНОВЕННО
+      <button @click="fastRemove(p.id)" class="bg-gray-50 text-red-500 w-10 h-10 rounded-xl flex items-center justify-center hover:bg-red-50 transition-colors">
+        🗑
       </button>
-
-      <p class="mt-4 text-[10px] text-gray-400 uppercase tracking-widest text-center">
-        Статус: {{ status }}
-      </p>
     </div>
-  </section>
+  </div>
 
+  <div v-if="syncing" class="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-full text-xs animate-pulse shadow-2xl">
+    ☁️ Синхронизация с таблицей...
+  </div>
 </div>
 
 <script>
@@ -52,57 +46,62 @@ createApp({
   data() {
     return {
       products: [],
-      status: 'Готов',
-      form: { title: '', category: 'Dwarf' }
+      title: '',
+      syncing: false
     };
   },
   methods: {
-    // 1. МГНОВЕННАЯ ЗАГРУЗКА ПРИ СТАРТЕ
+    // ЗАГРУЗКА
     async load() {
-      const r = await fetch('/api/admin/get-products');
-      this.products = await r.json();
+      try {
+        const r = await fetch('/api/admin/get-products');
+        this.products = await r.json();
+      } catch (e) { console.error("Ошибка загрузки"); }
     },
 
-    // 2. МГНОВЕННОЕ ДОБАВЛЕНИЕ
-    add() {
-      if (!this.form.title) return;
-      this.status = 'Сохранение в фоне...';
+    // МГНОВЕННОЕ ДОБАВЛЕНИЕ
+    fastAdd() {
+      const newObj = { 
+        id: 't' + Date.now(), 
+        title: this.title, 
+        category: 'Dwarf' 
+      };
 
-      const newId = 't' + Date.now();
-      const newProduct = { id: newId, title: this.form.title, category: this.form.category };
+      // ШАГ 1: СРАЗУ НА ЭКРАН (не ждем сервер)
+      this.products.unshift(newObj);
+      const savedTitle = this.title;
+      this.title = ''; 
+      this.syncing = true;
 
-      // --- ГЛАВНОЕ: Сначала обновляем экран! ---
-      this.products.unshift(newProduct);
-      const dataToSave = { ...newProduct, password: 'khvalla74' };
-      
-      // Очищаем ввод сразу
-      this.form.title = '';
-
-      // --- ОТПРАВЛЯЕМ БЕЗ AWAIT (Браузер не ждет ответа) ---
+      // ШАГ 2: В ФОНЕ В ТАБЛИЦУ
       fetch('/api/admin/add-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToSave)
-      }).then(() => {
-        this.status = 'Успешно сохранено';
-      }).catch(() => {
-        this.status = 'Ошибка сети, но на экране всё есть';
+        body: JSON.stringify({ 
+          id: newObj.id, 
+          title: savedTitle, 
+          category: 'Dwarf', 
+          password: 'khvalla74' 
+        })
+      }).finally(() => {
+        this.syncing = false;
+        // Можно не делать load(), чтобы не «прыгал» список
       });
     },
 
-    // 3. МГНОВЕННОЕ УДАЛЕНИЕ
-    remove(id) {
-      this.status = 'Удаление в фоне...';
-      // Сначала убираем с глаз
+    // МГНОВЕННОЕ УДАЛЕНИЕ
+    fastRemove(id) {
+      // ШАГ 1: СРАЗУ УБИРАЕМ С ЭКРАНА
       this.products = this.products.filter(p => p.id !== id);
+      this.syncing = true;
 
-      // Потом удаляем в таблице
+      // ШАГ 2: В ФОНЕ ИЗ ТАБЛИЦЫ
       fetch('/api/admin/delete-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, password: 'khvalla74' })
-      }).then(() => {
-        this.status = 'Удалено из таблицы';
+      }).finally(() => {
+        this.syncing = false;
       });
     }
   },
