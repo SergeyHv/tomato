@@ -2,41 +2,29 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>🍅 Мгновенная Админка</title>
+  <title>🍅 Fast Admin</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 p-4 font-sans">
-<div id="app" class="max-w-md mx-auto">
+<body class="bg-gray-50 p-4">
+<div id="app" class="max-w-xl mx-auto">
 
-  <h1 class="text-2xl font-black text-red-600 mb-6 uppercase tracking-tighter">🍅 Управление</h1>
-
-  <div class="bg-white p-6 rounded-3xl shadow-xl mb-8 border border-red-50">
-    <input v-model="title" placeholder="Название сорта..." 
-           class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-red-500 text-lg mb-4">
+  <div class="bg-white p-6 rounded-3xl shadow-xl border mb-6">
+    <input v-model="form.title" placeholder="Название сорта" class="w-full p-4 rounded-xl bg-gray-100 mb-4 outline-none">
     
-    <button @click="fastAdd" :disabled="!title"
-            class="w-full bg-red-600 text-white py-4 rounded-2xl font-bold text-lg active:scale-95 transition-all shadow-lg shadow-red-200">
-      ДОБАВИТЬ СЕЙЧАС
+    <button @click="handleSave" 
+            class="w-full bg-red-600 text-white py-4 rounded-xl font-bold active:scale-95 transition-all">
+      {{ btnText }}
     </button>
   </div>
 
-  <div class="space-y-3">
-    <div v-for="p in products" :key="p.id" 
-         class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center animate-in fade-in duration-300">
-      <div>
-        <div class="font-bold text-gray-800">{{ p.title }}</div>
-        <div class="text-[10px] text-gray-400 uppercase">{{ p.id }}</div>
-      </div>
-      <button @click="fastRemove(p.id)" class="bg-gray-50 text-red-500 w-10 h-10 rounded-xl flex items-center justify-center hover:bg-red-50 transition-colors">
-        🗑
-      </button>
+  <div class="space-y-2">
+    <div v-for="p in products" :key="p.id" class="p-4 bg-white rounded-2xl shadow-sm flex justify-between items-center border">
+      <span class="font-bold">{{ p.title }}</span>
+      <button @click="handleRemove(p.id)" class="text-red-500 p-2">🗑</button>
     </div>
   </div>
 
-  <div v-if="syncing" class="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-full text-xs animate-pulse shadow-2xl">
-    ☁️ Синхронизация с таблицей...
-  </div>
 </div>
 
 <script>
@@ -46,62 +34,56 @@ createApp({
   data() {
     return {
       products: [],
-      title: '',
-      syncing: false
+      form: { title: '', category: 'Dwarf' },
+      btnText: 'СОХРАНИТЬ'
     };
   },
   methods: {
-    // ЗАГРУЗКА
     async load() {
-      try {
-        const r = await fetch('/api/admin/get-products');
-        this.products = await r.json();
-      } catch (e) { console.error("Ошибка загрузки"); }
+      const r = await fetch('/api/admin/get-products');
+      this.products = await r.json();
     },
 
-    // МГНОВЕННОЕ ДОБАВЛЕНИЕ
-    fastAdd() {
-      const newObj = { 
-        id: 't' + Date.now(), 
-        title: this.title, 
-        category: 'Dwarf' 
-      };
+    // МАКСИМАЛЬНО УПРОЩЕННОЕ СОХРАНЕНИЕ
+    handleSave() {
+      if (!this.form.title) return;
 
-      // ШАГ 1: СРАЗУ НА ЭКРАН (не ждем сервер)
-      this.products.unshift(newObj);
-      const savedTitle = this.title;
-      this.title = ''; 
-      this.syncing = true;
+      // 1. Создаем объект
+      const newId = 't' + Date.now();
+      const newProduct = { id: newId, title: this.form.title, category: this.form.category };
 
-      // ШАГ 2: В ФОНЕ В ТАБЛИЦУ
+      // 2. МГНОВЕННО обновляем интерфейс
+      this.products.unshift(newProduct);
+      const titleToSave = this.form.title;
+      this.form.title = ''; 
+      
+      // Визуальный отклик на полсекунды
+      this.btnText = '✅ ГОТОВО';
+      setTimeout(() => { this.btnText = 'СОХРАНИТЬ'; }, 500);
+
+      // 3. ОТПРАВКА БЕЗ AWAIT (Фоновый процесс)
+      // Мы не ждем ответа, поэтому браузер не зависнет
       fetch('/api/admin/add-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          id: newObj.id, 
-          title: savedTitle, 
+          id: newId, 
+          title: titleToSave, 
           category: 'Dwarf', 
           password: 'khvalla74' 
         })
-      }).finally(() => {
-        this.syncing = false;
-        // Можно не делать load(), чтобы не «прыгал» список
       });
     },
 
-    // МГНОВЕННОЕ УДАЛЕНИЕ
-    fastRemove(id) {
-      // ШАГ 1: СРАЗУ УБИРАЕМ С ЭКРАНА
+    handleRemove(id) {
+      // 1. Мгновенно удаляем из массива
       this.products = this.products.filter(p => p.id !== id);
-      this.syncing = true;
 
-      // ШАГ 2: В ФОНЕ ИЗ ТАБЛИЦЫ
+      // 2. Отправляем запрос «вдогонку»
       fetch('/api/admin/delete-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, password: 'khvalla74' })
-      }).finally(() => {
-        this.syncing = false;
       });
     }
   },
