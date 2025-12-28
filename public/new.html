@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>🍅 Управление томатами</title>
+  <title>🍅 Управление коллекцией</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
@@ -12,7 +12,7 @@
 
   <aside class="w-full md:w-1/3 bg-white border-r flex flex-col h-1/2 md:h-full shadow-2xl">
     <div class="p-6 border-b bg-white z-10">
-      <h1 class="text-2xl font-black text-red-600 flex items-center gap-2">🍅 Админ-панель</h1>
+      <h1 class="text-2xl font-black text-red-600 flex items-center gap-2 text-shadow-sm">🍅 Админка</h1>
       <input v-model="search" placeholder="🔍 Быстрый фильтр..."
         class="w-full mt-4 p-3 rounded-2xl border-2 border-gray-100 focus:border-red-400 outline-none transition-all">
     </div>
@@ -20,21 +20,25 @@
     <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50">
       <div v-for="p in filtered" :key="p.id"
         class="p-3 border-2 border-transparent rounded-2xl flex items-center gap-4 bg-white hover:border-red-100 hover:shadow-sm transition-all group">
-        <img :src="p.images || 'https://via.placeholder.com/150'" class="w-14 h-14 rounded-xl object-cover border">
+        <img :src="p.images || 'https://via.placeholder.com/150'" class="w-14 h-14 rounded-xl object-cover border shadow-sm">
         <div class="flex-1 min-w-0">
           <div class="font-bold truncate text-gray-700">{{ p.title }}</div>
           <div class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">{{ p.category }}</div>
         </div>
-        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button @click="edit(p)" class="p-2 hover:bg-blue-50 rounded-lg text-blue-500">✏️</button>
-          <button @click="remove(p.id)" class="p-2 hover:bg-red-50 rounded-lg text-red-500">🗑</button>
+        <div class="flex gap-1">
+          <button @click="edit(p)" class="p-2 hover:bg-blue-50 rounded-lg text-blue-500 transition-colors">✏️</button>
+          <button @click="remove(p.id)" class="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors">🗑</button>
         </div>
       </div>
     </div>
   </aside>
 
   <main class="flex-1 overflow-y-auto p-4 md:p-10 flex justify-center items-start bg-[#faf7f2]">
-    <div class="w-full max-w-xl bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white">
+    <div class="w-full max-w-xl bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white relative">
+      <div v-if="saving" class="absolute top-8 right-8 text-xs font-bold text-red-500 animate-pulse bg-red-50 px-3 py-1 rounded-full">
+        ☁️ Синхронизация...
+      </div>
+
       <h2 class="text-3xl font-black mb-8 text-gray-800 flex items-center gap-4">
         <span class="bg-red-500 text-white w-12 h-12 flex items-center justify-center rounded-2xl shadow-lg shadow-red-200">
           {{ editId ? '✎' : '+' }}
@@ -44,43 +48,43 @@
 
       <form @submit.prevent="save" class="space-y-6">
         <div>
-          <label class="text-xs font-bold text-gray-400 uppercase ml-2">Название сорта</label>
-          <input v-model="form.title" required placeholder="Напр: Аметистовая драгоценность"
-            class="w-full mt-1 p-4 rounded-2xl border-2 border-gray-50 bg-gray-50 focus:bg-white focus:border-red-400 outline-none text-lg transition-all">
+          <label class="text-xs font-bold text-gray-400 uppercase ml-2 tracking-widest">Название сорта</label>
+          <input v-model="form.title" required placeholder="Напр: Сержант Пеппер"
+            class="w-full mt-1 p-4 rounded-2xl border-2 border-gray-50 bg-gray-50 focus:bg-white focus:border-red-400 outline-none text-lg transition-all shadow-inner">
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="text-xs font-bold text-gray-400 uppercase ml-2">Категория</label>
-            <select v-model="form.category" class="w-full mt-1 p-4 rounded-2xl border-2 border-gray-50 bg-gray-50 outline-none cursor-pointer">
+            <label class="text-xs font-bold text-gray-400 uppercase ml-2 tracking-widest">Категория</label>
+            <select v-model="form.category" class="w-full mt-1 p-4 rounded-2xl border-2 border-gray-50 bg-gray-50 outline-none cursor-pointer hover:bg-white transition-all">
               <option value="Dwarf">Гном</option>
-              <option value="Det">Низкий</option>
-              <option value="Indet">Высокий</option>
+              <option value="Det">Низкий (Дет)</option>
+              <option value="Indet">Высокий (Индет)</option>
             </select>
           </div>
           <div>
-            <label class="text-xs font-bold text-gray-400 uppercase ml-2">ID (Авто)</label>
-            <input :value="editId || 'Автоматически'" disabled class="w-full mt-1 p-4 rounded-2xl border-2 border-gray-50 bg-gray-100 text-gray-400">
+            <label class="text-xs font-bold text-gray-400 uppercase ml-2 tracking-widest">ID записи</label>
+            <input :value="editId || 'Автоматически'" disabled class="w-full mt-1 p-4 rounded-2xl border-2 border-gray-50 bg-gray-100 text-gray-400 italic">
           </div>
         </div>
 
         <div>
-          <label class="text-xs font-bold text-gray-400 uppercase ml-2">Фотография</label>
-          <div class="mt-1 relative border-2 border-dashed border-gray-200 p-8 rounded-[2rem] text-center bg-gray-50/50 hover:bg-white hover:border-red-200 transition-all cursor-pointer overflow-hidden">
+          <label class="text-xs font-bold text-gray-400 uppercase ml-2 tracking-widest">Фотография</label>
+          <div class="mt-1 relative border-2 border-dashed border-gray-200 p-8 rounded-[2rem] text-center bg-gray-50/50 hover:bg-white hover:border-red-200 transition-all cursor-pointer overflow-hidden group">
             <input type="file" @change="pickImage" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10">
-            <div v-if="!preview" class="text-gray-400 font-medium text-sm">Нажмите, чтобы загрузить фото</div>
-            <img v-if="preview" :src="preview" class="absolute inset-0 w-full h-full object-cover">
+            <div v-if="!preview" class="text-gray-400 font-medium text-sm group-hover:text-red-400 transition-colors">Нажмите, чтобы выбрать фото</div>
+            <img v-if="preview" :src="preview" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
           </div>
         </div>
 
         <div class="pt-6 space-y-4">
-          <button :disabled="saving"
-            class="w-full bg-gray-900 hover:bg-black disabled:bg-gray-300 text-white py-5 rounded-[1.5rem] text-xl font-bold shadow-xl transition-all active:scale-95">
-            {{ saving ? '⏳ Синхронизация...' : '💾 Сохранить в коллекцию' }}
+          <button type="submit"
+            class="w-full bg-gray-900 hover:bg-black text-white py-5 rounded-[1.5rem] text-xl font-bold shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
+            <span>💾 Сохранить сорт</span>
           </button>
           
-          <button v-if="editId" type="button" @click="cancel" class="w-full text-gray-400 font-bold text-sm uppercase tracking-widest hover:text-red-500 transition-colors">
-            Отменить и сбросить
+          <button v-if="editId" type="button" @click="cancel" class="w-full text-gray-400 font-bold text-sm uppercase tracking-widest hover:text-red-500 transition-colors py-2">
+            ✖ Отменить редактирование
           </button>
         </div>
       </form>
@@ -90,10 +94,6 @@
 
 <script>
 const { createApp } = Vue;
-
-// Чтобы не хранить пароль в открытом виде, можно ввести его один раз
-// Или оставить так, если доступ только у вас.
-const API_PASS = 'khvalla74'; 
 
 createApp({
   data() {
@@ -111,8 +111,10 @@ createApp({
   },
   methods: {
     async load() {
-      const r = await fetch('/api/admin/get-products');
-      if (r.ok) this.products = await r.json();
+      try {
+        const r = await fetch('/api/admin/get-products');
+        if (r.ok) this.products = await r.json();
+      } catch (e) { console.error('Ошибка сети при загрузке'); }
     },
     edit(p) {
       this.editId = p.id;
@@ -129,86 +131,99 @@ createApp({
     pickImage(e) {
       const f = e.target.files[0]; if (!f) return;
       const r = new FileReader();
-      r.onload = ev => { this.preview = ev.target.result; this.imageBase64 = ev.target.result; };
+      r.onload = ev => { 
+        this.preview = ev.target.result; 
+        this.imageBase64 = ev.target.result; 
+      };
       r.readAsDataURL(f);
     },
     async save() {
+      // Имитация мгновенного обновления для интерфейса
       const tempId = this.editId || `t_${Date.now()}`;
-      const backupProducts = [...this.products]; // Для отката при ошибке
-      
-      const newObject = { 
+      const newEntry = { 
         id: tempId, 
         title: this.form.title, 
         category: this.form.category, 
         images: this.preview 
       };
 
-      // --- ШАГ 1: МГНОВЕННОЕ ОБНОВЛЕНИЕ (Optimistic UI) ---
+      // 1. Сначала меняем список на экране
       if (this.editId) {
-        const i = this.products.findIndex(p => p.id === tempId);
-        if (i !== -1) this.products[i] = newObject;
+        const idx = this.products.findIndex(p => p.id === tempId);
+        if (idx !== -1) this.products[idx] = newEntry;
       } else {
-        this.products.unshift(newObject);
+        this.products.unshift(newEntry);
       }
-      
-      const savedForm = { ...this.form }; // Сохраняем данные формы
-      this.cancel(); // Сразу очищаем форму для следующего ввода
+
+      // Сохраняем данные для отправки и очищаем форму
+      const dataToSend = { ...this.form, images: this.preview, imageBase64: this.imageBase64 };
+      this.cancel();
       this.saving = true;
 
       try {
-        let imageUrl = newObject.images;
+        let finalImageUrl = dataToSend.images;
         
-        // --- ШАГ 2: ФОНОВАЯ ЗАГРУЗКА НА СЕРВЕР ---
-        if (this.imageBase64) {
+        // 2. Фоновая загрузка изображения, если оно новое
+        if (dataToSend.imageBase64) {
           const up = await fetch('/api/admin/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename: `tomato_${Date.now()}.jpg`, base64: this.imageBase64 })
+            body: JSON.stringify({ filename: `tomato_${Date.now()}.jpg`, base64: dataToSend.imageBase64 })
           });
-          imageUrl = (await up.json()).url;
+          const uploadRes = await up.json();
+          finalImageUrl = uploadRes.url;
         }
 
+        // 3. Отправка в Google Таблицу (пароль берется из ENV на бэкенде)
         await fetch('/api/admin/add-product', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: API_PASS, id: tempId, title: savedForm.title, category: savedForm.category, images: imageUrl })
+          body: JSON.stringify({ 
+            id: tempId, 
+            title: dataToSend.title, 
+            category: dataToSend.category, 
+            images: finalImageUrl 
+          })
         });
-        
-        console.log("Успешно сохранено в Google Sheets");
+
       } catch (e) {
-        alert("Ошибка связи с таблицей. Данные на экране могут быть неверны.");
-        this.products = backupProducts; // Откат если всё плохо
+        console.error("Ошибка синхронизации:", e);
+        // В случае критической ошибки можно перезагрузить список
+        this.load();
       } finally {
         this.saving = false;
-        this.load(); // Тихая проверка актуальности данных
+        // Тихая подгрузка актуальных данных
+        setTimeout(this.load, 2000);
       }
     },
     async remove(id) {
-      if (!confirm('Удалить этот сорт?')) return;
+      if (!confirm('Удалить сорт?')) return;
       
-      // МГНОВЕННО УДАЛЯЕМ С ЭКРАНА
+      // Мгновенное удаление с экрана
       this.products = this.products.filter(p => p.id !== id);
 
       try {
         await fetch('/api/admin/delete-product', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: API_PASS, id })
+          body: JSON.stringify({ id })
         });
       } catch (e) {
-        alert('Ошибка при удалении в таблице');
-        this.load(); // Возвращаем если не удалилось
+        console.error("Ошибка удаления:", e);
+        this.load(); // Возвращаем список, если сервер выдал ошибку
       }
     }
   },
-  mounted() { this.load(); }
+  mounted() { 
+    this.load(); 
+  }
 }).mount('#app');
 </script>
 
 <style>
-  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-thumb { background: #fee2e2; border-radius: 10px; }
-  body { -webkit-tap-highlight-color: transparent; }
+  .text-shadow-sm { text-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 </style>
 </body>
 </html>
