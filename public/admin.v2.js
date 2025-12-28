@@ -22,6 +22,8 @@
   const submitBtn     = $('submitBtn');
   const formTitle     = $('formTitle');
 
+  const isMobile = () => window.innerWidth < 768;
+
   const translit = str => {
     const map = {
       а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',
@@ -29,10 +31,7 @@
       р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'c',
       ч:'ch',ш:'sh',щ:'sch',ы:'y',э:'e',ю:'yu',я:'ya'
     };
-
-    return str
-      .toLowerCase()
-      .split('')
+    return str.toLowerCase().split('')
       .map(ch => map[ch] || ch)
       .join('')
       .replace(/[^a-z0-9]+/g, '-')
@@ -46,9 +45,11 @@
     productForm.reset();
     if (imagePreview) imagePreview.classList.add('hidden');
     formTitle.innerText = '➕ Новый сорт';
+    if (isMobile()) titleInput.focus();
   }
 
   async function loadProducts() {
+    if (!productList) return;
     const res = await fetch('/api/admin/get-products');
     allProducts = await res.json();
 
@@ -67,6 +68,7 @@
   }
 
   window.editProduct = id => {
+    if (isMobile()) return;
     const p = allProducts.find(x => x.id === id);
     if (!p) return;
 
@@ -103,7 +105,6 @@
     if (!file) return;
 
     imageName = file.name;
-
     const reader = new FileReader();
     reader.onload = e => {
       imageBase64 = e.target.result;
@@ -126,27 +127,21 @@
 
     try {
       const id = editId || translit(titleInput.value);
-
       let imageUrl = '';
 
       if (imageBase64) {
         const up = await fetch('/api/admin/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            filename: imageName,
-            base64: imageBase64
-          })
+          body: JSON.stringify({ filename: imageName, base64: imageBase64 })
         });
         imageUrl = (await up.json()).url;
-      } else if (editId) {
-        imageUrl = allProducts.find(p => p.id === editId)?.images || '';
       }
 
       const props =
-        `Срок=${propTerm.value};` +
-        `Высота=${propHeight.value};` +
-        `Вес=${propWeight.value}`;
+        `Срок=${propTerm.value || ''};` +
+        `Высота=${propHeight.value || ''};` +
+        `Вес=${propWeight.value || ''}`;
 
       await fetch('/api/admin/add-product', {
         method: 'POST',
@@ -154,10 +149,10 @@
         body: JSON.stringify({
           id,
           title: titleInput.value,
-          price: priceInput.value,
+          price: priceInput?.value || '',
           category: categoryInput.value,
-          tags: tagsInput.value,
-          description: descInput.value,
+          tags: tagsInput?.value || '',
+          description: descInput?.value || '',
           props,
           images: imageUrl
         })
@@ -166,15 +161,20 @@
       resetForm();
       await loadProducts();
 
+      if (isMobile()) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
     } catch (err) {
       alert('Ошибка сохранения');
       console.error(err);
     }
 
     submitBtn.disabled = false;
-    submitBtn.innerText = '💾 Сохранить';
+    submitBtn.innerText = '💾 Сохранить сорт';
   };
 
   loadProducts();
+  if (isMobile()) titleInput.focus();
 
 })();
