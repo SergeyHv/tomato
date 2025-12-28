@@ -2,97 +2,100 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>🍅 Коллекция томатов</title>
+  <title>🍅 Управление коллекцией</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 </head>
 
 <body class="bg-[#faf7f2] min-h-screen text-gray-800">
-<div id="app" class="flex flex-col md:flex-row">
+<div id="app" class="flex flex-col md:flex-row h-screen overflow-hidden">
 
-  <!-- ПК -->
-  <aside class="hidden md:flex md:w-1/3 bg-white border-r p-5 flex-col">
-    <h1 class="text-2xl font-bold text-red-600 mb-4">🍅 Коллекция томатов</h1>
+  <aside class="w-full md:w-1/3 bg-white border-r flex flex-col h-1/2 md:h-full shadow-lg">
+    <div class="p-5 border-b bg-white sticky top-0 z-10">
+      <h1 class="text-2xl font-bold text-red-600 mb-4 flex items-center gap-2">
+        <span>🍅</span> Коллекция
+      </h1>
+      <input v-model="search" placeholder="🔍 Поиск по названию..."
+        class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 outline-none transition-all">
+    </div>
 
-    <input v-model="search" placeholder="🔍 Поиск"
-      class="mb-3 p-3 rounded-xl border text-lg">
-
-    <div class="space-y-2 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#fdfcfb]">
+      <div v-if="filtered.length === 0" class="text-center text-gray-400 mt-10">Ничего не найдено</div>
+      
       <div v-for="p in filtered" :key="p.id"
-        class="p-2 border rounded-xl flex items-center gap-3 bg-white">
-        <img :src="p.images" class="w-12 h-12 rounded-lg object-cover">
-        <div class="flex-1">
-          <div class="font-semibold">{{ p.title }}</div>
-          <div class="text-sm text-gray-500">{{ p.category }}</div>
+        class="p-3 border rounded-2xl flex items-center gap-4 bg-white hover:shadow-md transition-shadow group">
+        <img :src="p.images || 'https://via.placeholder.com/150'" class="w-14 h-14 rounded-xl object-cover border">
+        <div class="flex-1 min-w-0">
+          <div class="font-bold truncate">{{ p.title }}</div>
+          <div class="text-xs text-gray-400 uppercase tracking-wider">{{ p.category }}</div>
         </div>
-        <button @click="edit(p)">✏️</button>
-        <button @click="remove(p.id)">🗑</button>
+        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button @click="edit(p)" class="p-2 hover:bg-blue-50 rounded-lg text-blue-500">✏️</button>
+          <button @click="remove(p.id)" class="p-2 hover:bg-red-50 rounded-lg text-red-500">🗑</button>
+        </div>
       </div>
     </div>
   </aside>
 
-  <!-- ФОРМА -->
-  <main class="flex-1 p-4 md:p-10">
-    <div class="max-w-xl mx-auto bg-white rounded-3xl p-6 shadow">
-      <h2 class="text-2xl font-bold mb-6">
-        {{ editId ? '✏️ Редактирование сорта' : '➕ Новый сорт' }}
+  <main class="flex-1 overflow-y-auto p-4 md:p-10 flex justify-center items-start">
+    <div class="w-full max-w-xl bg-white rounded-[2rem] p-8 shadow-xl border border-orange-50">
+      <h2 class="text-2xl font-black mb-8 flex items-center gap-3">
+        <span class="bg-red-100 p-2 rounded-xl">{{ editId ? '✏️' : '➕' }}</span>
+        {{ editId ? 'Редактировать сорт' : 'Добавить новый сорт' }}
       </h2>
 
-      <form @submit.prevent="save" class="space-y-4 text-lg">
+      <form @submit.prevent="save" class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-500 mb-1 ml-1">Название сорта</label>
+          <input v-model="form.title" required placeholder="Например: Бычье сердце"
+            class="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all text-lg">
+        </div>
 
-        <input v-model="form.title" required
-          placeholder="Название сорта"
-          class="w-full p-4 rounded-xl border">
+        <div>
+          <label class="block text-sm font-medium text-gray-500 mb-1 ml-1">Тип роста</label>
+          <select v-model="form.category" class="w-full p-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all text-lg appearance-none">
+            <option value="Dwarf">Гном (Dwarf)</option>
+            <option value="Det">Детерминантный (Низкий)</option>
+            <option value="Indet">Индетерминантный (Высокий)</option>
+          </select>
+        </div>
 
-        <select v-model="form.category"
-          class="w-full p-4 rounded-xl border">
-          <option value="Dwarf">Гном</option>
-          <option value="Det">Низкий</option>
-          <option value="Indet">Высокий</option>
-        </select>
-
-        <input type="file" @change="pickImage"
-          class="w-full border p-3 rounded-xl">
-
-        <img v-if="preview" :src="preview"
-          class="mt-3 max-h-48 w-full rounded-xl object-cover">
-
-        <button :disabled="saving"
-          class="w-full bg-red-600 text-white py-4 rounded-xl text-xl font-bold">
-          {{ saving ? '⏳ Сохраняем…' : '💾 Сохранить сорт' }}
-        </button>
-
-        <button v-if="editId" type="button"
-          @click="cancel"
-          class="w-full bg-gray-200 py-3 rounded-xl">
-          ✖ Отмена
-        </button>
-      </form>
-
-      <!-- МОБИЛА -->
-      <div class="md:hidden mt-10">
-        <input v-model="search" placeholder="🔍 Поиск"
-          class="w-full mb-3 p-3 rounded-xl border text-lg">
-
-        <div class="space-y-2">
-          <div v-for="p in filtered" :key="p.id"
-            class="p-2 border rounded-xl bg-white flex gap-3">
-            <img :src="p.images" class="w-12 h-12 rounded-lg object-cover">
-            <div>
-              <div class="font-semibold">{{ p.title }}</div>
-              <div class="text-sm text-gray-500">{{ p.category }}</div>
+        <div>
+          <label class="block text-sm font-medium text-gray-500 mb-1 ml-1">Фотография</label>
+          <div class="relative group">
+            <input type="file" @change="pickImage" accept="image/*"
+              class="w-full border-2 border-dashed border-gray-200 p-8 rounded-2xl text-center cursor-pointer hover:border-red-300 transition-colors file:hidden">
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-400 group-hover:text-red-500" v-if="!preview">
+               Нажмите, чтобы выбрать фото
             </div>
+            <img v-if="preview" :src="preview" class="mt-4 w-full h-64 rounded-2xl object-cover shadow-inner border">
           </div>
         </div>
-      </div>
 
+        <div class="pt-4 space-y-3">
+          <button :disabled="saving"
+            class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white py-5 rounded-2xl text-xl font-bold shadow-lg shadow-red-200 transition-all active:scale-[0.98]">
+            {{ saving ? '⏳ Сохранение...' : '💾 Сохранить в базу' }}
+          </button>
+
+          <button v-if="editId" type="button" @click="cancel"
+            class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 py-4 rounded-2xl font-semibold transition-all">
+            Отмена
+          </button>
+        </div>
+      </form>
     </div>
   </main>
 </div>
 
 <script>
 const { createApp } = Vue;
+
+// Конфиг для легкой смены пароля
+const API_CONFIG = {
+  auth: 'khvalla74'
+};
 
 createApp({
   data() {
@@ -103,35 +106,39 @@ createApp({
       saving: false,
       preview: '',
       imageBase64: '',
-      form: { title:'', category:'Dwarf' }
+      form: { title: '', category: 'Dwarf' }
     };
   },
 
   computed: {
     filtered() {
-      return this.products.filter(p =>
-        p.title.toLowerCase().includes(this.search.toLowerCase())
-      );
+      const q = this.search.toLowerCase();
+      return this.products.filter(p => p.title.toLowerCase().includes(q));
     }
   },
 
   methods: {
     async load() {
-      const r = await fetch('/api/admin/get-products');
-      this.products = await r.json();
+      try {
+        const r = await fetch('/api/admin/get-products');
+        if (!r.ok) throw new Error('Ошибка загрузки');
+        this.products = await r.json();
+      } catch (e) {
+        alert('Не удалось загрузить данные: ' + e.message);
+      }
     },
 
     edit(p) {
       this.editId = p.id;
-      this.form.title = p.title;
-      this.form.category = p.category;
+      this.form = { ...p }; // Копируем объект, чтобы не мутировать оригинал сразу
       this.preview = p.images;
       this.imageBase64 = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     cancel() {
       this.editId = null;
-      this.form = { title:'', category:'Dwarf' };
+      this.form = { title: '', category: 'Dwarf' };
       this.preview = '';
       this.imageBase64 = '';
     },
@@ -139,6 +146,7 @@ createApp({
     pickImage(e) {
       const f = e.target.files[0];
       if (!f) return;
+      
       const r = new FileReader();
       r.onload = ev => {
         this.preview = ev.target.result;
@@ -148,55 +156,81 @@ createApp({
     },
 
     async save() {
+      if (this.saving) return;
       this.saving = true;
 
-      let imageUrl = this.preview;
-      if (this.imageBase64) {
-        const up = await fetch('/api/admin/upload', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            filename:'img.jpg',
-            base64:this.imageBase64
-          })
-        });
-        imageUrl = (await up.json()).url;
-      }
+      try {
+        let imageUrl = this.preview;
 
-      const id = this.editId || this.form.title.toLowerCase().replace(/\s+/g,'-');
-
-      await fetch('/api/admin/add-product', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          password:'khvalla74',
-          id,
-          title:this.form.title,
-          category:this.form.category,
-          images:imageUrl
-        })
-      });
-
-      if (this.editId) {
-        const i = this.products.findIndex(p => p.id === id);
-        if (i !== -1) {
-          this.products[i] = { id, title:this.form.title, category:this.form.category, images:imageUrl };
+        // 1. Загрузка картинки, если выбрана новая
+        if (this.imageBase64) {
+          const up = await fetch('/api/admin/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              filename: `tomato_${Date.now()}.jpg`,
+              base64: this.imageBase64
+            })
+          });
+          const uploadRes = await up.json();
+          imageUrl = uploadRes.url;
         }
-      } else {
-        this.products.unshift({ id, title:this.form.title, category:this.form.category, images:imageUrl });
-      }
 
-      this.cancel();
-      this.saving = false;
+        // 2. Формируем ID: если редактируем — старый, если новый — уникальный
+        const finalId = this.editId || `t_${Date.now()}`;
+
+        const payload = {
+          password: API_CONFIG.auth,
+          id: finalId,
+          title: this.form.title,
+          category: this.form.category,
+          images: imageUrl
+        };
+
+        const res = await fetch('/api/admin/add-product', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error('Сервер отклонил запрос');
+
+        // 3. Обновляем локальный список
+        const newTomato = { ...payload };
+        delete newTomato.password; // Удаляем пароль из локального объекта
+
+        if (this.editId) {
+          const i = this.products.findIndex(p => p.id === finalId);
+          if (i !== -1) this.products[i] = newTomato;
+        } else {
+          this.products.unshift(newTomato);
+        }
+
+        this.cancel();
+      } catch (e) {
+        alert('Ошибка при сохранении: ' + e.message);
+      } finally {
+        this.saving = false;
+      }
     },
 
     async remove(id) {
-      await fetch('/api/admin/delete-product', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ password:'khvalla74', id })
-      });
-      this.products = this.products.filter(p => p.id !== id);
+      if (!confirm('Удалить этот сорт?')) return;
+
+      try {
+        const res = await fetch('/api/admin/delete-product', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: API_CONFIG.auth, id })
+        });
+        
+        if (res.ok) {
+          this.products = this.products.filter(p => p.id !== id);
+          if (this.editId === id) this.cancel();
+        }
+      } catch (e) {
+        alert('Ошибка при удалении');
+      }
     }
   },
 
@@ -205,5 +239,13 @@ createApp({
   }
 }).mount('#app');
 </script>
+
+<style>
+  /* Кастомный скроллбар для эстетики */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+</style>
 </body>
 </html>
