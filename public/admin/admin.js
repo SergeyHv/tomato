@@ -47,7 +47,6 @@ const translit = str => {
     .replace(/^-+|-+$/g, '');
 };
 
-/* ===== UI ===== */
 const ui = {
   render(list) {
     renderDesktop(productListDesktop, list);
@@ -55,10 +54,8 @@ const ui = {
   }
 };
 
-/* ===== IMAGE ===== */
 bindImageUpload(imageUpload, imagePreview, state);
 
-/* ===== EXIT EDIT ===== */
 function exitEditMode() {
   state.editId = null;
   state.imageBase64 = '';
@@ -66,18 +63,15 @@ function exitEditMode() {
   productForm.reset();
   imagePreview.classList.add('hidden');
   formTitle.innerText = '➕ Новый сорт';
-
   if (cancelBtn) {
     cancelBtn.remove();
     cancelBtn = null;
   }
 }
 
-/* ===== LIST ===== */
 bindListActions(productListDesktop, {
   onEdit(id) {
     if (isMobile()) return;
-
     const p = state.allProducts.find(x => x.id === id);
     if (!p) return;
 
@@ -121,42 +115,38 @@ bindListActions(productListDesktop, {
     if (!confirm('Удалить сорт?')) return;
     const { deleteProduct } = await import('./api.js');
     await deleteProduct(id);
-    await loadAll(state, ui);
+    loadAll(state, ui);
   }
 });
 
-/* ===== SAVE ===== */
-productForm.onsubmit = async e => {
+/* ===== SAVE (НЕ БЛОКИРУЕТ UI) ===== */
+productForm.onsubmit = e => {
   e.preventDefault();
 
   submitBtn.disabled = true;
   submitBtn.innerText = '⏳ Сохраняем…';
 
-  try {
-    await handleSave(state, {
-      id: state.editId || translit(titleInput.value),
-      title: titleInput.value,
-      category: categoryInput.value,
-      price: priceInput.value,
-      tags: tagsInput.value,
-      description: descInput.value,
-      props:
-        `Срок=${propTerm.value};` +
-        `Высота=${propHeight.value};` +
-        `Вес=${propWeight.value}`
-    });
-
+  handleSave(state, {
+    id: state.editId || translit(titleInput.value),
+    title: titleInput.value,
+    category: categoryInput.value,
+    price: priceInput.value,
+    tags: tagsInput.value,
+    description: descInput.value,
+    props:
+      `Срок=${propTerm.value};` +
+      `Высота=${propHeight.value};` +
+      `Вес=${propWeight.value}`
+  })
+  .then(() => {
     exitEditMode();
-
-    try {
-      await loadAll(state, ui);
-    } catch {}
-
-  } catch {}
-
-  submitBtn.disabled = false;
-  submitBtn.innerText = '💾 Сохранить сорт';
+    setTimeout(() => loadAll(state, ui), 0);
+  })
+  .catch(() => {})
+  .finally(() => {
+    submitBtn.disabled = false;
+    submitBtn.innerText = '💾 Сохранить сорт';
+  });
 };
 
-/* ===== INIT ===== */
 loadAll(state, ui);
