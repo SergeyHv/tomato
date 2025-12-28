@@ -31,10 +31,9 @@ const imagePreview = $('imagePreview');
 const submitBtn = $('submitBtn');
 const formTitle = $('formTitle');
 
-// кнопка отмены
 let cancelBtn = null;
 
-/* ===== ПРАВИЛЬНАЯ ТРАНСЛИТЕРАЦИЯ ===== */
+/* ===== TRANSLIT ===== */
 const translit = str => {
   const map = {
     а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',
@@ -71,6 +70,7 @@ function exitEditMode() {
   productForm.reset();
   imagePreview.classList.add('hidden');
   formTitle.innerText = '➕ Новый сорт';
+
   if (cancelBtn) {
     cancelBtn.remove();
     cancelBtn = null;
@@ -135,6 +135,7 @@ bindListActions(productListDesktop, {
 /* ===== SAVE ===== */
 productForm.onsubmit = async e => {
   e.preventDefault();
+
   submitBtn.disabled = true;
   submitBtn.innerText = '⏳ Сохраняем…';
 
@@ -158,15 +159,22 @@ productForm.onsubmit = async e => {
     );
 
     exitEditMode();
-    await loadAll(state, ui);
+
+    // 🔴 даже если это упадёт — кнопка всё равно вернётся
+    try {
+      await loadAll(state, ui);
+    } catch (e) {
+      console.warn('Не удалось обновить список', e);
+    }
 
   } catch (err) {
     console.error(err);
     showToast(toast, 'Ошибка сохранения', false);
+  } finally {
+    // 🔥 КЛЮЧЕВОЕ МЕСТО
+    submitBtn.disabled = false;
+    submitBtn.innerText = '💾 Сохранить сорт';
   }
-
-  submitBtn.disabled = false;
-  submitBtn.innerText = '💾 Сохранить сорт';
 };
 
 /* ===== INIT ===== */
