@@ -41,9 +41,28 @@
       .replace(/^-+|-+$/g, '');
   };
 
-  function renderList(list, data) {
-    if (!list) return;
-    list.innerHTML = data.map(p => `
+  /* ===== РЕНДЕР ===== */
+
+  function renderDesktop(list) {
+    if (!productListDesktop) return;
+    productListDesktop.innerHTML = list.map(p => `
+      <div class="p-2 border rounded-xl flex items-center gap-3 bg-white">
+        <div class="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center">
+          ${p.images ? `<img src="${p.images}" class="w-12 h-12 rounded-lg object-cover">` : '🍅'}
+        </div>
+        <div class="flex-1 truncate">
+          <div class="font-semibold text-sm">${p.title}</div>
+          <div class="text-xs text-gray-500">${p.category || ''}</div>
+        </div>
+        <button onclick="editProduct('${p.id}')" class="text-lg">✏️</button>
+        <button onclick="deleteProduct('${p.id}')" class="text-lg">🗑</button>
+      </div>
+    `).join('');
+  }
+
+  function renderMobile(list) {
+    if (!productListMobile) return;
+    productListMobile.innerHTML = list.map(p => `
       <div class="p-3 border rounded-xl bg-white flex gap-3 items-center">
         <div class="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center">
           ${p.images ? `<img src="${p.images}" class="w-12 h-12 rounded-lg object-cover">` : '🍅'}
@@ -59,8 +78,8 @@
   async function loadProducts() {
     const res = await fetch('/api/admin/get-products');
     allProducts = await res.json();
-    renderList(productListDesktop, allProducts);
-    renderList(productListMobile, allProducts);
+    renderDesktop(allProducts);
+    renderMobile(allProducts);
   }
 
   function filterProducts(query) {
@@ -68,8 +87,8 @@
     const filtered = allProducts.filter(p =>
       (p.title || '').toLowerCase().includes(q)
     );
-    renderList(productListDesktop, filtered);
-    renderList(productListMobile, filtered);
+    renderDesktop(filtered);
+    renderMobile(filtered);
   }
 
   if (searchDesktop) {
@@ -79,9 +98,61 @@
     searchMobile.addEventListener('input', e => filterProducts(e.target.value));
   }
 
+  /* ===== РЕДАКТИРОВАНИЕ / УДАЛЕНИЕ (ПК) ===== */
+
+  window.editProduct = id => {
+    if (isMobile()) return;
+    const p = allProducts.find(x => x.id === id);
+    if (!p) return;
+
+    editId = id;
+    imageBase64 = '';
+    imageName = '';
+
+    formTitle.innerText = '✏️ Редактирование сорта';
+
+    titleInput.value = p.title || '';
+    categoryInput.value = p.category || '';
+    priceInput.value = p.price || '';
+    tagsInput.value = p.tags || '';
+    descInput.value = p.description || '';
+
+    const map = {};
+    (p.props || '').split(';').forEach(x => {
+      const [k,v] = x.split('=');
+      if (k) map[k] = v;
+    });
+
+    propTerm.value = map['Срок'] || '';
+    propHeight.value = map['Высота'] || '';
+    propWeight.value = map['Вес'] || '';
+
+    if (p.images) {
+      imagePreview.src = p.images;
+      imagePreview.classList.remove('hidden');
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  window.deleteProduct = async id => {
+    if (!confirm('Удалить сорт?')) return;
+
+    await fetch('/api/admin/delete-product', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+
+    await loadProducts();
+  };
+
+  /* ===== ФОТО ===== */
+
   imageUpload.addEventListener('change', () => {
     const file = imageUpload.files[0];
     if (!file) return;
+
     imageName = file.name;
     const reader = new FileReader();
     reader.onload = e => {
@@ -92,9 +163,10 @@
     reader.readAsDataURL(file);
   });
 
+  /* ===== СОХРАНЕНИЕ ===== */
+
   productForm.onsubmit = async e => {
     e.preventDefault();
-
     if (!titleInput.value.trim()) return alert('Введите название');
 
     submitBtn.disabled = true;
@@ -111,6 +183,8 @@
           body: JSON.stringify({ filename: imageName, base64: imageBase64 })
         });
         imageUrl = (await up.json()).url;
+      } else if (editId) {
+        imageUrl = allProducts.find(p => p.id === editId)?.images || '';
       }
 
       const props =
@@ -137,9 +211,10 @@
       imagePreview.classList.add('hidden');
       imageBase64 = '';
       imageName = '';
+      editId = null;
+      formTitle.innerText = '➕ Новый сорт';
 
       await loadProducts();
-      if (isMobile()) window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 
     } catch (e) {
       alert('Ошибка сохранения');
