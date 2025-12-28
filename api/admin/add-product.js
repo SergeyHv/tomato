@@ -2,26 +2,14 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'POST only' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const {
-    password,
-    id,
-    title,
-    price,
-    images,
-    category,
-    tags,
-    description,
-    stock,
-    props
-  } = req.body;
+  const { password, id, title, category, images } = req.body;
 
-  // 🔐 ОДИНАКОВАЯ АВТОРИЗАЦИЯ КАК В delete-product
-  if (password !== 'khvalla74') {
-    return res.status(403).json({ error: 'Forbidden' });
+  // Проверка пароля (берем из окружения или хардкод для теста)
+  const adminPass = process.env.ADMIN_PASSWORD || 'khvalla74';
+  if (password !== adminPass) {
+    return res.status(403).json({ error: 'Неверный пароль' });
   }
 
   try {
@@ -31,46 +19,37 @@ export default async function handler(req, res) {
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
-    const doc = new GoogleSpreadsheet(
-      process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      auth
-    );
-
+    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEETS_SPREADSHEET_ID, auth);
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
     const rows = await sheet.getRows();
 
-    const existingRow = rows.find(r => r.get('id') === id);
-
-    const baseData = {
-      id,
-      title,
-      price: price || '',
-      category: category || '',
-      tags: tags || '',
-      description: description || '',
-      stock: stock || 'TRUE',
-      props: props || ''
-    };
+    // Ищем, существует ли уже такой ID (для редактирования)
+    const existingRow = rows.find(r => r.get('id') === String(id));
 
     if (existingRow) {
-      Object.assign(existingRow, baseData);
-      if (images && images.trim()) {
-        existingRow.images = images;
-      }
+      // ОБНОВЛЕНИЕ
+      existingRow.set('title', title);
+      existingRow.set('category', category);
+      existingRow.set('images', images);
       await existingRow.save();
-      return res.status(200).json({ success: true, mode: 'updated' });
+    } else {
+      // ДОБАВЛЕНИЕ НОВОГО
+      await sheet.addRow({
+        id: String(id),
+        title,
+        category,
+        images,
+        date: new Date().toISOString()
+      });
     }
 
-    await sheet.addRow({
-      ...baseData,
-      images: images || ''
-    });
+    // Отключаем кэш, чтобы клиент сразу мог стянуть свежие данные
+    res.setHeader('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
+    return res.status(200).json({ success: true });
 
-    return res.status(200).json({ success: true, mode: 'added' });
-
-  } catch (err) {
-    console.error('ADD PRODUCT ERROR:', err);
-    return res.status(500).json({ error: err.message });
+  } catch (error) {
+    console.error('Ошибка записи в таблицу:', error);
+    return res.status(500).json({ error: error.message });
   }
 }
