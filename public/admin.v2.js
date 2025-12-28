@@ -27,6 +27,8 @@
   const submitBtn     = $('submitBtn');
   const formTitle     = $('formTitle');
 
+  const ADMIN_PASSWORD = 'khvalla74'; // 🔴 ключевая строка
+
   const translit = str => {
     const map = {
       а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',
@@ -40,8 +42,6 @@
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
   };
-
-  /* ===== РЕНДЕР ===== */
 
   function renderDesktop(list) {
     if (!productListDesktop) return;
@@ -82,24 +82,6 @@
     renderMobile(allProducts);
   }
 
-  function filterProducts(query) {
-    const q = query.toLowerCase();
-    const filtered = allProducts.filter(p =>
-      (p.title || '').toLowerCase().includes(q)
-    );
-    renderDesktop(filtered);
-    renderMobile(filtered);
-  }
-
-  if (searchDesktop) {
-    searchDesktop.addEventListener('input', e => filterProducts(e.target.value));
-  }
-  if (searchMobile) {
-    searchMobile.addEventListener('input', e => filterProducts(e.target.value));
-  }
-
-  /* ===== РЕДАКТИРОВАНИЕ ===== */
-
   window.editProduct = id => {
     if (isMobile()) return;
     const p = allProducts.find(x => x.id === id);
@@ -137,20 +119,22 @@
 
   window.deleteProduct = async id => {
     if (!confirm('Удалить сорт?')) return;
+
     await fetch('/api/admin/delete-product', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({
+        id,
+        password: ADMIN_PASSWORD
+      })
     });
+
     await loadProducts();
   };
-
-  /* ===== ФОТО ===== */
 
   imageUpload.addEventListener('change', () => {
     const file = imageUpload.files[0];
     if (!file) return;
-
     imageName = file.name;
     const reader = new FileReader();
     reader.onload = e => {
@@ -160,8 +144,6 @@
     };
     reader.readAsDataURL(file);
   });
-
-  /* ===== СОХРАНЕНИЕ ===== */
 
   productForm.onsubmit = async e => {
     e.preventDefault();
@@ -174,7 +156,6 @@
       const id = editId || translit(titleInput.value);
       let imageUrl = '';
 
-      // 🔴 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: если выбрали новое фото — всегда грузим
       if (imageBase64) {
         const up = await fetch('/api/admin/upload', {
           method: 'POST',
