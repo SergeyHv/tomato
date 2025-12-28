@@ -7,11 +7,10 @@
 
   const $ = id => document.getElementById(id);
   const isMobile = () => window.innerWidth < 768;
+  const bust = url => url ? `${url}?t=${Date.now()}` : '';
 
   const productListDesktop = $('productList');
   const productListMobile  = $('productListMobile');
-  const searchDesktop      = $('searchInputDesktop');
-  const searchMobile       = $('searchInputMobile');
 
   const productForm   = $('productForm');
   const titleInput    = $('title');
@@ -26,8 +25,6 @@
   const imagePreview  = $('imagePreview');
   const submitBtn     = $('submitBtn');
   const formTitle     = $('formTitle');
-
-  const ADMIN_PASSWORD = 'khvalla74'; // 🔴 ключевая строка
 
   const translit = str => {
     const map = {
@@ -48,7 +45,7 @@
     productListDesktop.innerHTML = list.map(p => `
       <div class="p-2 border rounded-xl flex items-center gap-3 bg-white">
         <div class="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center">
-          ${p.images ? `<img src="${p.images}" class="w-12 h-12 rounded-lg object-cover">` : '🍅'}
+          ${p.images ? `<img src="${bust(p.images)}" class="w-12 h-12 rounded-lg object-cover">` : '🍅'}
         </div>
         <div class="flex-1 truncate">
           <div class="font-semibold text-sm">${p.title}</div>
@@ -65,7 +62,7 @@
     productListMobile.innerHTML = list.map(p => `
       <div class="p-3 border rounded-xl bg-white flex gap-3 items-center">
         <div class="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center">
-          ${p.images ? `<img src="${p.images}" class="w-12 h-12 rounded-lg object-cover">` : '🍅'}
+          ${p.images ? `<img src="${bust(p.images)}" class="w-12 h-12 rounded-lg object-cover">` : '🍅'}
         </div>
         <div class="flex-1">
           <div class="font-semibold">${p.title}</div>
@@ -110,7 +107,7 @@
     propWeight.value = map['Вес'] || '';
 
     if (p.images) {
-      imagePreview.src = p.images;
+      imagePreview.src = bust(p.images);
       imagePreview.classList.remove('hidden');
     }
 
@@ -119,27 +116,23 @@
 
   window.deleteProduct = async id => {
     if (!confirm('Удалить сорт?')) return;
-
     await fetch('/api/admin/delete-product', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id,
-        password: ADMIN_PASSWORD
-      })
+      body: JSON.stringify({ id, password: 'khvalla74' })
     });
-
     await loadProducts();
   };
 
   imageUpload.addEventListener('change', () => {
     const file = imageUpload.files[0];
     if (!file) return;
+
     imageName = file.name;
     const reader = new FileReader();
     reader.onload = e => {
       imageBase64 = e.target.result;
-      imagePreview.src = imageBase64;
+      imagePreview.src = e.target.result;
       imagePreview.classList.remove('hidden');
     };
     reader.readAsDataURL(file);
