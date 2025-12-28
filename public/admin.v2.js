@@ -1,5 +1,7 @@
 (function () {
 
+  const ADMIN_PASSWORD = 'khvalla74';
+
   let allProducts = [];
   let editId = null;
   let imageBase64 = '';
@@ -11,8 +13,8 @@
 
   const productListDesktop = $('productList');
   const productListMobile  = $('productListMobile');
-  const productForm   = $('productForm');
 
+  const productForm   = $('productForm');
   const titleInput    = $('title');
   const categoryInput = $('category');
   const priceInput    = $('price');
@@ -27,24 +29,36 @@
   const formTitle     = $('formTitle');
   const toast         = $('toast');
 
-  function showToast(text) {
+  /* ===== UTILS ===== */
+
+  const translit = str => {
+    const map = {
+      а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',
+      и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',
+      р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'c',
+      ч:'ch',ш:'sh',щ:'sch',ы:'y',э:'e',ю:'yu',я:'ya'
+    };
+    return str.toLowerCase().split('')
+      .map(ch => map[ch] || ch)
+      .join('')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  function showToast(text, ok = true) {
     toast.innerText = text;
     toast.className =
-      'fixed bottom-5 right-5 px-6 py-4 rounded-xl text-white text-lg shadow-lg bg-green-600';
+      `fixed bottom-5 right-5 px-6 py-4 rounded-xl text-white text-lg shadow-lg ${
+        ok ? 'bg-green-600' : 'bg-red-600'
+      }`;
     toast.classList.remove('hidden');
     setTimeout(() => toast.classList.add('hidden'), 2500);
   }
 
-  async function loadProducts() {
-    const res = await fetch('/api/admin/get-products', {
-      credentials: 'same-origin'
-    });
-    allProducts = await res.json();
-    renderDesktop(allProducts);
-    renderMobile(allProducts);
-  }
+  /* ===== RENDER ===== */
 
   function renderDesktop(list) {
+    if (!productListDesktop) return;
     productListDesktop.innerHTML = list.map(p => `
       <div class="p-2 border rounded-xl flex items-center gap-3 bg-white">
         <img src="${bust(p.images)}" class="w-12 h-12 rounded-lg object-cover">
@@ -71,8 +85,18 @@
     `).join('');
   }
 
+  async function loadProducts() {
+    const res = await fetch('/api/admin/get-products');
+    allProducts = await res.json();
+    renderDesktop(allProducts);
+    renderMobile(allProducts);
+  }
+
+  /* ===== EDIT / DELETE ===== */
+
   window.editProduct = id => {
     if (isMobile()) return;
+
     const p = allProducts.find(x => x.id === id);
     if (!p) return;
 
@@ -82,8 +106,8 @@
 
     formTitle.innerText = '✏️ Редактирование сорта';
 
-    titleInput.value = p.title;
-    categoryInput.value = p.category;
+    titleInput.value = p.title || '';
+    categoryInput.value = p.category || '';
     priceInput.value = p.price || '';
     tagsInput.value = p.tags || '';
     descInput.value = p.description || '';
@@ -91,7 +115,7 @@
     const map = {};
     (p.props || '').split(';').forEach(x => {
       const [k,v] = x.split('=');
-      map[k] = v;
+      if (k) map[k] = v;
     });
 
     propTerm.value = map['Срок'] || '';
@@ -100,20 +124,43 @@
 
     imagePreview.src = bust(p.images);
     imagePreview.classList.remove('hidden');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  imageUpload.onchange = () => {
+  window.deleteProduct = async id => {
+    if (!confirm('Удалить сорт?')) return;
+
+    await fetch('/api/admin/delete-product', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id,
+        password: ADMIN_PASSWORD
+      })
+    });
+
+    showToast('Сорт удалён');
+    await loadProducts();
+  };
+
+  /* ===== IMAGE ===== */
+
+  imageUpload.addEventListener('change', () => {
     const file = imageUpload.files[0];
     if (!file) return;
+
     imageName = file.name;
-    const r = new FileReader();
-    r.onload = e => {
+    const reader = new FileReader();
+    reader.onload = e => {
       imageBase64 = e.target.result;
       imagePreview.src = e.target.result;
       imagePreview.classList.remove('hidden');
     };
-    r.readAsDataURL(file);
-  };
+    reader.readAsDataURL(file);
+  });
+
+  /* ===== SAVE ===== */
 
   productForm.onsubmit = async e => {
     e.preventDefault();
@@ -121,68 +168,63 @@
     submitBtn.disabled = true;
     submitBtn.innerText = '⏳ Сохраняем…';
 
-    let imageUrl = '';
+    try {
+      const id = editId || translit(titleInput.value);
+      let imageUrl = '';
 
-    if (imageBase64) {
-      const up = await fetch('/api/admin/upload', {
+      if (imageBase64) {
+        const up = await fetch('/api/admin/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: imageName,
+            base64: imageBase64
+          })
+        });
+        imageUrl = (await up.json()).url;
+      } else if (editId) {
+        imageUrl = allProducts.find(p => p.id === editId)?.images || '';
+      }
+
+      const res = await fetch('/api/admin/add-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: imageName, base64: imageBase64 }),
-        credentials: 'same-origin'
+        body: JSON.stringify({
+          password: ADMIN_PASSWORD,
+          id,
+          title: titleInput.value,
+          category: categoryInput.value,
+          price: priceInput.value,
+          tags: tagsInput.value,
+          description: descInput.value,
+          props:
+            `Срок=${propTerm.value};` +
+            `Высота=${propHeight.value};` +
+            `Вес=${propWeight.value}`,
+          images: imageUrl
+        })
       });
-      imageUrl = (await up.json()).url;
-    } else if (editId) {
-      imageUrl = allProducts.find(p => p.id === editId)?.images || '';
+
+      if (!res.ok) throw new Error('SAVE FAILED');
+
+      showToast(editId ? 'Изменения сохранены' : 'Сорт добавлен');
+
+      editId = null;
+      productForm.reset();
+      imagePreview.classList.add('hidden');
+
+      await loadProducts();
+
+    } catch (err) {
+      console.error(err);
+      showToast('Ошибка сохранения', false);
     }
-
-    const res = await fetch('/api/admin/add-product', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({
-        id: editId,
-        title: titleInput.value,
-        category: categoryInput.value,
-        price: priceInput.value,
-        tags: tagsInput.value,
-        description: descInput.value,
-        props:
-          `Срок=${propTerm.value};` +
-          `Высота=${propHeight.value};` +
-          `Вес=${propWeight.value}`,
-        images: imageUrl
-      })
-    });
-
-    if (!res.ok) {
-      alert('Ошибка сохранения (авторизация)');
-      submitBtn.disabled = false;
-      submitBtn.innerText = '💾 Сохранить';
-      return;
-    }
-
-    showToast(editId ? 'Изменения сохранены' : 'Сорт добавлен');
-    editId = null;
-    productForm.reset();
-    imagePreview.classList.add('hidden');
-
-    await loadProducts();
 
     submitBtn.disabled = false;
-    submitBtn.innerText = '💾 Сохранить';
+    submitBtn.innerText = '💾 Сохранить сорт';
   };
 
-  window.deleteProduct = async id => {
-    if (!confirm('Удалить сорт?')) return;
-    await fetch('/api/admin/delete-product', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ id, password: 'khvalla74' })
-    });
-    showToast('Сорт удалён');
-    await loadProducts();
-  };
+  /* ===== INIT ===== */
 
   loadProducts();
 
