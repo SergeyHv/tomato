@@ -23,3 +23,8 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+# Project data (NEVER commit)
+raw_photos/
+processed_photos/
+ocr_data/
+ai_scan_results/
