@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Каталог томатов</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            tomato: {
+              50: '#fff1f1',
+              100: '#ffdfdf',
+              200: '#ffc5c5',
+              300: '#ff9d9d',
+              400: '#ff6464',
+              500: '#ff2f2f',
+              600: '#ed1515',
+              700: '#c80d0d',
+              800: '#a50f0f',
+              900: '#881414',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-stone-50 text-stone-800 font-sans antialiased">
+  <div id="root"></div>
+  <script type="module" src="/src/index.tsx"></script>
+</body>
+</html>
