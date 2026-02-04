@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Filters } from './components/Filters';
@@ -6,7 +5,6 @@ import { Catalog } from './components/Catalog';
 import { NewsSidebar } from './components/NewsSidebar';
 import { CartModal } from './components/CartModal';
 import { DetailModal } from './components/DetailModal';
-import { AdminScanner } from './components/AdminScanner';
 import { NEWS_DATA } from './constants';
 import { Tomato, FilterState, CartItem } from './types';
 import { fetchTomatoes } from './services/api';
@@ -31,7 +29,6 @@ const App: React.FC = () => {
   });
   
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [selectedTomato, setSelectedTomato] = useState<Tomato | null>(null);
 
   // Load Data
@@ -134,39 +131,33 @@ const App: React.FC = () => {
       <Header 
         cartCount={cartItemCount} 
         onOpenCart={() => setIsCartOpen(true)} 
-        onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
       <div className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6">
-        
-        {isAdminOpen ? (
-            <AdminScanner onBack={() => setIsAdminOpen(false)} />
-        ) : (
-            <>
-                <Filters 
-                filters={filters} 
-                onFilterChange={handleFilterChange} 
-                onReset={handleResetFilters} 
-                totalCount={tomatoes.length}
-                filteredCount={filteredTomatoes.length}
-                />
+        <>
+          <Filters 
+            filters={filters} 
+            onFilterChange={handleFilterChange} 
+            onReset={handleResetFilters} 
+            totalCount={tomatoes.length}
+            filteredCount={filteredTomatoes.length}
+          />
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-                <main className="lg:col-span-3">
-                    <Catalog 
-                    tomatoes={filteredTomatoes} 
-                    onAddToCart={addToCart} 
-                    onViewDetail={handleOpenDetail}
-                    cartItems={cart}
-                    />
-                </main>
-                
-                <aside className="lg:col-span-1 sticky top-24">
-                    <NewsSidebar news={NEWS_DATA} />
-                </aside>
-                </div>
-            </>
-        )}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+            <main className="lg:col-span-3">
+              <Catalog 
+                tomatoes={filteredTomatoes} 
+                onAddToCart={addToCart} 
+                onViewDetail={handleOpenDetail}
+                cartItems={cart}
+              />
+            </main>
+            
+            <aside className="lg:col-span-1 sticky top-24">
+              <NewsSidebar news={NEWS_DATA} />
+            </aside>
+          </div>
+        </>
       </div>
 
       {isCartOpen && (
