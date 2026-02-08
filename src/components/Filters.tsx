@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, X, Filter, BarChart2 } from 'lucide-react';
-import { FilterState, TomatoColor, TomatoType, GrowthType, GrowingEnvironment } from '../types';
+import { FilterState, TomatoColor, TomatoType, GrowingEnvironment } from '../types';
 import { localize } from '../utils/localization';
 
 interface FiltersProps {
@@ -10,6 +10,13 @@ interface FiltersProps {
   totalCount: number;
   filteredCount: number;
 }
+
+const GROWTH_OPTIONS_RU = [
+  'Гном',
+  'Дет',
+  'Среднерослый',
+  'Индет',
+];
 
 export const Filters: React.FC<FiltersProps> = ({
   filters,
@@ -33,8 +40,7 @@ export const Filters: React.FC<FiltersProps> = ({
 
   return (
     <div className="space-y-6 bg-white p-4 rounded-xl shadow-sm border border-stone-100">
-      
-      {/* ENVIRONMENT FILTER */}
+      {/* ENVIRONMENT */}
       <div className="space-y-2">
         <h3 className="text-lg font-semibold text-stone-800">
           Где вы планируете выращивать томаты?
@@ -127,15 +133,22 @@ export const Filters: React.FC<FiltersProps> = ({
             ))}
           </select>
 
+          {/* TYPE OF GROWTH — RU VALUES ONLY */}
           <select
             value={filters.growth}
             onChange={(e) => onFilterChange({ growth: e.target.value })}
             className="border border-stone-200 rounded-lg px-3 py-2 bg-white text-sm text-stone-700 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
           >
             <option value="">🌱 Тип куста</option>
-            {Object.values(GrowthType).map((g) => (
+            {GROWTH_OPTIONS_RU.map((g) => (
               <option key={g} value={g}>
-                {localize(g)}
+                {g === 'Гном'
+                  ? 'Гном'
+                  : g === 'Дет'
+                  ? 'Низкорослый (Дет)'
+                  : g === 'Среднерослый'
+                  ? 'Среднерослый (Полудет)'
+                  : 'Высокорослый (Индет)'}
               </option>
             ))}
           </select>
