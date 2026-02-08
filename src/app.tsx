@@ -8,49 +8,14 @@ import { DetailModal } from './components/DetailModal';
 import { NEWS_DATA } from './constants';
 import { Tomato, FilterState, CartItem } from './types';
 import { fetchTomatoes } from './services/api';
-import { normalizeCategory } from './utils/localization';
-
-/* =========================
-   КАНОН СРЕДЫ ВЫРАЩИВАНИЯ
-   ========================= */
-
-/**
- * Логика:
- * 🌿 Открытый грунт  → исключаем ЯВНО тепличные (Indeterminate)
- * 🏠 Теплица         → показываем ВСЁ (кроме гномов, если появятся)
- * 🌤 Подходит для обоих → только Determinate + Semi-determinate
- */
-const matchesEnvironment = (
-  rawGrowth: string,
-  environment: FilterState['environment']
-): boolean => {
-  if (!environment) return true;
-
-  const growth = normalizeCategory(rawGrowth);
-
-  switch (environment) {
-    case 'ground':
-      // Открытый грунт: всё, КРОМЕ явных тепличных
-      return growth !== 'Indeterminate';
-
-    case 'greenhouse':
-      // Теплица: всё (если гномы появятся — исключатся здесь)
-      return growth !== 'Dwarf';
-
-    case 'both':
-      // Подходит для обоих: только безопасные
-      return growth === 'Determinate' || growth === 'Semi-determinate';
-
-    default:
-      return true;
-  }
-};
 
 const App: React.FC = () => {
+  // Data State
   const [tomatoes, setTomatoes] = useState<Tomato[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // UI State
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     environment: '',
@@ -67,6 +32,7 @@ const App: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedTomato, setSelectedTomato] = useState<Tomato | null>(null);
 
+  // Load Data
   useEffect(() => {
     fetchTomatoes()
       .then(data => {
@@ -79,10 +45,12 @@ const App: React.FC = () => {
       });
   }, []);
 
+  // Sync Cart
   useEffect(() => {
     localStorage.setItem('tomato_cart_v2', JSON.stringify(cart));
   }, [cart]);
 
+  // Handlers
   const handleFilterChange = useCallback((newFilters: Partial<FilterState>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   }, []);
@@ -121,6 +89,26 @@ const App: React.FC = () => {
     setSelectedTomato(null);
   }, []);
 
+  // ENVIRONMENT LOGIC (ЭТАП 1.4)
+  const matchesEnvironment = (growth: string) => {
+    if (!filters.environment) return true;
+
+    if (filters.environment === 'ground') {
+      return growth === 'Гном' || growth === 'Дет';
+    }
+
+    if (filters.environment === 'greenhouse') {
+      return growth === 'Индет' || growth === 'Среднерослый' || growth === 'Дет';
+    }
+
+    if (filters.environment === 'both') {
+      return growth === 'Дет' || growth === 'Среднерослый';
+    }
+
+    return true;
+  };
+
+  // Derived State (Filtering)
   const filteredTomatoes = useMemo(() => {
     return tomatoes.filter(tomato => {
       const q = filters.search.toLowerCase();
@@ -129,23 +117,17 @@ const App: React.FC = () => {
         tomato.name.toLowerCase().includes(q) ||
         (tomato.originalName && tomato.originalName.toLowerCase().includes(q));
 
-      const matchesEnv = matchesEnvironment(
-        tomato.growth,
-        filters.environment
-      );
-
       const matchesColor = filters.color ? tomato.color === filters.color : true;
       const matchesType = filters.type ? tomato.type === filters.type : true;
-      const matchesGrowth = filters.growth
-        ? normalizeCategory(tomato.growth) === filters.growth
-        : true;
+      const matchesGrowth = filters.growth ? tomato.growth === filters.growth : true;
+      const matchesEnv = matchesEnvironment(tomato.growth);
 
       return (
         matchesSearch &&
-        matchesEnv &&
         matchesColor &&
         matchesType &&
-        matchesGrowth
+        matchesGrowth &&
+        matchesEnv
       );
     });
   }, [filters, tomatoes]);
@@ -183,7 +165,10 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header cartCount={cartItemCount} onOpenCart={() => setIsCartOpen(true)} />
+      <Header
+        cartCount={cartItemCount}
+        onOpenCart={() => setIsCartOpen(true)}
+      />
 
       <div className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6">
         <Filters
