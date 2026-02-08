@@ -1,4 +1,3 @@
-
 export const TRANSLATIONS: Record<string, string> = {
   // Цвета
   'Red': 'Красный',
@@ -8,11 +7,11 @@ export const TRANSLATIONS: Record<string, string> = {
   'Green': 'Зелёный',
   'Orange': 'Оранжевый',
   'Bi-color': 'Биколор',
-  'Bi-Color': 'Биколор', 
+  'Bi-Color': 'Биколор',
   'White': 'Белый',
   'Purple': 'Пурпурный',
   'Striped': 'Полосатый',
-  
+
   // Типы плодов
   'Cherry': 'Черри',
   'Plum': 'Сливка',
@@ -22,16 +21,16 @@ export const TRANSLATIONS: Record<string, string> = {
   'Oxheart': 'Бычье сердце',
   'Pepper': 'Перцевидный',
   'Pear': 'Грушевидный',
-  
-  // Типы роста
+
+  // Типы роста (КАНОН, как в реальности)
   'Dwarf': 'Гном',
-  'Determinate': 'Дет (Низкорослый)',
-  'Semi-determinate': 'Среднерослый',
-  'Indeterminate': 'Индет (Высокорослый)',
-  
+  'Determinate': 'Низкорослый (Дет)',
+  'Semi-determinate': 'Среднерослый (Полудет)',
+  'Indeterminate': 'Высокорослый (Индет)',
+
   // Заглушки и общие термины
   'Разное': 'Разное',
-  'Индет': 'Индет (Высокий)',
+  'Индет': 'Высокорослый (Индет)',
   'Классика': 'Классика',
   'Не указано': 'Нет данных'
 };
@@ -48,7 +47,7 @@ const ALIASES: Record<string, string> = {
   'дет': 'Determinate',
   'полудет': 'Semi-determinate',
   'гном': 'Dwarf',
-  'черное сердце': 'Heart', // Если напишут сложный цвет/тип
+  'черное сердце': 'Heart',
   'биф': 'Beefsteak',
   'сердце': 'Heart',
   'черный': 'Black',
@@ -56,33 +55,28 @@ const ALIASES: Record<string, string> = {
 };
 
 export const localize = (key: string): string => {
-  if (!key) return "";
+  if (!key) return '';
   const cleanKey = String(key).trim();
-  // Если ключ уже на русском (например, мы его так записали в Airtable), возвращаем как есть
+  // Если ключ уже на русском — возвращаем как есть
   if (/[а-яА-ЯёЁ]/.test(cleanKey)) return cleanKey;
   return TRANSLATIONS[cleanKey] || cleanKey;
 };
 
 /**
  * Превращает русское значение из базы в английский ID для корректной работы фильтров.
- * Пример: "Черри" -> "Cherry", "Красный" -> "Red"
  */
 export const normalizeCategory = (value: string): string => {
-  if (!value) return "";
+  if (!value) return '';
   const v = String(value).trim();
-  
-  // 1. Если это уже английский ключ (есть в TRANSLATIONS), возвращаем его
+
+  // Если это уже английский ключ
   if (TRANSLATIONS[v]) return v;
 
   const lowerV = v.toLowerCase();
 
-  // 2. Ищем в обратном словаре (по полному совпадению перевода)
   if (REVERSE_TRANSLATIONS[lowerV]) return REVERSE_TRANSLATIONS[lowerV];
-
-  // 3. Ищем в списке синонимов
   if (ALIASES[lowerV]) return ALIASES[lowerV];
 
-  // 4. Если не нашли, возвращаем как есть (пусть отображается на русском)
   return v;
 };
 
