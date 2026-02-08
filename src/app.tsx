@@ -134,14 +134,16 @@ const App: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           {/* DESKTOP FILTERS */}
           <aside className="hidden lg:block lg:col-span-1 sticky top-24">
-            <Filters
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              onReset={handleResetFilters}
-              totalCount={tomatoes.length}
-              filteredCount={filteredTomatoes.length}
-            />
-          </aside>
+  <div className="max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
+    <Filters
+      filters={filters}
+      onFilterChange={handleFilterChange}
+      onReset={handleResetFilters}
+      totalCount={tomatoes.length}
+      filteredCount={filteredTomatoes.length}
+    />
+  </div>
+</aside>
 
           <main className="lg:col-span-3">
             <Catalog
