@@ -1,18 +1,17 @@
-
 export interface Tomato {
   id: string;
   name: string;
   originalName: string;
   description: string;
   fullDescription: string;
-  color: string; 
+  color: string;
   type: string;
   growth: string;
   height: string;
   weight: string;
   imageUrl: string;
   price: number;
-  origin?: string; // Происхождение сорта
+  origin?: string;
 }
 
 export interface NewsItem {
@@ -27,8 +26,19 @@ export interface CartItem {
   quantity: number;
 }
 
+/* =========================
+   ЭТАП 1 — СРЕДА ВЫРАЩИВАНИЯ
+   ========================= */
+
+export type GrowingEnvironment = 'ground' | 'greenhouse' | 'both' | '';
+
 export interface FilterState {
   search: string;
+
+  /* НОВЫЙ ПЕРВИЧНЫЙ ФИЛЬТР */
+  environment: GrowingEnvironment;
+
+  /* СУЩЕСТВУЮЩИЕ ФИЛЬТРЫ — НЕ ТРОГАЕМ */
   color: string;
   type: string;
   growth: string;
