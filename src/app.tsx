@@ -9,6 +9,42 @@ import { NEWS_DATA } from './constants';
 import { Tomato, FilterState, CartItem } from './types';
 import { fetchTomatoes } from './services/api';
 
+/* =========================
+   ЭТАП 1.4 — ЛОГИКА СРЕДЫ
+   ========================= */
+
+/**
+ * Определяет, подходит ли сорт под выбранную среду выращивания
+ * Основано ТОЛЬКО на типе куста (growth)
+ */
+const matchesEnvironment = (
+  growth: string,
+  environment: FilterState['environment']
+): boolean => {
+  if (!environment) return true;
+
+  switch (environment) {
+    case 'ground':
+      // Открытый грунт: Гном, Детерминантный
+      return growth === 'Dwarf' || growth === 'Determinate';
+
+    case 'greenhouse':
+      // Теплица: Индет, Полудет, Детерминантный (допустим)
+      return (
+        growth === 'Indeterminate' ||
+        growth === 'Semi-determinate' ||
+        growth === 'Determinate'
+      );
+
+    case 'both':
+      // Подходит для обоих: Детерминантный, Полудет
+      return growth === 'Determinate' || growth === 'Semi-determinate';
+
+    default:
+      return true;
+  }
+};
+
 const App: React.FC = () => {
   // Data State
   const [tomatoes, setTomatoes] = useState<Tomato[]>([]);
@@ -89,29 +125,6 @@ const App: React.FC = () => {
     setSelectedTomato(null);
   }, []);
 
-  // === ЭТАП 1.4: логика соответствия growth -> environment ===
-  const matchesEnvironment = (growth: string, environment: FilterState['environment']) => {
-    if (!environment) return true;
-
-    switch (environment) {
-      case 'ground':
-        return growth === 'Dwarf' || growth === 'Determinate';
-
-      case 'greenhouse':
-        return (
-          growth === 'Indeterminate' ||
-          growth === 'Semi-determinate' ||
-          growth === 'Determinate'
-        );
-
-      case 'both':
-        return growth === 'Determinate' || growth === 'Semi-determinate';
-
-      default:
-        return true;
-    }
-  };
-
   // Derived State (Filtering)
   const filteredTomatoes = useMemo(() => {
     return tomatoes.filter(tomato => {
@@ -121,17 +134,17 @@ const App: React.FC = () => {
         tomato.name.toLowerCase().includes(q) ||
         (tomato.originalName && tomato.originalName.toLowerCase().includes(q));
 
+      const matchesEnv = matchesEnvironment(tomato.growth, filters.environment);
       const matchesColor = filters.color ? tomato.color === filters.color : true;
       const matchesType = filters.type ? tomato.type === filters.type : true;
       const matchesGrowth = filters.growth ? tomato.growth === filters.growth : true;
-      const matchesEnv = matchesEnvironment(tomato.growth, filters.environment);
 
       return (
         matchesSearch &&
+        matchesEnv &&
         matchesColor &&
         matchesType &&
-        matchesGrowth &&
-        matchesEnv
+        matchesGrowth
       );
     });
   }, [filters, tomatoes]);
