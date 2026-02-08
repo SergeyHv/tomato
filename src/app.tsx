@@ -18,6 +18,7 @@ const App: React.FC = () => {
   // UI State
   const [filters, setFilters] = useState<FilterState>({
     search: '',
+    environment: '',
     color: '',
     type: '',
     growth: '',
@@ -38,8 +39,8 @@ const App: React.FC = () => {
         setTomatoes(data);
         setLoading(false);
       })
-      .catch(err => {
-        setError("Не удалось загрузить каталог. Проверьте соединение.");
+      .catch(() => {
+        setError('Не удалось загрузить каталог. Проверьте соединение.');
         setLoading(false);
       });
   }, []);
@@ -55,15 +56,19 @@ const App: React.FC = () => {
   }, []);
 
   const handleResetFilters = useCallback(() => {
-    setFilters({ search: '', color: '', type: '', growth: '' });
+    setFilters({
+      search: '',
+      environment: '',
+      color: '',
+      type: '',
+      growth: '',
+    });
   }, []);
 
   const addToCart = useCallback((tomato: Tomato) => {
     setCart(prev => {
       const existing = prev.find(item => item.tomato.id === tomato.id);
-      if (existing) {
-        return prev;
-      }
+      if (existing) return prev;
       return [...prev, { tomato, quantity: 1 }];
     });
   }, []);
@@ -84,12 +89,13 @@ const App: React.FC = () => {
     setSelectedTomato(null);
   }, []);
 
-  // Derived State (Filtering)
+  // Derived State (Filtering — БЕЗ environment, ЭТАП 1)
   const filteredTomatoes = useMemo(() => {
     return tomatoes.filter(tomato => {
       const q = filters.search.toLowerCase();
-      const matchesSearch = !q || 
-        tomato.name.toLowerCase().includes(q) || 
+      const matchesSearch =
+        !q ||
+        tomato.name.toLowerCase().includes(q) ||
         (tomato.originalName && tomato.originalName.toLowerCase().includes(q));
 
       const matchesColor = filters.color ? tomato.color === filters.color : true;
@@ -120,7 +126,12 @@ const App: React.FC = () => {
         <div className="text-center p-6 bg-white rounded-xl shadow-lg">
           <p className="text-red-500 font-bold mb-2">Ошибка</p>
           <p className="text-stone-600">{error}</p>
-          <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-stone-800 text-white rounded-lg">Обновить</button>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-stone-800 text-white rounded-lg"
+          >
+            Обновить
+          </button>
         </div>
       </div>
     );
@@ -128,54 +139,50 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header 
-        cartCount={cartItemCount} 
-        onOpenCart={() => setIsCartOpen(true)} 
+      <Header
+        cartCount={cartItemCount}
+        onOpenCart={() => setIsCartOpen(true)}
       />
 
       <div className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6">
-        <>
-          <Filters 
-            filters={filters} 
-            onFilterChange={handleFilterChange} 
-            onReset={handleResetFilters} 
-            totalCount={tomatoes.length}
-            filteredCount={filteredTomatoes.length}
-          />
+        <Filters
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onReset={handleResetFilters}
+          totalCount={tomatoes.length}
+          filteredCount={filteredTomatoes.length}
+        />
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-            <main className="lg:col-span-3">
-              <Catalog 
-                tomatoes={filteredTomatoes} 
-                onAddToCart={addToCart} 
-                onViewDetail={handleOpenDetail}
-                cartItems={cart}
-              />
-            </main>
-            
-            <aside className="lg:col-span-1 sticky top-24">
-              <NewsSidebar news={NEWS_DATA} />
-            </aside>
-          </div>
-        </>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+          <main className="lg:col-span-3">
+            <Catalog
+              tomatoes={filteredTomatoes}
+              onAddToCart={addToCart}
+              onViewDetail={handleOpenDetail}
+              cartItems={cart}
+            />
+          </main>
+
+          <aside className="lg:col-span-1 sticky top-24">
+            <NewsSidebar news={NEWS_DATA} />
+          </aside>
+        </div>
       </div>
 
       {isCartOpen && (
-        <CartModal 
-          cart={cart} 
-          onClose={() => setIsCartOpen(false)} 
+        <CartModal
+          cart={cart}
+          onClose={() => setIsCartOpen(false)}
           onRemove={removeFromCart}
           onClear={clearCart}
         />
       )}
 
       {selectedTomato && (
-        <DetailModal 
-          tomato={selectedTomato} 
-          onClose={handleCloseDetail} 
-          onAddToCart={() => {
-            addToCart(selectedTomato);
-          }}
+        <DetailModal
+          tomato={selectedTomato}
+          onClose={handleCloseDetail}
+          onAddToCart={() => addToCart(selectedTomato)}
           isInCart={cart.some(i => i.tomato.id === selectedTomato.id)}
           onRemoveFromCart={() => removeFromCart(selectedTomato.id)}
         />
