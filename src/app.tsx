@@ -11,33 +11,34 @@ import { fetchTomatoes } from './services/api';
 import { normalizeCategory } from './utils/localization';
 
 /* =========================
-   ЭТАП 1.4 — ЛОГИКА СРЕДЫ (FIX)
+   КАНОН СРЕДЫ ВЫРАЩИВАНИЯ
    ========================= */
 
+/**
+ * Логика:
+ * 🌿 Открытый грунт  → исключаем ЯВНО тепличные (Indeterminate)
+ * 🏠 Теплица         → показываем ВСЁ (кроме гномов, если появятся)
+ * 🌤 Подходит для обоих → только Determinate + Semi-determinate
+ */
 const matchesEnvironment = (
   rawGrowth: string,
   environment: FilterState['environment']
 ): boolean => {
   if (!environment) return true;
 
-  // КАНОН: всегда работаем с нормализованным значением
   const growth = normalizeCategory(rawGrowth);
 
   switch (environment) {
     case 'ground':
-      // Открытый грунт
-      return growth === 'Dwarf' || growth === 'Determinate';
+      // Открытый грунт: всё, КРОМЕ явных тепличных
+      return growth !== 'Indeterminate';
 
     case 'greenhouse':
-      // Теплица
-      return (
-        growth === 'Indeterminate' ||
-        growth === 'Semi-determinate' ||
-        growth === 'Determinate'
-      );
+      // Теплица: всё (если гномы появятся — исключатся здесь)
+      return growth !== 'Dwarf';
 
     case 'both':
-      // Подходит для обоих
+      // Подходит для обоих: только безопасные
       return growth === 'Determinate' || growth === 'Semi-determinate';
 
     default:
