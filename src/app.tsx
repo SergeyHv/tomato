@@ -8,28 +8,28 @@ import { DetailModal } from './components/DetailModal';
 import { NEWS_DATA } from './constants';
 import { Tomato, FilterState, CartItem } from './types';
 import { fetchTomatoes } from './services/api';
+import { normalizeCategory } from './utils/localization';
 
 /* =========================
-   ЭТАП 1.4 — ЛОГИКА СРЕДЫ
+   ЭТАП 1.4 — ЛОГИКА СРЕДЫ (FIX)
    ========================= */
 
-/**
- * Определяет, подходит ли сорт под выбранную среду выращивания
- * Основано ТОЛЬКО на типе куста (growth)
- */
 const matchesEnvironment = (
-  growth: string,
+  rawGrowth: string,
   environment: FilterState['environment']
 ): boolean => {
   if (!environment) return true;
 
+  // КАНОН: всегда работаем с нормализованным значением
+  const growth = normalizeCategory(rawGrowth);
+
   switch (environment) {
     case 'ground':
-      // Открытый грунт: Гном, Детерминантный
+      // Открытый грунт
       return growth === 'Dwarf' || growth === 'Determinate';
 
     case 'greenhouse':
-      // Теплица: Индет, Полудет, Детерминантный (допустим)
+      // Теплица
       return (
         growth === 'Indeterminate' ||
         growth === 'Semi-determinate' ||
@@ -37,7 +37,7 @@ const matchesEnvironment = (
       );
 
     case 'both':
-      // Подходит для обоих: Детерминантный, Полудет
+      // Подходит для обоих
       return growth === 'Determinate' || growth === 'Semi-determinate';
 
     default:
@@ -46,12 +46,10 @@ const matchesEnvironment = (
 };
 
 const App: React.FC = () => {
-  // Data State
   const [tomatoes, setTomatoes] = useState<Tomato[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // UI State
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     environment: '',
@@ -68,7 +66,6 @@ const App: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedTomato, setSelectedTomato] = useState<Tomato | null>(null);
 
-  // Load Data
   useEffect(() => {
     fetchTomatoes()
       .then(data => {
@@ -81,12 +78,10 @@ const App: React.FC = () => {
       });
   }, []);
 
-  // Sync Cart to LocalStorage
   useEffect(() => {
     localStorage.setItem('tomato_cart_v2', JSON.stringify(cart));
   }, [cart]);
 
-  // Handlers
   const handleFilterChange = useCallback((newFilters: Partial<FilterState>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   }, []);
@@ -125,7 +120,6 @@ const App: React.FC = () => {
     setSelectedTomato(null);
   }, []);
 
-  // Derived State (Filtering)
   const filteredTomatoes = useMemo(() => {
     return tomatoes.filter(tomato => {
       const q = filters.search.toLowerCase();
@@ -134,10 +128,16 @@ const App: React.FC = () => {
         tomato.name.toLowerCase().includes(q) ||
         (tomato.originalName && tomato.originalName.toLowerCase().includes(q));
 
-      const matchesEnv = matchesEnvironment(tomato.growth, filters.environment);
+      const matchesEnv = matchesEnvironment(
+        tomato.growth,
+        filters.environment
+      );
+
       const matchesColor = filters.color ? tomato.color === filters.color : true;
       const matchesType = filters.type ? tomato.type === filters.type : true;
-      const matchesGrowth = filters.growth ? tomato.growth === filters.growth : true;
+      const matchesGrowth = filters.growth
+        ? normalizeCategory(tomato.growth) === filters.growth
+        : true;
 
       return (
         matchesSearch &&
@@ -182,10 +182,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header
-        cartCount={cartItemCount}
-        onOpenCart={() => setIsCartOpen(true)}
-      />
+      <Header cartCount={cartItemCount} onOpenCart={() => setIsCartOpen(true)} />
 
       <div className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6">
         <Filters
