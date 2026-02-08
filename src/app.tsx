@@ -28,7 +28,7 @@ const App: React.FC = () => {
     const saved = localStorage.getItem('tomato_cart_v2');
     return saved ? JSON.parse(saved) : [];
   });
-  
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedTomato, setSelectedTomato] = useState<Tomato | null>(null);
 
@@ -89,7 +89,30 @@ const App: React.FC = () => {
     setSelectedTomato(null);
   }, []);
 
-  // Derived State (Filtering — БЕЗ environment, ЭТАП 1)
+  // === ЭТАП 1.4: логика соответствия growth -> environment ===
+  const matchesEnvironment = (growth: string, environment: FilterState['environment']) => {
+    if (!environment) return true;
+
+    switch (environment) {
+      case 'ground':
+        return growth === 'Dwarf' || growth === 'Determinate';
+
+      case 'greenhouse':
+        return (
+          growth === 'Indeterminate' ||
+          growth === 'Semi-determinate' ||
+          growth === 'Determinate'
+        );
+
+      case 'both':
+        return growth === 'Determinate' || growth === 'Semi-determinate';
+
+      default:
+        return true;
+    }
+  };
+
+  // Derived State (Filtering)
   const filteredTomatoes = useMemo(() => {
     return tomatoes.filter(tomato => {
       const q = filters.search.toLowerCase();
@@ -101,8 +124,15 @@ const App: React.FC = () => {
       const matchesColor = filters.color ? tomato.color === filters.color : true;
       const matchesType = filters.type ? tomato.type === filters.type : true;
       const matchesGrowth = filters.growth ? tomato.growth === filters.growth : true;
+      const matchesEnv = matchesEnvironment(tomato.growth, filters.environment);
 
-      return matchesSearch && matchesColor && matchesType && matchesGrowth;
+      return (
+        matchesSearch &&
+        matchesColor &&
+        matchesType &&
+        matchesGrowth &&
+        matchesEnv
+      );
     });
   }, [filters, tomatoes]);
 
