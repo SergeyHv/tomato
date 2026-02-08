@@ -10,12 +10,10 @@ import { Tomato, FilterState, CartItem } from './types';
 import { fetchTomatoes } from './services/api';
 
 const App: React.FC = () => {
-  // Data State
   const [tomatoes, setTomatoes] = useState<Tomato[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // UI State
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     environment: '',
@@ -23,6 +21,8 @@ const App: React.FC = () => {
     type: '',
     growth: '',
   });
+
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   const [cart, setCart] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem('tomato_cart_v2');
@@ -32,7 +32,6 @@ const App: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedTomato, setSelectedTomato] = useState<Tomato | null>(null);
 
-  // Load Data
   useEffect(() => {
     fetchTomatoes()
       .then(data => {
@@ -45,12 +44,14 @@ const App: React.FC = () => {
       });
   }, []);
 
-  // Sync Cart
   useEffect(() => {
     localStorage.setItem('tomato_cart_v2', JSON.stringify(cart));
   }, [cart]);
 
-  // Handlers
+  useEffect(() => {
+    document.body.style.overflow = isFiltersOpen ? 'hidden' : '';
+  }, [isFiltersOpen]);
+
   const handleFilterChange = useCallback((newFilters: Partial<FilterState>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   }, []);
@@ -65,50 +66,15 @@ const App: React.FC = () => {
     });
   }, []);
 
-  const addToCart = useCallback((tomato: Tomato) => {
-    setCart(prev => {
-      const existing = prev.find(item => item.tomato.id === tomato.id);
-      if (existing) return prev;
-      return [...prev, { tomato, quantity: 1 }];
-    });
-  }, []);
-
-  const removeFromCart = useCallback((id: string) => {
-    setCart(prev => prev.filter(item => item.tomato.id !== id));
-  }, []);
-
-  const clearCart = useCallback(() => {
-    setCart([]);
-  }, []);
-
-  const handleOpenDetail = useCallback((tomato: Tomato) => {
-    setSelectedTomato(tomato);
-  }, []);
-
-  const handleCloseDetail = useCallback(() => {
-    setSelectedTomato(null);
-  }, []);
-
-  // ENVIRONMENT LOGIC (ЭТАП 1.4)
   const matchesEnvironment = (growth: string) => {
     if (!filters.environment) return true;
-
-    if (filters.environment === 'ground') {
-      return growth === 'Гном' || growth === 'Дет';
-    }
-
-    if (filters.environment === 'greenhouse') {
+    if (filters.environment === 'ground') return growth === 'Гном' || growth === 'Дет';
+    if (filters.environment === 'greenhouse')
       return growth === 'Индет' || growth === 'Среднерослый' || growth === 'Дет';
-    }
-
-    if (filters.environment === 'both') {
-      return growth === 'Дет' || growth === 'Среднерослый';
-    }
-
+    if (filters.environment === 'both') return growth === 'Дет' || growth === 'Среднерослый';
     return true;
   };
 
-  // Derived State (Filtering)
   const filteredTomatoes = useMemo(() => {
     return tomatoes.filter(tomato => {
       const q = filters.search.toLowerCase();
@@ -122,13 +88,7 @@ const App: React.FC = () => {
       const matchesGrowth = filters.growth ? tomato.growth === filters.growth : true;
       const matchesEnv = matchesEnvironment(tomato.growth);
 
-      return (
-        matchesSearch &&
-        matchesColor &&
-        matchesType &&
-        matchesGrowth &&
-        matchesEnv
-      );
+      return matchesSearch && matchesColor && matchesType && matchesGrowth && matchesEnv;
     });
   }, [filters, tomatoes]);
 
@@ -140,7 +100,6 @@ const App: React.FC = () => {
         <div className="text-center">
           <div className="text-4xl animate-bounce mb-4">🍅</div>
           <p className="text-stone-500 font-medium">Загружаем каталог сортов...</p>
-          <p className="text-stone-400 text-xs mt-2">Пожалуйста, подождите</p>
         </div>
       </div>
     );
@@ -152,12 +111,6 @@ const App: React.FC = () => {
         <div className="text-center p-6 bg-white rounded-xl shadow-lg">
           <p className="text-red-500 font-bold mb-2">Ошибка</p>
           <p className="text-stone-600">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-stone-800 text-white rounded-lg"
-          >
-            Обновить
-          </button>
         </div>
       </div>
     );
@@ -165,52 +118,86 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header
-        cartCount={cartItemCount}
-        onOpenCart={() => setIsCartOpen(true)}
-      />
+      <Header cartCount={cartItemCount} onOpenCart={() => setIsCartOpen(true)} />
 
-      <div className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6">
-        <Filters
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onReset={handleResetFilters}
-          totalCount={tomatoes.length}
-          filteredCount={filteredTomatoes.length}
-        />
+      {/* MOBILE FILTER BUTTON */}
+      <div className="lg:hidden px-4 pt-4">
+        <button
+          onClick={() => setIsFiltersOpen(true)}
+          className="w-full border border-stone-200 rounded-xl px-4 py-3 bg-white shadow-sm text-stone-700 font-medium"
+        >
+          Фильтры · Найдено {filteredTomatoes.length}
+        </button>
+      </div>
 
+      <div className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+          {/* DESKTOP FILTERS */}
+          <aside className="hidden lg:block lg:col-span-1 sticky top-24">
+            <Filters
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onReset={handleResetFilters}
+              totalCount={tomatoes.length}
+              filteredCount={filteredTomatoes.length}
+            />
+          </aside>
+
           <main className="lg:col-span-3">
             <Catalog
               tomatoes={filteredTomatoes}
-              onAddToCart={addToCart}
-              onViewDetail={handleOpenDetail}
+              onAddToCart={(t) => setCart(prev => [...prev, { tomato: t, quantity: 1 }])}
+              onViewDetail={setSelectedTomato}
               cartItems={cart}
             />
           </main>
-
-          <aside className="lg:col-span-1 sticky top-24">
-            <NewsSidebar news={NEWS_DATA} />
-          </aside>
         </div>
       </div>
+
+      {/* MOBILE DRAWER */}
+      {isFiltersOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setIsFiltersOpen(false)}
+          />
+          <div className="relative bg-white w-5/6 max-w-sm h-full overflow-y-auto p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="font-semibold text-lg">Фильтры</div>
+              <button onClick={() => setIsFiltersOpen(false)}>✕</button>
+            </div>
+
+            <Filters
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onReset={handleResetFilters}
+              totalCount={tomatoes.length}
+              filteredCount={filteredTomatoes.length}
+            />
+          </div>
+        </div>
+      )}
 
       {isCartOpen && (
         <CartModal
           cart={cart}
           onClose={() => setIsCartOpen(false)}
-          onRemove={removeFromCart}
-          onClear={clearCart}
+          onRemove={(id) => setCart(prev => prev.filter(i => i.tomato.id !== id))}
+          onClear={() => setCart([])}
         />
       )}
 
       {selectedTomato && (
         <DetailModal
           tomato={selectedTomato}
-          onClose={handleCloseDetail}
-          onAddToCart={() => addToCart(selectedTomato)}
+          onClose={() => setSelectedTomato(null)}
+          onAddToCart={() =>
+            setCart(prev => [...prev, { tomato: selectedTomato, quantity: 1 }])
+          }
           isInCart={cart.some(i => i.tomato.id === selectedTomato.id)}
-          onRemoveFromCart={() => removeFromCart(selectedTomato.id)}
+          onRemoveFromCart={() =>
+            setCart(prev => prev.filter(i => i.tomato.id !== selectedTomato.id))
+          }
         />
       )}
     </div>
