@@ -12,13 +12,7 @@ export interface Tomato {
   imageUrl: string;
   price: number;
   origin?: string;
-}
-
-export interface NewsItem {
-  id: string;
-  title: string;
-  date: string;
-  summary: string;
+  ripening?: string; // Срок созревания
 }
 
 export interface CartItem {
@@ -26,19 +20,10 @@ export interface CartItem {
   quantity: number;
 }
 
-/* =========================
-   ЭТАП 1 — СРЕДА ВЫРАЩИВАНИЯ
-   ========================= */
-
-export type GrowingEnvironment = 'ground' | 'greenhouse' | 'both' | '';
-
 export interface FilterState {
   search: string;
-
-  /* НОВЫЙ ПЕРВИЧНЫЙ ФИЛЬТР */
-  environment: GrowingEnvironment;
-
-  /* СУЩЕСТВУЮЩИЕ ФИЛЬТРЫ — НЕ ТРОГАЕМ */
+  environment: string;
+  ripening: string; // ← НОВОЕ
   color: string;
   type: string;
   growth: string;
@@ -63,9 +48,4 @@ export enum TomatoType {
   Heart = 'Heart'
 }
 
-export enum GrowthType {
-  Dwarf = 'Dwarf',
-  Determinate = 'Determinate',
-  SemiDeterminate = 'Semi-determinate',
-  Indeterminate = 'Indeterminate'
-}
+export type GrowingEnvironment = 'ground' | 'greenhouse' | 'both' | '';
