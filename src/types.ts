@@ -12,7 +12,7 @@ export interface Tomato {
   imageUrl: string;
   price: number;
   origin?: string;
-  ripening?: string; // Срок созревания
+  ripening?: string;
 }
 
 export interface CartItem {
@@ -23,7 +23,7 @@ export interface CartItem {
 export interface FilterState {
   search: string;
   environment: string;
-  ripening: string; // ← НОВОЕ
+  ripening: string;
   color: string;
   type: string;
   growth: string;
@@ -46,6 +46,14 @@ export enum TomatoType {
   Classic = 'Classic',
   Beefsteak = 'Beefsteak',
   Heart = 'Heart'
+}
+
+/** Используется в constants.ts */
+export enum GrowthType {
+  Dwarf = 'Гном',
+  Determinate = 'Дет',
+  SemiDeterminate = 'Среднерослый',
+  Indeterminate = 'Индет',
 }
 
 export type GrowingEnvironment = 'ground' | 'greenhouse' | 'both' | '';
