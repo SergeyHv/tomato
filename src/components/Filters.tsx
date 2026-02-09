@@ -11,12 +11,7 @@ interface FiltersProps {
   filteredCount: number;
 }
 
-const GROWTH_OPTIONS_RU = [
-  'Гном',
-  'Дет',
-  'Среднерослый',
-  'Индет',
-];
+const GROWTH_OPTIONS_RU = ['Гном', 'Дет', 'Среднерослый', 'Индет'];
 
 export const Filters: React.FC<FiltersProps> = ({
   filters,
@@ -39,51 +34,48 @@ export const Filters: React.FC<FiltersProps> = ({
   };
 
   return (
-    <div className="space-y-6 bg-white p-4 rounded-xl shadow-sm border border-stone-100">
-      {/* ENVIRONMENT */}
+    <div className="space-y-5 bg-white p-4 rounded-xl shadow-sm border border-stone-100">
+      {/* ENVIRONMENT — SEGMENTED CONTROL */}
       <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-stone-800">
-          Где вы планируете выращивать томаты?
-        </h3>
-        <p className="text-sm text-stone-500">
-          Это поможет сразу показать подходящие сорта
-        </p>
+        <div className="text-sm font-medium text-stone-700">
+          Где выращиваете томаты
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+        <div className="flex gap-2">
           <button
             onClick={() => setEnvironment('ground')}
-            className={`rounded-xl border px-4 py-4 text-left transition-all
-              ${filters.environment === 'ground'
-                ? 'border-emerald-500 bg-emerald-50'
-                : 'border-stone-200 hover:border-emerald-300'}
-            `}
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium border transition
+              ${
+                filters.environment === 'ground'
+                  ? 'bg-emerald-500 text-white border-emerald-500'
+                  : 'bg-white text-stone-700 border-stone-200 hover:border-emerald-300'
+              }`}
           >
-            <div className="text-lg font-medium">🌿 Открытый грунт</div>
-            <div className="text-sm text-stone-500">Для грядок и дачи</div>
+            🌿 Открытый грунт
           </button>
 
           <button
             onClick={() => setEnvironment('greenhouse')}
-            className={`rounded-xl border px-4 py-4 text-left transition-all
-              ${filters.environment === 'greenhouse'
-                ? 'border-emerald-500 bg-emerald-50'
-                : 'border-stone-200 hover:border-emerald-300'}
-            `}
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium border transition
+              ${
+                filters.environment === 'greenhouse'
+                  ? 'bg-emerald-500 text-white border-emerald-500'
+                  : 'bg-white text-stone-700 border-stone-200 hover:border-emerald-300'
+              }`}
           >
-            <div className="text-lg font-medium">🏠 Теплица</div>
-            <div className="text-sm text-stone-500">Для выращивания в теплице</div>
+            🏠 Теплица
           </button>
 
           <button
             onClick={() => setEnvironment('both')}
-            className={`rounded-xl border px-4 py-4 text-left transition-all
-              ${filters.environment === 'both'
-                ? 'border-emerald-500 bg-emerald-50'
-                : 'border-stone-200 hover:border-emerald-300'}
-            `}
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium border transition
+              ${
+                filters.environment === 'both'
+                  ? 'bg-emerald-500 text-white border-emerald-500'
+                  : 'bg-white text-stone-700 border-stone-200 hover:border-emerald-300'
+              }`}
           >
-            <div className="text-lg font-medium">🌤 Подходит для обоих</div>
-            <div className="text-sm text-stone-500">Универсальные сорта</div>
+            🌤 Для обоих
           </button>
         </div>
       </div>
@@ -101,84 +93,83 @@ export const Filters: React.FC<FiltersProps> = ({
       </div>
 
       {/* SECONDARY FILTERS */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="flex items-center gap-2 text-stone-500 text-sm font-medium mr-1">
-            <Filter size={16} /> Фильтры:
-          </div>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2 text-stone-500 text-sm font-medium">
+          <Filter size={16} /> Фильтры
+        </div>
 
-          <select
-            value={filters.color}
-            onChange={(e) => onFilterChange({ color: e.target.value })}
-            className="border border-stone-200 rounded-lg px-3 py-2 bg-white text-sm text-stone-700 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+        <select
+          value={filters.color}
+          onChange={(e) => onFilterChange({ color: e.target.value })}
+          className="border border-stone-200 rounded-lg px-3 py-2 bg-white text-sm text-stone-700 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+        >
+          <option value="">🎨 Цвет</option>
+          {Object.values(TomatoColor).map((c) => (
+            <option key={c} value={c}>
+              {localize(c)}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filters.type}
+          onChange={(e) => onFilterChange({ type: e.target.value })}
+          className="border border-stone-200 rounded-lg px-3 py-2 bg-white text-sm text-stone-700 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+        >
+          <option value="">🍅 Тип плода</option>
+          {Object.values(TomatoType).map((t) => (
+            <option key={t} value={t}>
+              {localize(t)}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filters.growth}
+          onChange={(e) => onFilterChange({ growth: e.target.value })}
+          className="border border-stone-200 rounded-lg px-3 py-2 bg-white text-sm text-stone-700 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+        >
+          <option value="">🌱 Тип куста</option>
+          {GROWTH_OPTIONS_RU.map((g) => (
+            <option key={g} value={g}>
+              {g === 'Гном'
+                ? 'Гном'
+                : g === 'Дет'
+                ? 'Низкорослый (Дет)'
+                : g === 'Среднерослый'
+                ? 'Среднерослый (Полудет)'
+                : 'Высокорослый (Индет)'}
+            </option>
+          ))}
+        </select>
+
+        {isFiltered && (
+          <button
+            onClick={onReset}
+            className="text-sm text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-3 py-2 rounded-lg flex items-center gap-1 transition-colors self-start"
           >
-            <option value="">🎨 Цвет</option>
-            {Object.values(TomatoColor).map((c) => (
-              <option key={c} value={c}>
-                {localize(c)}
-              </option>
-            ))}
-          </select>
+            <X size={14} /> Сбросить
+          </button>
+        )}
+      </div>
 
-          <select
-            value={filters.type}
-            onChange={(e) => onFilterChange({ type: e.target.value })}
-            className="border border-stone-200 rounded-lg px-3 py-2 bg-white text-sm text-stone-700 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
-          >
-            <option value="">🍅 Тип плода</option>
-            {Object.values(TomatoType).map((t) => (
-              <option key={t} value={t}>
-                {localize(t)}
-              </option>
-            ))}
-          </select>
-
-          {/* TYPE OF GROWTH — RU VALUES ONLY */}
-          <select
-            value={filters.growth}
-            onChange={(e) => onFilterChange({ growth: e.target.value })}
-            className="border border-stone-200 rounded-lg px-3 py-2 bg-white text-sm text-stone-700 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
-          >
-            <option value="">🌱 Тип куста</option>
-            {GROWTH_OPTIONS_RU.map((g) => (
-              <option key={g} value={g}>
-                {g === 'Гном'
-                  ? 'Гном'
-                  : g === 'Дет'
-                  ? 'Низкорослый (Дет)'
-                  : g === 'Среднерослый'
-                  ? 'Среднерослый (Полудет)'
-                  : 'Высокорослый (Индет)'}
-              </option>
-            ))}
-          </select>
-
-          {isFiltered && (
-            <button
-              onClick={onReset}
-              className="text-sm text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-            >
-              <X size={14} /> Сбросить
-            </button>
+      {/* COUNTER */}
+      <div className="flex items-center gap-2 bg-stone-50 border border-stone-100 px-4 py-2 rounded-full">
+        <BarChart2 size={14} className="text-emerald-500" />
+        <span className="text-sm font-medium text-stone-600">
+          {isFiltered ? (
+            <>
+              Найдено{' '}
+              <span className="text-emerald-600 font-bold">{filteredCount}</span> из{' '}
+              {totalCount}
+            </>
+          ) : (
+            <>
+              Всего сортов{' '}
+              <span className="text-stone-800 font-bold">{totalCount}</span>
+            </>
           )}
-        </div>
-
-        <div className="flex items-center gap-2 bg-stone-50 border border-stone-100 px-4 py-2 rounded-full self-start md:self-auto">
-          <BarChart2 size={14} className="text-emerald-500" />
-          <span className="text-sm font-medium text-stone-600">
-            {isFiltered ? (
-              <>
-                Найдено:{' '}
-                <span className="text-emerald-600 font-bold">{filteredCount}</span> из {totalCount}
-              </>
-            ) : (
-              <>
-                Всего сортов:{' '}
-                <span className="text-stone-800 font-bold">{totalCount}</span>
-              </>
-            )}
-          </span>
-        </div>
+        </span>
       </div>
     </div>
   );
