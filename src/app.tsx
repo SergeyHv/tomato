@@ -85,8 +85,6 @@ const App: React.FC = () => {
         (tomato.originalName && tomato.originalName.toLowerCase().includes(q));
 
       const matchesRipening = filters.ripening
-        ? tomato.ripening === filters.ripening
-        : true;
 
       const matchesColor = filters.color ? tomato.color === filters.color : true;
       const matchesType = filters.type ? tomato.type === filters.type : true;
