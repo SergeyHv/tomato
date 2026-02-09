@@ -84,7 +84,10 @@ const App: React.FC = () => {
         tomato.name.toLowerCase().includes(q) ||
         (tomato.originalName && tomato.originalName.toLowerCase().includes(q));
 
-      const matchesRipening = filters.ripening
+      const matchesRipening =
+        !filters.ripening ||
+        !tomato.ripening ||
+        tomato.ripening === filters.ripening;
 
       const matchesColor = filters.color ? tomato.color === filters.color : true;
       const matchesType = filters.type ? tomato.type === filters.type : true;
@@ -157,6 +160,7 @@ const App: React.FC = () => {
 
           <main className="lg:col-span-3">
             <Catalog
+              key={tomatoes.length}
               tomatoes={filteredTomatoes}
               onAddToCart={(t) =>
                 setCart(prev => [...prev, { tomato: t, quantity: 1 }])
@@ -196,9 +200,7 @@ const App: React.FC = () => {
         <CartModal
           cart={cart}
           onClose={() => setIsCartOpen(false)}
-          onRemove={(id) =>
-            setCart(prev => prev.filter(i => i.tomato.id !== id))
-          }
+          onRemove={(id) => setCart(prev => prev.filter(i => i.tomato.id !== id))}
           onClear={() => setCart([])}
         />
       )}
