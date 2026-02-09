@@ -84,13 +84,18 @@ const App: React.FC = () => {
         tomato.name.toLowerCase().includes(q) ||
         (tomato.originalName && tomato.originalName.toLowerCase().includes(q));
 
-      // === ФИНАЛЬНАЯ ЛОГИКА RIPENING ===
-      // фильтр выключен → все
-      // фильтр включён → только строгое совпадение
+      // === КОРРЕКТНАЯ ОБРАБОТКА RIPENING ===
+      const tomatoRipening =
+        typeof tomato.ripening === 'string'
+          ? tomato.ripening
+          : tomato.ripening && typeof tomato.ripening === 'object'
+          ? (tomato.ripening as any).name
+          : '';
+
       const matchesRipening = !filters.ripening
         ? true
-        : tomato.ripening === filters.ripening;
-      // =================================
+        : tomatoRipening === filters.ripening;
+      // ===================================
 
       const matchesColor = filters.color ? tomato.color === filters.color : true;
       const matchesType = filters.type ? tomato.type === filters.type : true;
@@ -136,7 +141,6 @@ const App: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <Header cartCount={cartItemCount} onOpenCart={() => setIsCartOpen(true)} />
 
-      {/* MOBILE FILTER BUTTON */}
       <div className="lg:hidden px-4 pt-4">
         <button
           onClick={() => setIsFiltersOpen(true)}
@@ -148,7 +152,6 @@ const App: React.FC = () => {
 
       <div className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-          {/* DESKTOP FILTERS */}
           <aside className="hidden lg:block lg:col-span-1 sticky top-24">
             <div className="max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
               <Filters
@@ -175,7 +178,6 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* MOBILE DRAWER */}
       {isFiltersOpen && (
         <div className="fixed inset-0 z-50 flex">
           <div
