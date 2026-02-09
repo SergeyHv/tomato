@@ -2,10 +2,8 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Filters } from './components/Filters';
 import { Catalog } from './components/Catalog';
-import { NewsSidebar } from './components/NewsSidebar';
 import { CartModal } from './components/CartModal';
 import { DetailModal } from './components/DetailModal';
-import { NEWS_DATA } from './constants';
 import { Tomato, FilterState, CartItem } from './types';
 import { fetchTomatoes } from './services/api';
 
@@ -17,6 +15,7 @@ const App: React.FC = () => {
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     environment: '',
+    ripening: '',
     color: '',
     type: '',
     growth: '',
@@ -60,6 +59,7 @@ const App: React.FC = () => {
     setFilters({
       search: '',
       environment: '',
+      ripening: '',
       color: '',
       type: '',
       growth: '',
@@ -78,17 +78,29 @@ const App: React.FC = () => {
   const filteredTomatoes = useMemo(() => {
     return tomatoes.filter(tomato => {
       const q = filters.search.toLowerCase();
+
       const matchesSearch =
         !q ||
         tomato.name.toLowerCase().includes(q) ||
         (tomato.originalName && tomato.originalName.toLowerCase().includes(q));
+
+      const matchesRipening = filters.ripening
+        ? tomato.ripening === filters.ripening
+        : true;
 
       const matchesColor = filters.color ? tomato.color === filters.color : true;
       const matchesType = filters.type ? tomato.type === filters.type : true;
       const matchesGrowth = filters.growth ? tomato.growth === filters.growth : true;
       const matchesEnv = matchesEnvironment(tomato.growth);
 
-      return matchesSearch && matchesColor && matchesType && matchesGrowth && matchesEnv;
+      return (
+        matchesSearch &&
+        matchesRipening &&
+        matchesColor &&
+        matchesType &&
+        matchesGrowth &&
+        matchesEnv
+      );
     });
   }, [filters, tomatoes]);
 
@@ -134,21 +146,23 @@ const App: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           {/* DESKTOP FILTERS */}
           <aside className="hidden lg:block lg:col-span-1 sticky top-24">
-  <div className="max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
-    <Filters
-      filters={filters}
-      onFilterChange={handleFilterChange}
-      onReset={handleResetFilters}
-      totalCount={tomatoes.length}
-      filteredCount={filteredTomatoes.length}
-    />
-  </div>
-</aside>
+            <div className="max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
+              <Filters
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                onReset={handleResetFilters}
+                totalCount={tomatoes.length}
+                filteredCount={filteredTomatoes.length}
+              />
+            </div>
+          </aside>
 
           <main className="lg:col-span-3">
             <Catalog
               tomatoes={filteredTomatoes}
-              onAddToCart={(t) => setCart(prev => [...prev, { tomato: t, quantity: 1 }])}
+              onAddToCart={(t) =>
+                setCart(prev => [...prev, { tomato: t, quantity: 1 }])
+              }
               onViewDetail={setSelectedTomato}
               cartItems={cart}
             />
@@ -184,7 +198,9 @@ const App: React.FC = () => {
         <CartModal
           cart={cart}
           onClose={() => setIsCartOpen(false)}
-          onRemove={(id) => setCart(prev => prev.filter(i => i.tomato.id !== id))}
+          onRemove={(id) =>
+            setCart(prev => prev.filter(i => i.tomato.id !== id))
+          }
           onClear={() => setCart([])}
         />
       )}
@@ -198,7 +214,9 @@ const App: React.FC = () => {
           }
           isInCart={cart.some(i => i.tomato.id === selectedTomato.id)}
           onRemoveFromCart={() =>
-            setCart(prev => prev.filter(i => i.tomato.id !== selectedTomato.id))
+            setCart(prev =>
+              prev.filter(i => i.tomato.id !== selectedTomato.id)
+            )
           }
         />
       )}
