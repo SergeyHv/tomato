@@ -29,6 +29,29 @@ const getField = (fields: Record<string, any>, ...keys: string[]): any => {
   return undefined;
 };
 
+/** КАНОНИЗАЦИЯ RIPENING */
+const normalizeRipening = (value: any): string | undefined => {
+  if (!value) return undefined;
+
+  const raw =
+    typeof value === 'string'
+      ? value
+      : typeof value === 'object'
+      ? value.name
+      : '';
+
+  if (!raw) return undefined;
+
+  const v = raw.trim().toLowerCase();
+
+  if (v.startsWith('ран')) return 'Ранний';
+  if (v.startsWith('среднеран')) return 'Среднеранний';
+  if (v.startsWith('средн')) return 'Средний';
+  if (v.startsWith('позд')) return 'Поздний';
+
+  return undefined;
+};
+
 export const fetchTomatoes = async (): Promise<Tomato[]> => {
   if (!AIRTABLE_TOKEN || AIRTABLE_TOKEN.includes('......')) {
     console.warn('Airtable token not found, using mock data.');
@@ -88,21 +111,12 @@ export const fetchTomatoes = async (): Promise<Tomato[]> => {
         const weight = getField(f, 'weight', 'Weight') || 'Не указано';
         const origin = getField(f, 'origin', 'Origin') || '';
 
-        // === ВАЖНО: читаем ripening, но НЕ фильтруем ===
         const ripeningRaw = getField(
           f,
           'ripening',
           'Ripening',
           'Срок созревания'
         );
-
-        const ripening =
-          typeof ripeningRaw === 'string'
-            ? ripeningRaw
-            : ripeningRaw && typeof ripeningRaw === 'object'
-            ? ripeningRaw.name
-            : undefined;
-        // ===============================================
 
         return {
           id: r.id,
@@ -118,7 +132,7 @@ export const fetchTomatoes = async (): Promise<Tomato[]> => {
           imageUrl,
           price: 0,
           origin: String(origin),
-          ripening,
+          ripening: normalizeRipening(ripeningRaw),
         };
       });
   } catch (err) {
