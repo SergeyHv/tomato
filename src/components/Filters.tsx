@@ -12,6 +12,7 @@ interface FiltersProps {
 }
 
 const GROWTH_OPTIONS_RU = ['Гном', 'Дет', 'Среднерослый', 'Индет'];
+const RIPENING_OPTIONS = ['Ранний', 'Среднеранний', 'Средний', 'Поздний'];
 
 export const Filters: React.FC<FiltersProps> = ({
   filters,
@@ -22,28 +23,34 @@ export const Filters: React.FC<FiltersProps> = ({
 }) => {
   const isFiltered =
     filters.search ||
+    filters.environment ||
+    filters.ripening ||
     filters.color ||
     filters.type ||
-    filters.growth ||
-    filters.environment;
+    filters.growth;
 
-  const setEnvironment = (value: GrowingEnvironment) => {
+  const toggleEnvironment = (value: GrowingEnvironment) => {
     onFilterChange({
       environment: filters.environment === value ? '' : value,
     });
   };
 
+  const toggleRipening = (value: string) => {
+    onFilterChange({
+      ripening: filters.ripening === value ? '' : value,
+    });
+  };
+
   return (
     <div className="space-y-5 bg-white p-4 rounded-xl shadow-sm border border-stone-100">
-      {/* ENVIRONMENT — SEGMENTED CONTROL */}
+      {/* ENVIRONMENT */}
       <div className="space-y-2">
         <div className="text-sm font-medium text-stone-700">
           Где выращиваете томаты
         </div>
-
         <div className="flex gap-2">
           <button
-            onClick={() => setEnvironment('ground')}
+            onClick={() => toggleEnvironment('ground')}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium border transition
               ${
                 filters.environment === 'ground'
@@ -53,9 +60,8 @@ export const Filters: React.FC<FiltersProps> = ({
           >
             🌿 Открытый грунт
           </button>
-
           <button
-            onClick={() => setEnvironment('greenhouse')}
+            onClick={() => toggleEnvironment('greenhouse')}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium border transition
               ${
                 filters.environment === 'greenhouse'
@@ -65,9 +71,8 @@ export const Filters: React.FC<FiltersProps> = ({
           >
             🏠 Теплица
           </button>
-
           <button
-            onClick={() => setEnvironment('both')}
+            onClick={() => toggleEnvironment('both')}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium border transition
               ${
                 filters.environment === 'both'
@@ -92,7 +97,30 @@ export const Filters: React.FC<FiltersProps> = ({
         />
       </div>
 
-      {/* SECONDARY FILTERS */}
+      {/* RIPENING */}
+      <div className="space-y-2">
+        <div className="text-sm font-medium text-stone-700">
+          Срок созревания
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {RIPENING_OPTIONS.map((r) => (
+            <button
+              key={r}
+              onClick={() => toggleRipening(r)}
+              className={`rounded-lg px-3 py-2 text-sm font-medium border transition
+                ${
+                  filters.ripening === r
+                    ? 'bg-emerald-500 text-white border-emerald-500'
+                    : 'bg-white text-stone-700 border-stone-200 hover:border-emerald-300'
+                }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* OTHER FILTERS */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2 text-stone-500 text-sm font-medium">
           <Filter size={16} /> Фильтры
