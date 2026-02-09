@@ -84,10 +84,13 @@ const App: React.FC = () => {
         tomato.name.toLowerCase().includes(q) ||
         (tomato.originalName && tomato.originalName.toLowerCase().includes(q));
 
-      const matchesRipening =
-        !filters.ripening ||
-        !tomato.ripening ||
-        tomato.ripening === filters.ripening;
+      // === ФИНАЛЬНАЯ ЛОГИКА RIPENING ===
+      // фильтр выключен → все
+      // фильтр включён → только строгое совпадение
+      const matchesRipening = !filters.ripening
+        ? true
+        : tomato.ripening === filters.ripening;
+      // =================================
 
       const matchesColor = filters.color ? tomato.color === filters.color : true;
       const matchesType = filters.type ? tomato.type === filters.type : true;
