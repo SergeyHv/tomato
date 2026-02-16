@@ -1,0 +1,169 @@
+import os
+import re
+import json
+import time
+import requests
+
+# ================= CONFIG =================
+
+BLOB_TOKEN = "vercel_blob_rw_29IdRG4kAlgZmEPN_1Ek9ECOUhgypnBQloFJOBoUDT8vrrG"
+TEXT_FILE = r"X:\tomato_parser\images\test.txt"
+RAW_PHOTOS = r"X:\sait\tomato_project\raw_photos"
+OUTPUT_JSON = r"X:\sait\tomato_project\public\tomatoes_data.json"
+
+BLOB_BASE = "https://blob.vercel-storage.com"
+PUBLIC_BLOB_BASE = "https://29idrg4kalgzmepn.public.blob.vercel-storage.com"
+
+# ================= OCR =================
+
+def split_into_blocks(text: str):
+    parts = re.split(r"(?=Image Result:)", text, flags=re.IGNORECASE)
+    return [p.strip() for p in parts if p.strip()]
+
+def extract_id(block: str):
+    for line in block.splitlines():
+        m = re.match(r"\[ID:\s*(\d+)\]", line.strip())
+        if m:
+            return int(m.group(1))
+    return None
+
+def extract_name(block: str):
+    for line in block.splitlines():
+        l = line.strip()
+        if not l or l.lower().startswith("image result") or l.startswith("[ID:"):
+            continue
+        for sep in [",", "/", ".", "("]:
+            if sep in l:
+                l = l.split(sep, 1)[0]
+                break
+        return l.strip()
+    return None
+
+def clean_description(block: str):
+    text = re.sub(r"(?i)image\s*result\s*:?", "", block)
+    text = re.sub(r"\[ID:\s*\d+\]", "", text)
+    lines = []
+    for line in text.splitlines():
+        l = line.strip(" -–")
+        if l:
+            lines.append(l)
+    return "\n".join(lines)
+
+# ================= BLOB =================
+
+def get_all_blobs():
+    print("📦 Получаем список файлов из Blob...")
+    blobs = []
+    cursor = None
+
+    while True:
+        params = {"limit": 1000}
+        if cursor:
+            params["cursor"] = cursor
+
+        r = requests.get(
+            BLOB_BASE,
+            headers={"authorization": f"Bearer {BLOB_TOKEN}", "x-api-version": "1"},
+            params=params
+        )
+
+        if r.status_code != 200:
+            print("❌ Ошибка получения Blob:", r.text)
+            return []
+
+        data = r.json()
+        blobs.extend(data.get("blobs", []))
+
+        if not data.get("hasMore"):
+            break
+
+        cursor = data.get("cursor")
+
+    print(f"✔ Найдено файлов в Blob: {len(blobs)}")
+    return blobs
+
+def find_blob_for_id(blobs, vid):
+    prefix = f"id_{vid}-"
+    for b in blobs:
+        if b["pathname"].startswith(prefix):
+            return b["url"]
+    return None
+
+def upload_to_blob(filepath, vid):
+    filename = f"id_{vid}.jpg"
+
+    with open(filepath, "rb") as f:
+        data = f.read()
+
+    r = requests.put(
+        f"{BLOB_BASE}/{filename}",
+        headers={
+            "authorization": f"Bearer {BLOB_TOKEN}",
+            "x-api-version": "1"
+        },
+        data=data
+    )
+
+    if r.status_code != 200:
+        print("❌ Ошибка загрузки:", r.text)
+        return None
+
+    return r.json().get("url")
+
+# ================= MAIN =================
+
+def main():
+    if not os.path.exists(TEXT_FILE):
+        print("❌ OCR файл не найден")
+        return
+
+    blobs = get_all_blobs()
+
+    raw = open(TEXT_FILE, encoding="utf-8").read()
+    blocks = split_into_blocks(raw)
+
+    data = []
+    uploaded = 0
+    missing = 0
+
+    for block in blocks:
+        vid = extract_id(block)
+        name = extract_name(block)
+
+        if not vid or not name:
+            continue
+
+        blob_url = find_blob_for_id(blobs, vid)
+
+        if not blob_url:
+            local_photo = os.path.join(RAW_PHOTOS, f"{name}.jpg")
+
+            if os.path.exists(local_photo):
+                print(f"⬆ Загружаем ID {vid}")
+                blob_url = upload_to_blob(local_photo, vid)
+                time.sleep(0.3)
+                uploaded += 1
+            else:
+                print(f"⚠ Фото не найдено для ID {vid}")
+                missing += 1
+                blob_url = None
+
+        record = {
+            "id": vid,
+            "name": name,
+            "description": clean_description(block),
+            "image": blob_url
+        }
+
+        data.append(record)
+
+    with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    print("\n✅ Готово")
+    print(f"Загружено новых фото: {uploaded}")
+    print(f"Фото не найдено: {missing}")
+    print(f"Всего записей в JSON: {len(data)}")
+
+if __name__ == "__main__":
+    main()
