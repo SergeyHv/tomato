@@ -53,91 +53,31 @@ const normalizeRipening = (value: any): string | undefined => {
 };
 
 export const fetchTomatoes = async (): Promise<Tomato[]> => {
-  if (!AIRTABLE_TOKEN || AIRTABLE_TOKEN.includes('......')) {
-    console.warn('Airtable token not found, using mock data.');
-    return TOMATO_DATA;
-  }
-
   try {
-    let allRecords: any[] = [];
-    let offset = '';
+    const res = await fetch('/tomatoes_data.json');
+    if (!res.ok) throw new Error('JSON load error');
 
-    do {
-      const url = new URL(
-        `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(
-          AIRTABLE_TABLE
-        )}`
-      );
-      if (offset) url.searchParams.append('offset', offset);
+    const data = await res.json();
 
-      const res = await fetch(url.toString(), {
-        headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` },
-      });
-
-      if (!res.ok) throw new Error(`Airtable error: ${res.status}`);
-
-      const data = await res.json();
-      allRecords = [...allRecords, ...data.records];
-      offset = data.offset;
-    } while (offset);
-
-    return allRecords
-      .filter((r: any) => {
-        const name = getField(r.fields, 'Name', 'name');
-        const isVisible = getField(r.fields, 'Visible', 'visible', 'Published');
-        return !!name && (isVisible === true || isVisible === undefined);
-      })
-      .map((r: any): Tomato => {
-        const f = r.fields;
-
-        let imageUrl = '';
-        const photoField = getField(f, 'Photo', 'photo', 'Attachments');
-        const filename = getField(f, 'image_url', 'ImageFilename');
-
-        if (photoField && Array.isArray(photoField) && photoField.length > 0) {
-          imageUrl = photoField[0].url;
-        } else if (filename) {
-          const nameStr = String(filename).trim();
-          imageUrl = nameStr.startsWith('http')
-            ? nameStr
-            : `/tomatoes/${nameStr}`;
-        }
-
-        const name = getField(f, 'Name', 'name') || 'Без имени';
-        const desc = getField(f, 'description', 'Description') || '';
-        const colorRaw = getField(f, 'color', 'Color') || 'Разное';
-        const typeRaw = getField(f, 'fruit_type', 'Type') || 'Классика';
-        const growthRaw = getField(f, 'growth_type', 'Growth') || 'Индет';
-        const weight = getField(f, 'weight', 'Weight') || 'Не указано';
-        const origin = getField(f, 'origin', 'Origin') || '';
-
-        const ripeningRaw = getField(
-          f,
-          'ripening',
-          'Ripening',
-          'Срок созревания'
-        );
-
-        return {
-          id: r.id,
-          name,
-          originalName: '',
-          description: desc,
-          fullDescription: desc,
-          color: normalizeCategory(String(colorRaw)),
-          type: normalizeCategory(String(typeRaw)),
-          growth: normalizeCategory(String(growthRaw)),
-          height: 'Не указано',
-          weight: String(weight),
-          imageUrl,
-          price: 0,
-          origin: String(origin),
-          ripening: normalizeRipening(ripeningRaw),
-        };
-      });
+    return data.map((item: any): Tomato => ({
+      id: String(item.id),
+      name: item.name || 'Без имени',
+      originalName: '',
+      description: item.description || '',
+      fullDescription: item.description || '',
+      color: normalizeCategory(item.color || 'Разное'),
+      type: normalizeCategory(item.type || 'Классика'),
+      growth: normalizeCategory(item.growth || 'Индет'),
+      height: 'Не указано',
+      weight: item.weight || 'Не указано',
+      imageUrl: item.image || '',
+      price: 0,
+      origin: item.origin || '',
+      ripening: item.ripening || undefined,
+    }));
   } catch (err) {
-    console.error('Fetch error:', err);
-    return TOMATO_DATA;
+    console.error('JSON fetch error:', err);
+    return [];
   }
 };
 
