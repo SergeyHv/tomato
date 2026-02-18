@@ -59,6 +59,8 @@ export const Catalog: React.FC<CatalogProps> = ({
       </div>
     );
   }
+  console.log("CATALOG DATA:", tomatoes[0]);
+
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
