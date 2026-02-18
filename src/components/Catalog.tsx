@@ -87,7 +87,8 @@ export const Catalog: React.FC<CatalogProps> = ({
               onClick={() => onViewDetail(tomato)}
             >
               {tomato.imageUrl ? (
-                <TomatoImage src={tomato.imageUrl} alt={tomato.name} />
+               <img src={tomato.imageUrl} alt={tomato.name} className="w-full h-full object-cover" />
+
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-stone-300 bg-stone-100">
                   <ImageOff size={32} />
