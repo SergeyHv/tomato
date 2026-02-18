@@ -70,7 +70,7 @@ export const fetchTomatoes = async (): Promise<Tomato[]> => {
       growth: normalizeCategory(item.growth || 'Индет'),
       height: 'Не указано',
       weight: item.weight || 'Не указано',
-      imageUrl: item.image || '',
+      imageUrl: item.imageUrl || '',
       price: 0,
       origin: item.origin || '',
       ripening: item.ripening || undefined,
