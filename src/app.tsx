@@ -67,13 +67,25 @@ const App: React.FC = () => {
   }, []);
 
   const matchesEnvironment = (growth: string) => {
-    if (!filters.environment) return true;
-    if (filters.environment === 'ground') return growth === 'Гном' || growth === 'Дет';
-    if (filters.environment === 'greenhouse')
-      return growth === 'Индет' || growth === 'Среднерослый' || growth === 'Дет';
-    if (filters.environment === 'both') return growth === 'Дет' || growth === 'Среднерослый';
-    return true;
-  };
+  if (!filters.environment) return true;
+  
+  // Открытый грунт → Гномы (карликовые)
+  if (filters.environment === 'ground') {
+    return growth === 'Гном';
+  }
+  
+  // Теплица → Индеты (высокорослые)
+  if (filters.environment === 'greenhouse') {
+    return growth === 'Индет';
+  }
+  
+  // Для обоих → Деты и Среднерослые
+  if (filters.environment === 'both') {
+    return growth === 'Дет' || growth === 'Среднерослый';
+  }
+  
+  return true;
+};
 
   const filteredTomatoes = useMemo(() => {
     return tomatoes.filter(tomato => {
