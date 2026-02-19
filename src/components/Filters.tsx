@@ -12,7 +12,7 @@ interface FiltersProps {
 }
 
 const GROWTH_OPTIONS_RU = ['Гном', 'Дет', 'Среднерослый', 'Индет'];
-const RIPENING_OPTIONS = ['Ранний', 'Среднеранний', 'Средний', 'Поздний'];
+const RIPENING_OPTIONS = ['Раннеспелый', 'Среднеранний', 'Среднеспелый', 'Позднеспелый'];
 
 export const Filters: React.FC<FiltersProps> = ({
   filters,
