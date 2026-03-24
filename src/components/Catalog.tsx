@@ -1,7 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Tomato, CartItem } from '../types';
-import { Plus, Info, Check, ImageOff, Loader2 } from 'lucide-react';
+import {
+  Plus,
+  Info,
+  Check,
+  ImageOff,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { localize } from '../utils/localization';
+
+const DEFAULT_PAGE_SIZE = 24;
+const PAGE_SIZE_OPTIONS = [12, 24, 48] as const;
 
 interface CatalogProps {
   tomatoes: Tomato[];
@@ -51,7 +62,50 @@ export const Catalog: React.FC<CatalogProps> = ({
   onAddToCart,
   onViewDetail,
 }) => {
-  if (tomatoes.length === 0) {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const topAnchorRef = useRef<HTMLDivElement>(null);
+
+  const total = tomatoes.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  useEffect(() => {
+    setPage(1);
+  }, [tomatoes]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const visible = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return tomatoes.slice(start, start + pageSize);
+  }, [tomatoes, page, pageSize]);
+
+  const goPage = (next: number) => {
+    const clamped = Math.min(totalPages, Math.max(1, next));
+    setPage(clamped);
+    topAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  /** Номера страниц для полосы навигации (с сжатием через … при большом totalPages). */
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages = new Set<number>([1, totalPages, page]);
+    for (let d = -1; d <= 1; d++) {
+      const p = page + d;
+      if (p >= 1 && p <= totalPages) pages.add(p);
+    }
+    return [...pages].sort((a, b) => a - b).reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+      if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
+      acc.push(p);
+      return acc;
+    }, []);
+  }, [page, totalPages]);
+
+  if (total === 0) {
     return (
       <div className="text-center py-20 bg-white rounded-xl border border-dashed border-stone-300">
         <p className="text-stone-400 text-lg">Ничего не найдено.</p>
@@ -59,12 +113,42 @@ export const Catalog: React.FC<CatalogProps> = ({
       </div>
     );
   }
-  console.log("CATALOG DATA:", tomatoes[0]);
 
+  const from = (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-      {tomatoes.map((tomato) => {
+    <div className="space-y-6">
+      <div ref={topAnchorRef} className="sr-only" aria-hidden />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-stone-600">
+        <p>
+          Показано{' '}
+          <span className="font-semibold text-stone-800">
+            {from}–{to}
+          </span>{' '}
+          из <span className="font-semibold text-stone-800">{total}</span>
+        </p>
+        <label className="flex items-center gap-2">
+          <span className="text-stone-500">На странице</span>
+          <select
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPage(1);
+            }}
+            className="border border-stone-200 rounded-lg px-2 py-1.5 bg-white text-stone-800 cursor-pointer focus:ring-2 focus:ring-emerald-500 outline-none"
+          >
+            {PAGE_SIZE_OPTIONS.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        {visible.map((tomato) => {
         const isInCart = cartItems.some(
           (item) => item.tomato.id === tomato.id
         );
@@ -158,6 +242,63 @@ export const Catalog: React.FC<CatalogProps> = ({
           </div>
         );
       })}
+      </div>
+
+      {totalPages > 1 && (
+        <nav
+          className="flex flex-col items-center justify-center gap-3 pt-2"
+          aria-label="Страницы каталога"
+        >
+          <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2">
+            {pageNumbers.map((item, i) =>
+              item === 'ellipsis' ? (
+                <span
+                  key={`e-${i}`}
+                  className="px-1 text-stone-400 select-none"
+                  aria-hidden
+                >
+                  …
+                </span>
+              ) : (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => goPage(item)}
+                  aria-current={item === page ? 'page' : undefined}
+                  className={`min-w-[2.25rem] h-9 rounded-lg text-sm font-medium tabular-nums transition-colors ${
+                    item === page
+                      ? 'bg-stone-800 text-white shadow-sm'
+                      : 'border border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                  }`}
+                >
+                  {item}
+                </button>
+              )
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => goPage(page - 1)}
+              disabled={page <= 1}
+              className="inline-flex items-center gap-1 rounded-lg border border-stone-200 px-3 py-2 text-sm font-medium text-stone-700 bg-white hover:bg-stone-50 disabled:opacity-40 disabled:pointer-events-none"
+            >
+              <ChevronLeft size={18} /> Назад
+            </button>
+            <span className="text-sm text-stone-600 tabular-nums px-2">
+              Страница {page} из {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => goPage(page + 1)}
+              disabled={page >= totalPages}
+              className="inline-flex items-center gap-1 rounded-lg border border-stone-200 px-3 py-2 text-sm font-medium text-stone-700 bg-white hover:bg-stone-50 disabled:opacity-40 disabled:pointer-events-none"
+            >
+              Вперёд <ChevronRight size={18} />
+            </button>
+          </div>
+        </nav>
+      )}
     </div>
   );
 };
