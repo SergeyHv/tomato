@@ -1,21 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App'; // Предполагаем, что у вас есть App.tsx
+import App from './App';
+import './index.css';
 
-// Функция для чтения параметра id из URL
-function getUrlId() {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('id');
-}
+const root = ReactDOM.createRoot(
+  document.getElementById('root') as HTMLElement
+);
 
-const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
+// Извлекаем ID из URL
+const getUrlId = () => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('id');
+};
 
-// Получаем id из URL
-const tomatoId = getUrlId();
-
-// Рендерим приложение с передачей tomatoId
 root.render(
   <React.StrictMode>
-    <App initialTomatoId={tomatoId} />
+    <App initialId={getUrlId()} />
   </React.StrictMode>
 );
