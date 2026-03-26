@@ -7,8 +7,6 @@
   <title>Каталог томатов</title>
   <meta name="description" content="Каталог сортов томатов с описаниями и характеристиками" />
 
- 
-
   <style>
     .scrollbar-hide::-webkit-scrollbar {
       display: none;
@@ -25,5 +23,49 @@
 
   <!-- Entry point -->
   <script type="module" src="/src/index.tsx"></script>
+
+  <!-- Добавленный скрипт для обработки URL-параметра -->
+  <script>
+    // Функция для загрузки данных из JSON
+    async function loadTomatoesData() {
+      try {
+        const response = await fetch('/tomatoes_data.json');
+        if (!response.ok) throw new Error('Не удалось загрузить данные');
+        return await response.json();
+      } catch (error) {
+        console.error('Ошибка загрузки tomatoes_data.json:', error);
+        return [];
+      }
+    }
+
+    // Функция для открытия модального окна
+    function openTomatoModal(tomato) {
+      console.log("Открыть модальное окно для:", tomato);
+      // Здесь добавьте логику открытия модального окна
+      // Например: document.getElementById('modal').showModal();
+    }
+
+    // Основная логика обработки URL-параметра
+    document.addEventListener('DOMContentLoaded', async () => {
+      const tomatoesData = await loadTomatoesData(); // Загружаем данные
+      window.tomatoesData = tomatoesData; // Сохраняем в глобальную переменную
+
+      // Получаем ID из URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const tomatoId = urlParams.get('id');
+
+      if (tomatoId) {
+        // Находим сорт по ID
+        const tomato = tomatoesData.find(tomato => tomato.id === tomatoId);
+
+        if (tomato) {
+          // Показываем модальное окно с этим сортом
+          openTomatoModal(tomato);
+        } else {
+          console.warn(`Сорт с ID ${tomatoId} не найден`);
+        }
+      }
+    });
+  </script>
 </body>
 </html>
