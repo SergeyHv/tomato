@@ -1,15 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './app';
-import './index.css';
+import App from './App'; // Предполагаем, что у вас есть App.tsx
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error('Root element #root not found');
+// Функция для чтения параметра id из URL
+function getUrlId() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('id');
 }
 
-ReactDOM.createRoot(rootElement).render(
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
+
+// Получаем id из URL
+const tomatoId = getUrlId();
+
+// Рендерим приложение с передачей tomatoId
+root.render(
   <React.StrictMode>
-    <App />
+    <App initialTomatoId={tomatoId} />
   </React.StrictMode>
 );
