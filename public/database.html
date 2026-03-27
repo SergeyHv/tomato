@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>База Томатов — Supabase</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen p-4">
+  <div id="app" class="max-w-4xl mx-auto flex flex-col md:flex-row gap-6">
+    
+    <div class="md:w-1/2 bg-white p-6 rounded-3xl shadow-lg border border-slate-100 h-fit">
+      <h2 class="text-xl font-black mb-4 uppercase tracking-tighter">Добавить сорт</h2>
+      <input v-model="form.title" placeholder="Название томата" class="w-full p-4 bg-slate-50 rounded-2xl mb-4 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+      
+      <select v-model="form.category" class="w-full p-4 bg-slate-50 rounded-2xl mb-4 outline-none">
+        <option value="Dwarf">Гном (Dwarf)</option>
+        <option value="Det">Низкий (Det)</option>
+        <option value="Indet">Высокий (Indet)</option>
+      </select>
+
+      <div class="mb-4">
+        <input type="file" @change="pickImage" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+      </div>
+
+      <button @click="save" :disabled="loading" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition-all disabled:opacity-50">
+        {{ loading ? '⏳ ЗАГРУЗКА...' : 'СОХРАНИТЬ' }}
+      </button>
+    </div>
+
+    <div class="md:w-1/2 space-y-3">
+      <div v-for="t in tomatoes" :key="t.id" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+        <img v-if="t.image_url" :src="t.image_url" class="w-12 h-12 rounded-lg object-cover">
+        <div class="flex-1">
+          <div class="font-bold">{{ t.title }}</div>
+          <div class="text-[10px] text-blue-500 font-black uppercase">{{ t.category }}</div>
+        </div>
+        <button @click="remove(t.id)" class="text-slate-300 hover:text-red-500">🗑</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient('https://elsbyawbmvyvkrvnfeoi.supabase.co', 'sb_publishable_Qa6ghz4rK3-bZURrGJxK3w_Hrj8HzdU');
+
+    Vue.createApp({
+      data() {
+        return {
+          tomatoes: [],
+          loading: false,
+          file: null,
+          form: { title: '', category: 'Dwarf' }
+        }
+      },
+      methods: {
+        async load() {
+          const { data } = await sb.from('tomatoes').select('*').order('created_at', { ascending: false });
+          this.tomatoes = data || [];
+        },
+        pickImage(e) {
+          this.file = e.target.files[0];
+        },
+        async save() {
+          if (!this.form.title) return;
+          this.loading = true;
+          try {
+            let imageUrl = '';
+            if (this.file) {
+              const name = `${Date.now()}_${this.file.name}`;
+              const { data: upData } = await sb.storage.from('tomatoes').upload(name, this.file);
+              if (upData) {
+                const { data: urlData } = sb.storage.from('tomatoes').getPublicUrl(name);
+                imageUrl = urlData.publicUrl;
+              }
+            }
+            const { data, error } = await sb.from('tomatoes').insert([{ title: this.form.title, category: this.form.category, image_url: imageUrl }]).select();
+            if (!error) {
+              this.tomatoes.unshift(data[0]);
+              this.form.title = '';
+              this.file = null;
+            }
+          } catch (e) { console.error(e); }
+          this.loading = false;
+        },
+        async remove(id) {
+          if (!confirm('Удалить?')) return;
+          await sb.from('tomatoes').delete().eq('id', id);
+          this.tomatoes = this.tomatoes.filter(t => t.id !== id);
+        }
+      },
+      mounted() { this.load(); }
+    }).mount('#app');
+  </script>
+</body>
+</html>
