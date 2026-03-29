@@ -75,39 +75,3 @@ export const fetchTomatoes = async (): Promise<Tomato[]> => {
     return [];
   }
 };
-
-export const submitOrder = async (order: {
-  name: string;
-  phone: string;
-  address: string;
-  comment: string;
-  items: CartItem[];
-}): Promise<void> => {
-  if (!AIRTABLE_TOKEN || AIRTABLE_TOKEN.includes('......')) return;
-
-  const itemsList = order.items.map(i => i.tomato.name).join(', ');
-  const payload = {
-    fields: {
-      Phone: order.phone,
-      Addres: order.address,
-      VarietiesList: itemsList,
-      CustomerComment: `${order.name}. ${order.comment}`,
-    },
-  };
-
-  const res = await fetch(
-    `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(
-      AIRTABLE_ORDERS_TABLE
-    )}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    }
-  );
-
-  if (!res.ok) throw new Error('Order failed');
-};
