@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Tomato, CartItem } from '../types';
-import {
-  Plus,
-  Info,
-  Check,
-  ImageOff,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { Tomato, CartItem, FilterState } from '../types';
+import { Search, X, Filter, Loader2, ImageOff, ChevronLeft, ChevronRight } from 'lucide-react';
 import { localize } from '../utils/localization';
 
 const DEFAULT_PAGE_SIZE = 24;
@@ -64,14 +56,37 @@ export const Catalog: React.FC<CatalogProps> = ({
 }) => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    environment: '',
+    ripening: '',
+    color: '',
+    type: '',
+    growth: '',
+  });
   const topAnchorRef = useRef<HTMLDivElement>(null);
 
-  const total = tomatoes.length;
+  const filteredTomatoes = useMemo(() => {
+    return tomatoes.filter(tomato => {
+      const matchesSearch = 
+        tomato.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        (tomato.originalName && tomato.originalName.toLowerCase().includes(filters.search.toLowerCase()));
+      
+      const matchesColor = !filters.color || tomato.color === filters.color;
+      const matchesType = !filters.type || tomato.type === filters.type;
+      const matchesGrowth = !filters.growth || tomato.growth === filters.growth;
+      const matchesRipening = !filters.ripening || tomato.ripening === filters.ripening;
+      
+      return matchesSearch && matchesColor && matchesType && matchesGrowth && matchesRipening;
+    });
+  }, [tomatoes, filters]);
+
+  const total = filteredTomatoes.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   useEffect(() => {
     setPage(1);
-  }, [tomatoes]);
+  }, [filteredTomatoes]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -79,8 +94,8 @@ export const Catalog: React.FC<CatalogProps> = ({
 
   const visible = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return tomatoes.slice(start, start + pageSize);
-  }, [tomatoes, page, pageSize]);
+    return filteredTomatoes.slice(start, start + pageSize);
+  }, [filteredTomatoes, page, pageSize]);
 
   const goPage = (next: number) => {
     const clamped = Math.min(totalPages, Math.max(1, next));
@@ -120,6 +135,32 @@ export const Catalog: React.FC<CatalogProps> = ({
   return (
     <div className="space-y-6">
       <div ref={topAnchorRef} className="sr-only" aria-hidden />
+      
+      {/* Строка поиска - ВОССТАНОВЛЕНА */}
+      <div className="relative mb-4">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-5 w-5 text-stone-400" aria-hidden="true" />
+        </div>
+        <input
+          type="text"
+          name="search"
+          id="search"
+          className="block w-full pl-10 pr-3 py-2 border border-stone-200 rounded-lg leading-5 bg-white placeholder-stone-500 focus:outline-none focus:placeholder-stone-400 focus:ring-1 focus:ring-tomato-500 focus:border-tomato-500 sm:text-sm"
+          placeholder="Поиск по названию..."
+          value={filters.search}
+          onChange={(e) => setFilters({...filters, search: e.target.value})}
+        />
+        {filters.search && (
+          <button
+            type="button"
+            className="absolute inset-y-0 right-0 flex items-center pr-3"
+            onClick={() => setFilters({...filters, search: ''})}
+          >
+            <X className="h-4 w-4 text-stone-400" aria-hidden="true" />
+          </button>
+        )}
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-stone-600">
         <p>
           Показано{' '}
