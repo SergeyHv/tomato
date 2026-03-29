@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body style="font-family: sans-serif; max-width: 500px; margin: 40px auto;">
+
+  <h2>Добавить сорт</h2>
+
+  <input id="password" placeholder="Пароль" style="width:100%;margin-bottom:10px;" />
+
+  <input id="name" placeholder="Название" style="width:100%;margin-bottom:10px;" />
+  <input id="color" placeholder="Цвет" style="width:100%;margin-bottom:10px;" />
+  <input id="type" placeholder="Тип" style="width:100%;margin-bottom:10px;" />
+  <input id="weight" placeholder="Вес" style="width:100%;margin-bottom:10px;" />
+  <input id="origin" placeholder="Происхождение" style="width:100%;margin-bottom:10px;" />
+
+  <textarea id="description" placeholder="Описание" style="width:100%;margin-bottom:10px;"></textarea>
+  <input id="imageUrl" placeholder="Ссылка на картинку" style="width:100%;margin-bottom:10px;" />
+
+  <button onclick="submit()">Добавить</button>
+
+  <p id="status"></p>
+
+  <script>
+    async function submit() {
+      const status = document.getElementById('status');
+      status.innerText = '⏳ Отправка...';
+
+      try {
+        const res = await fetch('/api/admin/add-product', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            password: document.getElementById('password').value,
+            name: document.getElementById('name').value,
+            color: document.getElementById('color').value,
+            type: document.getElementById('type').value,
+            weight: document.getElementById('weight').value,
+            origin: document.getElementById('origin').value,
+            description: document.getElementById('description').value,
+            imageUrl: document.getElementById('imageUrl').value
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          status.innerText = '✅ Добавлено';
+        } else {
+          status.innerText = '❌ Ошибка';
+        }
+
+      } catch (e) {
+        status.innerText = '❌ Ошибка запроса';
+      }
+    }
+  </script>
+
+</body>
+</html>
