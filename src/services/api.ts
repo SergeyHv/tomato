@@ -12,11 +12,6 @@ const getEnv = (key: string): string | undefined => {
   }
 };
 
-const AIRTABLE_BASE_ID = getEnv('VITE_AIRTABLE_BASE_ID') || 'app6EHiUQjTfVJlms';
-const AIRTABLE_TABLE = 'Varieties';
-const AIRTABLE_ORDERS_TABLE = 'Orders';
-const AIRTABLE_TOKEN = getEnv('VITE_AIRTABLE_TOKEN') || '';
-
 const getField = (fields: Record<string, any>, ...keys: string[]): any => {
   for (const key of keys) {
     if (fields[key] !== undefined) return fields[key];
