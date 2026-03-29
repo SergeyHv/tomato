@@ -8,10 +8,6 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "photos": "node scripts/process_photos.js",
-    "scan": "node scripts/scan_ai.js",
-    "bot": "node scripts/bot.js",
-    "parse-ocr": "node scripts/parse_ocr.js"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",
