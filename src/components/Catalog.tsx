@@ -29,7 +29,7 @@ const TomatoImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
         <img
           src={src}
           alt={alt}
-          className={`w-full h-full object-cover transition-opacity duration-500 ${
+          className={`w-full h-full object-cover transition-opacity duration-5 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           loading="lazy"
@@ -70,8 +70,7 @@ export const Catalog: React.FC<CatalogProps> = ({
     return tomatoes.filter(tomato => {
       const matchesSearch = 
         tomato.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        (tomato.originalName && tomato.originalName.toLowerCase().includes(filters.search.toLowerCase()));
-      
+        (tomato.originalName && tomato.originalName.toLowerCase().includes(filters.search.toLowerCase()));      
       const matchesColor = !filters.color || tomato.color === filters.color;
       const matchesType = !filters.type || tomato.type === filters.type;
       const matchesGrowth = !filters.growth || tomato.growth === filters.growth;
@@ -90,9 +89,7 @@ export const Catalog: React.FC<CatalogProps> = ({
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
-
-  const visible = useMemo(() => {
+  }, [page, totalPages  const visible = useMemo(() => {
     const start = (page - 1) * pageSize;
     return filteredTomatoes.slice(start, start + pageSize);
   }, [filteredTomatoes, page, pageSize]);
@@ -136,7 +133,7 @@ export const Catalog: React.FC<CatalogProps> = ({
     <div className="space-y-6">
       <div ref={topAnchorRef} className="sr-only" aria-hidden />
       
-      {/* Строка поиска - ВОССТАНОВЛЕНА */}
+      {/* Строка поиска */}
       <div className="relative mb-4">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-stone-400" aria-hidden="true" />
@@ -210,12 +207,11 @@ export const Catalog: React.FC<CatalogProps> = ({
             className="group bg-white rounded-2xl border border-stone-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
           >
             <div
-              className="relative h-48 overflow-hidden bg-stone-100 cursor-pointer"
+              className="relative h-48 md:h-64 overflow-hidden bg-stone-100 cursor-pointer"
               onClick={() => onViewDetail(tomato)}
             >
               {tomato.imageUrl ? (
-               <img src={tomato.imageUrl} alt={tomato.name} className="w-full h-full object-cover" />
-
+                <TomatoImage src={tomato.imageUrl} alt={tomato.name} />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-stone-300 bg-stone-100">
                   <ImageOff size={32} />
