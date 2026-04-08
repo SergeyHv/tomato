@@ -5,46 +5,6 @@ function App({ initialId }: { initialId: string | null }) {
   const [selectedTomato, setSelectedTomato] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const slugify = (text: string) => {
-    return text
-      .toLowerCase()
-      .replace(/[^a-zа-я0-9\s]/gi, '')
-      .replace(/\s+/g, '_')
-      .replace(/ё/g, 'e')
-      .replace(/й/g, 'i')
-      .replace(/ц/g, 'c')
-      .replace(/у/g, 'u')
-      .replace(/к/g, 'k')
-      .replace(/е/g, 'e')
-      .replace(/н/g, 'n')
-      .replace(/г/g, 'g')
-      .replace(/ш/g, 'sh')
-      .replace(/щ/g, 'sh')
-      .replace(/з/g, 'z')
-      .replace(/х/g, 'h')
-      .replace(/ъ/g, '')
-      .replace(/ф/g, 'f')
-      .replace(/ы/g, 'y')
-      .replace(/в/g, 'v')
-      .replace(/а/g, 'a')
-      .replace(/п/g, 'p')
-      .replace(/р/g, 'r')
-      .replace(/о/g, 'o')
-      .replace(/л/g, 'l')
-      .replace(/д/g, 'd')
-      .replace(/ж/g, 'zh')
-      .replace(/э/g, 'e')
-      .replace(/я/g, 'ya')
-      .replace(/ч/g, 'ch')
-      .replace(/с/g, 's')
-      .replace(/м/g, 'm')
-      .replace(/и/g, 'i')
-      .replace(/т/g, 't')
-      .replace(/ь/g, '')
-      .replace(/б/g, 'b')
-      .replace(/ю/g, 'yu');
-  };
-
   const parseCSV = (text: string) => {
     const rows = [];
     let current = '';
@@ -138,7 +98,7 @@ function App({ initialId }: { initialId: string | null }) {
             >
               <div className="relative h-64 bg-stone-100 overflow-hidden">
                 <img
-                  src={`/images/${slugify(tomato.name)}.jpg`}
+                  src={`/images/${tomato.id}.jpg`}
                   alt={tomato.name}
                   className="w-full h-full object-cover object-left group-hover:scale-105 transition duration-300"
                   onError={(e) => {
@@ -177,7 +137,7 @@ function App({ initialId }: { initialId: string | null }) {
           <div className="bg-white rounded-xl max-w-3xl w-full overflow-hidden">
             <div className="relative h-80 bg-stone-100">
               <img
-                src={`/images/${slugify(selectedTomato.name)}.jpg`}
+                src={`/images/${selectedTomato.id}.jpg`}
                 className="w-full h-full object-cover object-left"
               />
 
