@@ -5,7 +5,6 @@ function App({ initialId }: { initialId: string | null }) {
   const [selectedTomato, setSelectedTomato] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  /** slugify для фото */
   const slugify = (text: string) => {
     return text
       .toLowerCase()
@@ -46,7 +45,6 @@ function App({ initialId }: { initialId: string | null }) {
       .replace(/ю/g, 'yu');
   };
 
-  /** НОВОЕ: безопасный CSV парсер */
   const parseCSV = (text: string) => {
     const rows = [];
     let current = '';
@@ -56,9 +54,8 @@ function App({ initialId }: { initialId: string | null }) {
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
 
-      if (char === '"') {
-        insideQuotes = !insideQuotes;
-      } else if (char === ',' && !insideQuotes) {
+      if (char === '"') insideQuotes = !insideQuotes;
+      else if (char === ',' && !insideQuotes) {
         row.push(current);
         current = '';
       } else if ((char === '\n' || char === '\r') && !insideQuotes) {
@@ -68,9 +65,7 @@ function App({ initialId }: { initialId: string | null }) {
           row = [];
           current = '';
         }
-      } else {
-        current += char;
-      }
+      } else current += char;
     }
 
     if (current || row.length) {
@@ -81,7 +76,6 @@ function App({ initialId }: { initialId: string | null }) {
     return rows;
   };
 
-  /** загрузка из Google Sheets */
   useEffect(() => {
     const url =
       'https://docs.google.com/spreadsheets/d/e/2PACX-1vShspJqmXJSwF9Sb4Y9yHM2Az6ERth1iNCgY3xBk5yE0O76xbvIgyc2nQlCPJhGncQs67jp-j42Mg2W/pub?output=csv';
@@ -95,7 +89,6 @@ function App({ initialId }: { initialId: string | null }) {
         const data = dataRows
           .map((cols) => {
             if (cols.length < 7) return null;
-
             return {
               id: cols[0],
               name: cols[1],
@@ -112,18 +105,11 @@ function App({ initialId }: { initialId: string | null }) {
         setIsLoading(false);
 
         if (initialId && data.length > 0) {
-          const foundTomato = data.find(
-            (tomato: any) => tomato.id === initialId
-          );
-          if (foundTomato) {
-            setSelectedTomato(foundTomato);
-          }
+          const found = data.find((t: any) => t.id === initialId);
+          if (found) setSelectedTomato(found);
         }
       })
-      .catch((error) => {
-        console.error('Ошибка загрузки данных:', error);
-        setIsLoading(false);
-      });
+      .catch(() => setIsLoading(false));
   }, []);
 
   const openTomatoModal = (tomato: any) => {
@@ -140,37 +126,48 @@ function App({ initialId }: { initialId: string | null }) {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Каталог томатов</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {isLoading ? (
-          <p className="text-center col-span-full">Загрузка данных...</p>
+          <p className="text-center col-span-full">Загрузка...</p>
         ) : (
           tomatoes.map((tomato) => (
             <div
               key={tomato.id}
-              className="border rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow bg-white"
+              className="group bg-white rounded-2xl shadow hover:shadow-xl transition overflow-hidden cursor-pointer"
               onClick={() => openTomatoModal(tomato)}
             >
-              <div className="flex items-start gap-3">
+              {/* КАРТИНКА */}
+              <div className="relative h-56 bg-stone-100 overflow-hidden">
                 <img
                   src={`/images/${slugify(tomato.name)}.jpg`}
                   alt={tomato.name}
-                  className="w-16 h-16 object-cover object-left rounded"
+                  className="w-full h-full object-cover object-left group-hover:scale-105 transition"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
 
-                <div>
-                  <h2 className="text-xl font-semibold">{tomato.name}</h2>
+                {/* ГРАДИЕНТ */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                  <h3 className="text-white font-semibold text-sm">
+                    {tomato.name}
+                  </h3>
+                </div>
+              </div>
 
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
-                      {tomato.color}
-                    </span>
-                    <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
-                      {tomato.type}
-                    </span>
-                  </div>
+              {/* НИЖНИЙ БЛОК */}
+              <div className="p-4 space-y-2">
+                <div className="flex gap-2 flex-wrap text-xs">
+                  <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
+                    {tomato.color}
+                  </span>
+                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                    {tomato.type}
+                  </span>
+                </div>
+
+                <div className="text-sm text-gray-500">
+                  {tomato.height} см • {tomato.weight} г
                 </div>
               </div>
             </div>
@@ -179,79 +176,35 @@ function App({ initialId }: { initialId: string | null }) {
       </div>
 
       {selectedTomato && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-2xl w-full overflow-hidden">
+            <div className="p-4">
               <button
                 onClick={closeTomatoModal}
-                className="float-right text-gray-500 hover:text-gray-700 text-2xl"
+                className="float-right text-xl"
               >
                 ✕
               </button>
 
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="md:w-1/3">
-                  <img
-                    src={`/images/${slugify(selectedTomato.name)}.jpg`}
-                    alt={selectedTomato.name}
-                    className="w-full h-auto rounded-lg object-left"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
+              <img
+                src={`/images/${slugify(selectedTomato.name)}.jpg`}
+                className="w-full rounded mb-4 object-left"
+              />
 
-                <div className="md:w-2/3">
-                  <h2 className="text-2xl font-bold mb-2">
-                    {selectedTomato.name}
-                  </h2>
+              <h2 className="text-xl font-bold mb-2">
+                {selectedTomato.name}
+              </h2>
 
-                  <div className="mb-6">
-                    <h3 className="text-xl font-semibold mb-2">
-                      Описание сорта
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      {selectedTomato.description || 'Описание недоступно'}
-                    </p>
-                  </div>
+              <p className="text-gray-600 mb-4">
+                {selectedTomato.description}
+              </p>
 
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    {selectedTomato.color && (
-                      <div className="bg-red-50 p-3 rounded">
-                        <div className="font-medium text-gray-500">Цвет</div>
-                        <div>{selectedTomato.color}</div>
-                      </div>
-                    )}
-                    {selectedTomato.type && (
-                      <div className="bg-purple-50 p-3 rounded">
-                        <div className="font-medium text-gray-500">Тип</div>
-                        <div>{selectedTomato.type}</div>
-                      </div>
-                    )}
-                    {selectedTomato.height && (
-                      <div className="bg-green-50 p-3 rounded">
-                        <div className="font-medium text-gray-500">Рост</div>
-                        <div>{selectedTomato.height} см</div>
-                      </div>
-                    )}
-                    {selectedTomato.weight && (
-                      <div className="bg-blue-50 p-3 rounded">
-                        <div className="font-medium text-gray-500">Вес</div>
-                        <div>{selectedTomato.weight} г</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>Цвет: {selectedTomato.color}</div>
+                <div>Тип: {selectedTomato.type}</div>
+                <div>Рост: {selectedTomato.height} см</div>
+                <div>Вес: {selectedTomato.weight} г</div>
               </div>
-            </div>
-
-            <div className="border-t p-4 bg-gray-50 rounded-b-lg">
-              <button
-                onClick={closeTomatoModal}
-                className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition"
-              >
-                Закрыть
-              </button>
             </div>
           </div>
         </div>
