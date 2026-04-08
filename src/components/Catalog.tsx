@@ -23,22 +23,52 @@ interface CatalogProps {
   onViewDetail: (tomato: Tomato) => void;
 }
 
-/** ФИКС: теперь поддержка локальных изображений из /public/images */
-const getImageSrc = (src: string) => {
-  if (!src) return '';
-
-  // если уже абсолютный URL (blob, http)
-  if (src.startsWith('http')) return src;
-
-  // если путь из таблицы /images/xxx.jpg
-  return src;
+/** НОВОЕ: транслит → slug под имя файла */
+const slugify = (text: string) => {
+  return text
+    .toLowerCase()
+    .replace(/[^a-zа-я0-9\s]/gi, '')
+    .replace(/\s+/g, '_')
+    .replace(/ё/g, 'e')
+    .replace(/й/g, 'i')
+    .replace(/ц/g, 'c')
+    .replace(/у/g, 'u')
+    .replace(/к/g, 'k')
+    .replace(/е/g, 'e')
+    .replace(/н/g, 'n')
+    .replace(/г/g, 'g')
+    .replace(/ш/g, 'sh')
+    .replace(/щ/g, 'sh')
+    .replace(/з/g, 'z')
+    .replace(/х/g, 'h')
+    .replace(/ъ/g, '')
+    .replace(/ф/g, 'f')
+    .replace(/ы/g, 'y')
+    .replace(/в/g, 'v')
+    .replace(/а/g, 'a')
+    .replace(/п/g, 'p')
+    .replace(/р/g, 'r')
+    .replace(/о/g, 'o')
+    .replace(/л/g, 'l')
+    .replace(/д/g, 'd')
+    .replace(/ж/g, 'zh')
+    .replace(/э/g, 'e')
+    .replace(/я/g, 'ya')
+    .replace(/ч/g, 'ch')
+    .replace(/с/g, 's')
+    .replace(/м/g, 'm')
+    .replace(/и/g, 'i')
+    .replace(/т/g, 't')
+    .replace(/ь/g, '')
+    .replace(/б/g, 'b')
+    .replace(/ю/g, 'yu');
 };
 
-const TomatoImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
+const TomatoImage: React.FC<{ name: string; alt: string }> = ({ name, alt }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  const finalSrc = getImageSrc(src);
+  const src = `/images/${slugify(name)}.jpg`;
 
   return (
     <>
@@ -48,9 +78,9 @@ const TomatoImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
         </div>
       )}
 
-      {!hasError && finalSrc && (
+      {!hasError && (
         <img
-          src={finalSrc}
+          src={src}
           alt={alt}
           className={`w-full h-full object-cover object-left transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
@@ -61,7 +91,7 @@ const TomatoImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
         />
       )}
 
-      {(hasError || !finalSrc) && (
+      {hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-stone-300 bg-stone-100">
           <ImageOff size={32} />
           <span className="text-xs font-medium mt-1">Нет фото</span>
@@ -217,10 +247,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                 className="relative h-56 bg-stone-100 cursor-pointer overflow-hidden"
                 onClick={() => onViewDetail(tomato)}
               >
-                <TomatoImage
-                  src={tomato.imageUrl}
-                  alt={tomato.name}
-                />
+                <TomatoImage name={tomato.name} alt={tomato.name} />
               </div>
 
               <div className="p-4 flex flex-col flex-grow">
