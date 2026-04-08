@@ -5,46 +5,6 @@ function App({ initialId }: { initialId: string | null }) {
   const [selectedTomato, setSelectedTomato] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const slugify = (text: string) => {
-    return text
-      .toLowerCase()
-      .replace(/[^a-zа-я0-9\s]/gi, '')
-      .replace(/\s+/g, '_')
-      .replace(/ё/g, 'e')
-      .replace(/й/g, 'i')
-      .replace(/ц/g, 'c')
-      .replace(/у/g, 'u')
-      .replace(/к/g, 'k')
-      .replace(/е/g, 'e')
-      .replace(/н/g, 'n')
-      .replace(/г/g, 'g')
-      .replace(/ш/g, 'sh')
-      .replace(/щ/g, 'sh')
-      .replace(/з/g, 'z')
-      .replace(/х/g, 'h')
-      .replace(/ъ/g, '')
-      .replace(/ф/g, 'f')
-      .replace(/ы/g, 'y')
-      .replace(/в/g, 'v')
-      .replace(/а/g, 'a')
-      .replace(/п/g, 'p')
-      .replace(/р/g, 'r')
-      .replace(/о/g, 'o')
-      .replace(/л/g, 'l')
-      .replace(/д/g, 'd')
-      .replace(/ж/g, 'zh')
-      .replace(/э/g, 'e')
-      .replace(/я/g, 'ya')
-      .replace(/ч/g, 'ch')
-      .replace(/с/g, 's')
-      .replace(/м/g, 'm')
-      .replace(/и/g, 'i')
-      .replace(/т/g, 't')
-      .replace(/ь/g, '')
-      .replace(/б/g, 'b')
-      .replace(/ю/g, 'yu');
-  };
-
   const parseCSV = (text: string) => {
     const rows = [];
     let current = '';
@@ -126,6 +86,7 @@ function App({ initialId }: { initialId: string | null }) {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Каталог томатов</h1>
 
+      {/* КАРТОЧКИ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {isLoading ? (
           <p className="text-center col-span-full">Загрузка...</p>
@@ -136,26 +97,26 @@ function App({ initialId }: { initialId: string | null }) {
               className="group bg-white rounded-2xl shadow hover:shadow-xl transition overflow-hidden cursor-pointer"
               onClick={() => openTomatoModal(tomato)}
             >
-              {/* КАРТИНКА */}
-              <div className="relative h-56 bg-stone-100 overflow-hidden">
+              {/* ФОТО */}
+              <div className="relative h-64 bg-stone-100 overflow-hidden">
                 <img
-                  src={`/images/${slugify(tomato.name)}.jpg`}
+                  src={`/images/${tomato.id}.jpg`}
                   alt={tomato.name}
-                  className="w-full h-full object-cover object-left group-hover:scale-105 transition"
+                  className="w-full h-full object-cover object-left group-hover:scale-105 transition duration-300"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
 
-                {/* ГРАДИЕНТ */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                  <h3 className="text-white font-semibold text-sm">
+                {/* ГРАДИЕНТ + НАЗВАНИЕ */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                  <h3 className="text-white font-semibold text-base leading-tight">
                     {tomato.name}
                   </h3>
                 </div>
               </div>
 
-              {/* НИЖНИЙ БЛОК */}
+              {/* НИЗ */}
               <div className="p-4 space-y-2">
                 <div className="flex gap-2 flex-wrap text-xs">
                   <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
@@ -175,35 +136,57 @@ function App({ initialId }: { initialId: string | null }) {
         )}
       </div>
 
+      {/* МОДАЛКА = СТРАНИЦА СОРТА */}
       {selectedTomato && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-2xl w-full overflow-hidden">
-            <div className="p-4">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-3xl w-full overflow-hidden">
+            {/* БОЛЬШОЕ ФОТО */}
+            <div className="relative h-80 bg-stone-100">
+              <img
+                src={`/images/${selectedTomato.id}.jpg`}
+                className="w-full h-full object-cover object-left"
+              />
+
               <button
                 onClick={closeTomatoModal}
-                className="float-right text-xl"
+                className="absolute top-3 right-3 bg-black/50 text-white px-3 py-1 rounded"
               >
                 ✕
               </button>
+            </div>
 
-              <img
-                src={`/images/${slugify(selectedTomato.name)}.jpg`}
-                className="w-full rounded mb-4 object-left"
-              />
-
-              <h2 className="text-xl font-bold mb-2">
+            {/* КОНТЕНТ */}
+            <div className="p-6 space-y-4">
+              <h2 className="text-2xl font-bold">
                 {selectedTomato.name}
               </h2>
 
-              <p className="text-gray-600 mb-4">
+              <div className="flex gap-2 flex-wrap text-sm">
+                <span className="bg-red-100 text-red-800 px-3 py-1 rounded">
+                  {selectedTomato.color}
+                </span>
+                <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded">
+                  {selectedTomato.type}
+                </span>
+              </div>
+
+              <p className="text-gray-700 leading-relaxed">
                 {selectedTomato.description}
               </p>
 
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>Цвет: {selectedTomato.color}</div>
-                <div>Тип: {selectedTomato.type}</div>
-                <div>Рост: {selectedTomato.height} см</div>
-                <div>Вес: {selectedTomato.weight} г</div>
+              <div className="grid grid-cols-2 gap-4 text-sm pt-4 border-t">
+                <div>
+                  <div className="text-gray-500">Рост</div>
+                  <div className="font-medium">
+                    {selectedTomato.height} см
+                  </div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Вес</div>
+                  <div className="font-medium">
+                    {selectedTomato.weight} г
+                  </div>
+                </div>
               </div>
             </div>
           </div>
