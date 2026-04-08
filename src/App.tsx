@@ -5,7 +5,7 @@ function App({ initialId }: { initialId: string | null }) {
   const [selectedTomato, setSelectedTomato] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  /** НОВОЕ: slugify для генерации пути к фото */
+  /** slugify для фото */
   const slugify = (text: string) => {
     return text
       .toLowerCase()
@@ -46,7 +46,42 @@ function App({ initialId }: { initialId: string | null }) {
       .replace(/ю/g, 'yu');
   };
 
-  /** НОВОЕ: загрузка из Google Sheets CSV */
+  /** НОВОЕ: безопасный CSV парсер */
+  const parseCSV = (text: string) => {
+    const rows = [];
+    let current = '';
+    let row: string[] = [];
+    let insideQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+
+      if (char === '"') {
+        insideQuotes = !insideQuotes;
+      } else if (char === ',' && !insideQuotes) {
+        row.push(current);
+        current = '';
+      } else if ((char === '\n' || char === '\r') && !insideQuotes) {
+        if (current || row.length) {
+          row.push(current);
+          rows.push(row);
+          row = [];
+          current = '';
+        }
+      } else {
+        current += char;
+      }
+    }
+
+    if (current || row.length) {
+      row.push(current);
+      rows.push(row);
+    }
+
+    return rows;
+  };
+
+  /** загрузка из Google Sheets */
   useEffect(() => {
     const url =
       'https://docs.google.com/spreadsheets/d/e/2PACX-1vShspJqmXJSwF9Sb4Y9yHM2Az6ERth1iNCgY3xBk5yE0O76xbvIgyc2nQlCPJhGncQs67jp-j42Mg2W/pub?output=csv';
@@ -54,12 +89,11 @@ function App({ initialId }: { initialId: string | null }) {
     fetch(url)
       .then((res) => res.text())
       .then((text) => {
-        const rows = text.split('\n').slice(1);
+        const rows = parseCSV(text);
+        const dataRows = rows.slice(1);
 
-        const data = rows
-          .map((row) => {
-            const cols = row.split(',');
-
+        const data = dataRows
+          .map((cols) => {
             if (cols.length < 7) return null;
 
             return {
