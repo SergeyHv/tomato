@@ -7,14 +7,10 @@ import {
   ImageOff,
   ChevronLeft,
   ChevronRight,
-  Check,
-  Plus,
-  Info,
 } from 'lucide-react';
 import { localize } from '../utils/localization';
 
 const DEFAULT_PAGE_SIZE = 24;
-const PAGE_SIZE_OPTIONS = [12, 24, 48] as const;
 
 interface CatalogProps {
   tomatoes: Tomato[];
@@ -23,52 +19,12 @@ interface CatalogProps {
   onViewDetail: (tomato: Tomato) => void;
 }
 
-/** НОВОЕ: транслит → slug под имя файла */
-const slugify = (text: string) => {
-  return text
-    .toLowerCase()
-    .replace(/[^a-zа-я0-9\s]/gi, '')
-    .replace(/\s+/g, '_')
-    .replace(/ё/g, 'e')
-    .replace(/й/g, 'i')
-    .replace(/ц/g, 'c')
-    .replace(/у/g, 'u')
-    .replace(/к/g, 'k')
-    .replace(/е/g, 'e')
-    .replace(/н/g, 'n')
-    .replace(/г/g, 'g')
-    .replace(/ш/g, 'sh')
-    .replace(/щ/g, 'sh')
-    .replace(/з/g, 'z')
-    .replace(/х/g, 'h')
-    .replace(/ъ/g, '')
-    .replace(/ф/g, 'f')
-    .replace(/ы/g, 'y')
-    .replace(/в/g, 'v')
-    .replace(/а/g, 'a')
-    .replace(/п/g, 'p')
-    .replace(/р/g, 'r')
-    .replace(/о/g, 'o')
-    .replace(/л/g, 'l')
-    .replace(/д/g, 'd')
-    .replace(/ж/g, 'zh')
-    .replace(/э/g, 'e')
-    .replace(/я/g, 'ya')
-    .replace(/ч/g, 'ch')
-    .replace(/с/g, 's')
-    .replace(/м/g, 'm')
-    .replace(/и/g, 'i')
-    .replace(/т/g, 't')
-    .replace(/ь/g, '')
-    .replace(/б/g, 'b')
-    .replace(/ю/g, 'yu');
-};
-
-const TomatoImage: React.FC<{ name: string; alt: string }> = ({ name, alt }) => {
+/** ИСПРАВЛЕНО: теперь используем id */
+const TomatoImage: React.FC<{ id: string; alt: string }> = ({ id, alt }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  const src = `/images/${slugify(name)}.jpg`;
+  const src = `/images/${id}.jpg`;
 
   return (
     <>
@@ -166,29 +122,6 @@ export const Catalog: React.FC<CatalogProps> = ({
     });
   };
 
-  const pageNumbers = useMemo(() => {
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-
-    const pages = new Set<number>([1, totalPages, page]);
-
-    for (let d = -1; d <= 1; d++) {
-      const p = page + d;
-      if (p >= 1 && p <= totalPages) pages.add(p);
-    }
-
-    return [...pages]
-      .sort((a, b) => a - b)
-      .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
-        if (idx > 0 && p - (arr[idx - 1] as number) > 1) {
-          acc.push('ellipsis');
-        }
-        acc.push(p);
-        return acc;
-      }, []);
-  }, [page, totalPages]);
-
   if (total === 0) {
     return (
       <div className="text-center py-20 bg-white rounded-xl border border-dashed border-stone-300">
@@ -199,9 +132,6 @@ export const Catalog: React.FC<CatalogProps> = ({
       </div>
     );
   }
-
-  const from = (page - 1) * pageSize + 1;
-  const to = Math.min(page * pageSize, total);
 
   return (
     <div className="space-y-6">
@@ -247,7 +177,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                 className="relative h-56 bg-stone-100 cursor-pointer overflow-hidden"
                 onClick={() => onViewDetail(tomato)}
               >
-                <TomatoImage name={tomato.name} alt={tomato.name} />
+                <TomatoImage id={tomato.id} alt={tomato.name} />
               </div>
 
               <div className="p-4 flex flex-col flex-grow">
