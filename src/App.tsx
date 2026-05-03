@@ -48,15 +48,20 @@ function App({ initialId }: { initialId: string | null }) {
 
         const data = dataRows
           .map((cols) => {
-            if (cols.length < 7) return null;
+            // Проверяем, что колонок достаточно (минимум 11 для imageUrl)
+            if (cols.length < 11) return null;
             return {
               id: cols[0],
               name: cols[1],
-              description: cols[2],
-              color: cols[3],
-              type: cols[4],
-              height: cols[5],
-              weight: cols[6],
+              originalName: cols[2],
+              description: cols[3],
+              fullDescription: cols[4],
+              color: cols[5],
+              type: cols[6],
+              growth: cols[7],
+              height: cols[8],
+              weight: cols[9],
+              imageUrl: cols[10], // ← вот она, колонка с ссылкой на фото!
             };
           })
           .filter(Boolean);
@@ -98,7 +103,7 @@ function App({ initialId }: { initialId: string | null }) {
             >
               <div className="relative h-64 bg-stone-100 overflow-hidden">
                 <img
-                  src={`/images/${tomato.id}.jpg`}
+                  src={tomato.imageUrl || `/images/${tomato.id}.jpg`}
                   alt={tomato.name}
                   className="w-full h-full object-cover object-left group-hover:scale-105 transition duration-300"
                   onError={(e) => {
@@ -137,8 +142,11 @@ function App({ initialId }: { initialId: string | null }) {
           <div className="bg-white rounded-xl max-w-3xl w-full overflow-hidden">
             <div className="relative h-80 bg-stone-100">
               <img
-                src={`/images/${selectedTomato.id}.jpg`}
+                src={selectedTomato.imageUrl || `/images/${selectedTomato.id}.jpg`}
                 className="w-full h-full object-cover object-left"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
               />
 
               <button
