@@ -1,150 +1,7 @@
-import React, { useState, useEffect } from 'react';
-
-function App({ initialId = null }: { initialId?: string | null }) {
-  const [tomatoes, setTomatoes] = useState<any[]>([]);
-  const [selectedTomato, setSelectedTomato] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const parseCSV = (text: string) => {
-    const rows = [];
-    let current = '';
-    let row: string[] = [];
-    let insideQuotes = false;
-
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-
-      if (char === '"') insideQuotes = !insideQuotes;
-      else if (char === ',' && !insideQuotes) {
-        row.push(current);
-        current = '';
-      } else if ((char === '\n' || char === '\r') && !insideQuotes) {
-        if (current || row.length) {
-          row.push(current);
-          rows.push(row);
-          row = [];
-          current = '';
-        }
-      } else current += char;
-    }
-
-    if (current || row.length) {
-      row.push(current);
-      rows.push(row);
-    }
-
-    return rows;
-  };
-
-  useEffect(() => {
-    const url =
-      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSpEDrdN5bZsJsb6k6JQk4My96Tet3Sac8N4-BGcJ4KHcSrfeqKbLolME0CMb9lvfecYbay7R1bqYY/pub?output=csv';
-
-    fetch(url)
-      .then((res) => res.text())
-      .then((text) => {
-        const rows = parseCSV(text);
-        const dataRows = rows.slice(1);
-
-        const data = dataRows
-          .map((cols) => {
-            if (cols.length < 11) return null;
-            return {
-              id: cols[0],
-              name: cols[1],
-              originalName: cols[2],
-              description: cols[3],
-              fullDescription: cols[4],
-              color: cols[5],
-              type: cols[6],
-              growth: cols[7],
-              height: cols[8],
-              weight: cols[9],
-              imageUrl: cols[10],
-            };
-          })
-          .filter(Boolean);
-
-        setTomatoes(data);
-        setIsLoading(false);
-
-        if (initialId && data.length > 0) {
-          const found = data.find((t: any) => t.id === initialId);
-          if (found) setSelectedTomato(found);
-        }
-      })
-      .catch((err) => {
-        console.error('Ошибка загрузки:', err);
-        setIsLoading(false);
-      });
-  }, [initialId]);
-
-  const openTomatoModal = (tomato: any) => {
-    setSelectedTomato(tomato);
-    window.history.pushState({}, '', `/?id=${tomato.id}`);
-  };
-
-  const closeTomatoModal = () => {
-    setSelectedTomato(null);
-    window.history.pushState({}, '', '/');
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Каталог томатов</h1>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-        {isLoading ? (
-          <p className="text-center col-span-full">Загрузка...</p>
-        ) : tomatoes.length === 0 ? (
-          <p className="text-center col-span-full">Нет данных о томатах</p>
-        ) : (
-          tomatoes.map((tomato) => (
-            <div
-              key={tomato.id}
-              className="group bg-white rounded-2xl shadow hover:shadow-xl transition overflow-hidden cursor-pointer"
-              onClick={() => openTomatoModal(tomato)}
-            >
-              <div className="relative h-64 bg-stone-100 overflow-hidden">
-                <img
-                  src={tomato.imageUrl || `/images/${tomato.id}.jpg`}
-                  alt={tomato.name}
-                  className="w-full h-full object-cover object-left group-hover:scale-105 transition duration-300"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                  <h3 className="text-white font-semibold text-base">
-                    {tomato.name}
-                  </h3>
-                </div>
-              </div>
-
-              <div className="p-4 space-y-2">
-                <div className="flex gap-2 flex-wrap text-xs">
-                  <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
-                    {tomato.color}
-                  </span>
-                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                    {tomato.type}
-                  </span>
-                </div>
-
-                <div className="text-sm text-gray-500">
-                  {tomato.height || '?'} см • {tomato.weight || '?'} г
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-     {selectedTomato && (
+{selectedTomato && (
   <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-    <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-      <div className="relative h-64 bg-stone-100 flex-shrink-0">
+    <div className="bg-white rounded-xl max-w-3xl w-full" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="relative bg-stone-100 flex-shrink-0" style={{ height: '300px' }}>
         <img
           src={selectedTomato.imageUrl || `/images/${selectedTomato.id}.jpg`}
           alt={selectedTomato.name}
@@ -161,7 +18,7 @@ function App({ initialId = null }: { initialId?: string | null }) {
         </button>
       </div>
 
-      <div className="p-6 space-y-4 overflow-y-auto flex-1">
+      <div className="p-6 space-y-4" style={{ overflowY: 'auto', flex: 1 }}>
         <h2 className="text-2xl font-bold">
           {selectedTomato.name}
         </h2>
@@ -184,5 +41,3 @@ function App({ initialId = null }: { initialId?: string | null }) {
     </div>
   </div>
 )}
-
-export default App;
