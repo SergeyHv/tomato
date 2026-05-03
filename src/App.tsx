@@ -39,7 +39,6 @@ function App() {
   };
 
   useEffect(() => {
-    // Ваша рабочая ссылка на CSV (та, что показывала 1300+ сортов)
     const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSpEDrdN5bZsJsb6k6JQk4My96Tet3Sac8N4-BGcJ4KHcSrfeqKbLolME0CMb9lvfecYbay7R1bqYY/pub?output=csv';
 
     fetch(url)
@@ -62,8 +61,8 @@ function App() {
               height: cols[8],
               weight: cols[9],
               imageUrl: cols[10],
-              ripening: cols[11] || 'средний',
-              environment: cols[12] || 'универсал',
+              price: 0,
+              ripening: cols[11] || '',
             } as Tomato;
           })
           .filter(Boolean);
@@ -108,7 +107,13 @@ function App() {
 
   const totalCartItems = cartItems.reduce((s, i) => s + i.quantity, 0);
 
-  if (isLoading) return <div className="p-8 text-center">Загрузка 1300+ сортов...</div>;
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p className="text-center">Загрузка 1300+ сортов...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -145,7 +150,7 @@ function App() {
       {selectedTomato && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-3xl w-full" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="relative h-64 bg-stone-100 flex-shrink-0">
+            <div className="relative bg-stone-100 flex-shrink-0" style={{ height: '300px' }}>
               <img
                 src={selectedTomato.imageUrl || `/images/${selectedTomato.id}.jpg`}
                 alt={selectedTomato.name}
