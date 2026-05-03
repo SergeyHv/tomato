@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function App({ initialId }: { initialId: string | null }) {
+function App({ initialId }: { initialId?: string | null }) {
   const [tomatoes, setTomatoes] = useState<any[]>([]);
   const [selectedTomato, setSelectedTomato] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
