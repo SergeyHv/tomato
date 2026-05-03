@@ -198,7 +198,7 @@ export const Catalog: React.FC<CatalogProps> = ({
             />
           </div>
 
-          {/* Цвет */}
+          {/* Цвет — ВРЕМЕННО ЗАКОММЕНТИРОВАН 
           <select
             value={filters.color}
             onChange={(e) => setFilters({ ...filters, color: e.target.value })}
@@ -209,6 +209,7 @@ export const Catalog: React.FC<CatalogProps> = ({
               <option key={color} value={color}>{localize(color)}</option>
             ))}
           </select>
+          */}
 
           {/* Тип плода */}
           <select
