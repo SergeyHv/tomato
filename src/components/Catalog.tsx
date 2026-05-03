@@ -9,6 +9,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { localize } from '../utils/localization';
+import { Filters } from './Filters';
 
 const DEFAULT_PAGE_SIZE = 24;
 
@@ -143,6 +144,13 @@ export const Catalog: React.FC<CatalogProps> = ({
   return (
     <div className="space-y-6">
       <div ref={topAnchorRef} className="sr-only" aria-hidden />
+      <Filters
+      filters={filters}
+      onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
+      onReset={() => setFilters({ search: '', environment: '', ripening: '', color: '', type: '', growth: '' })}
+      totalCount={tomatoes.length}
+      filteredCount={total}
+    />
 
       <div className="relative mb-4">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
