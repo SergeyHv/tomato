@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, Trash2, Package, Send, Loader2 } from 'lucide-react';
 import { CartItem } from '../types';
