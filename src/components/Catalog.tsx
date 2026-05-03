@@ -1,3 +1,4 @@
+import { localize } from '../utils/localization';
 {/* Цвет — динамический, но с русским отображением */}
 <select
   value={filters.color}
