@@ -9,7 +9,6 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { localize } from '../utils/localization';
-import { Filters } from './Filters';
 
 const DEFAULT_PAGE_SIZE = 24;
 
@@ -75,6 +74,31 @@ export const Catalog: React.FC<CatalogProps> = ({
 
   const topAnchorRef = useRef<HTMLDivElement>(null);
 
+  // Динамические фильтры — собираем уникальные значения из данных
+  const uniqueColors = useMemo(() => {
+    const colors = new Set<string>();
+    tomatoes.forEach(t => t.color && colors.add(t.color));
+    return Array.from(colors).sort();
+  }, [tomatoes]);
+
+  const uniqueTypes = useMemo(() => {
+    const types = new Set<string>();
+    tomatoes.forEach(t => t.type && types.add(t.type));
+    return Array.from(types).sort();
+  }, [tomatoes]);
+
+  const uniqueGrowth = useMemo(() => {
+    const growths = new Set<string>();
+    tomatoes.forEach(t => t.growth && growths.add(t.growth));
+    return Array.from(growths).sort();
+  }, [tomatoes]);
+
+  const uniqueRipening = useMemo(() => {
+    const ripenings = new Set<string>();
+    tomatoes.forEach(t => t.ripening && ripenings.add(t.ripening));
+    return Array.from(ripenings).sort();
+  }, [tomatoes]);
+
   const filteredTomatoes = useMemo(() => {
     if (!tomatoes || tomatoes.length === 0) return [];
     return tomatoes.filter((tomato) => {
@@ -133,6 +157,8 @@ export const Catalog: React.FC<CatalogProps> = ({
     });
   };
 
+  const hasActiveFilters = filters.search || filters.color || filters.type || filters.growth || filters.ripening;
+
   if (!tomatoes || tomatoes.length === 0) {
     return (
       <div className="text-center py-20 bg-white rounded-xl border border-dashed border-stone-300">
@@ -147,9 +173,9 @@ export const Catalog: React.FC<CatalogProps> = ({
 
       {/* БЛОК ФИЛЬТРОВ */}
       <div className="bg-white rounded-xl border border-stone-200 p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h3 className="font-medium text-stone-700">🔍 Фильтры и поиск</h3>
-          {(filters.search || filters.environment || filters.ripening || filters.color || filters.type || filters.growth) && (
+          {hasActiveFilters && (
             <button
               onClick={resetFilters}
               className="text-sm text-rose-500 hover:text-rose-700 flex items-center gap-1"
@@ -159,7 +185,7 @@ export const Catalog: React.FC<CatalogProps> = ({
           )}
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {/* Поиск */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
@@ -172,63 +198,56 @@ export const Catalog: React.FC<CatalogProps> = ({
             />
           </div>
 
-          {/* Цвет */}
+          {/* Цвет — динамический */}
           <select
             value={filters.color}
             onChange={(e) => setFilters({ ...filters, color: e.target.value })}
             className="border border-stone-200 rounded-lg px-3 py-2 text-sm"
           >
-            <option value="">🎨 Все цвета</option>
-            <option value="Red">Красный</option>
-            <option value="Pink">Розовый</option>
-            <option value="Yellow">Жёлтый</option>
-            <option value="Orange">Оранжевый</option>
-            <option value="Black">Чёрный/Тёмный</option>
-            <option value="Green">Зелёный</option>
-            <option value="BiColor">Биколор</option>
+            <option value="">🎨 Все цвета ({uniqueColors.length})</option>
+            {uniqueColors.map(color => (
+              <option key={color} value={color}>{color}</option>
+            ))}
           </select>
 
-          {/* Тип плода */}
+          {/* Тип плода — динамический */}
           <select
             value={filters.type}
             onChange={(e) => setFilters({ ...filters, type: e.target.value })}
             className="border border-stone-200 rounded-lg px-3 py-2 text-sm"
           >
-            <option value="">🍅 Все типы</option>
-            <option value="Cherry">Черри</option>
-            <option value="Plum">Сливовидный</option>
-            <option value="Classic">Классический</option>
-            <option value="Beefsteak">Бифштексный</option>
-            <option value="Heart">Сердцевидный</option>
+            <option value="">🍅 Все типы ({uniqueTypes.length})</option>
+            {uniqueTypes.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
           </select>
 
-          {/* Тип куста */}
+          {/* Тип куста — динамический */}
           <select
             value={filters.growth}
             onChange={(e) => setFilters({ ...filters, growth: e.target.value })}
             className="border border-stone-200 rounded-lg px-3 py-2 text-sm"
           >
-            <option value="">🌱 Все кусты</option>
-            <option value="Гном">Гном</option>
-            <option value="Дет">Низкорослый (Дет)</option>
-            <option value="Среднерослый">Среднерослый</option>
-            <option value="Индет">Высокорослый (Индет)</option>
+            <option value="">🌱 Все кусты ({uniqueGrowth.length})</option>
+            {uniqueGrowth.map(growth => (
+              <option key={growth} value={growth}>{growth}</option>
+            ))}
           </select>
 
-          {/* Срок созревания */}
+          {/* Срок созревания — динамический */}
           <select
             value={filters.ripening}
             onChange={(e) => setFilters({ ...filters, ripening: e.target.value })}
             className="border border-stone-200 rounded-lg px-3 py-2 text-sm"
           >
-            <option value="">📅 Все сроки</option>
-            <option value="Ранний">Ранний</option>
-            <option value="Средний">Средний</option>
-            <option value="Поздний">Поздний</option>
+            <option value="">📅 Все сроки ({uniqueRipening.length})</option>
+            {uniqueRipening.map(ripening => (
+              <option key={ripening} value={ripening}>{ripening}</option>
+            ))}
           </select>
 
           {/* Счётчик */}
-          <div className="flex items-center justify-center bg-stone-50 rounded-lg px-3 py-2 text-sm">
+          <div className="flex items-center justify-center bg-stone-50 rounded-lg px-3 py-2 text-sm col-span-1">
             <span className="text-stone-600">
               Найдено: <span className="font-bold text-emerald-600">{total}</span> из {tomatoes.length}
             </span>
@@ -271,7 +290,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                     </h3>
 
                     <div className="text-xs text-stone-500 mt-2">
-                      {localize(tomato.color)} • {localize(tomato.type)}
+                      {tomato.color} • {tomato.type}
                     </div>
 
                     <div className="mt-auto pt-4">
