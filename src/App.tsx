@@ -38,7 +38,7 @@ function App({ initialId = null }: { initialId?: string | null }) {
 
   useEffect(() => {
     const url =
-      'https://docs.google.com/spreadsheets/d/e/2PACX-1vShspJqmXJSwF9Sb4Y9yHM2Az6ERth1iNCgY3xBk5yE0O76xbvIgyc2nQlCPJhGncQs67jp-j42Mg2W/pub?output=csv';
+      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSpEDrdN5bZsJsb6k6JQk4My96Tet3Sac8N4-BGcJ4KHcSrfeqKbLolME0CMb9lvfecYbay7R1bqYY/pub?output=csv';
 
     fetch(url)
       .then((res) => res.text())
