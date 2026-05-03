@@ -20,11 +20,10 @@ interface CatalogProps {
 }
 
 /** ИСПРАВЛЕНО: теперь используем id */
-const TomatoImage: React.FC<{ id: string; alt: string }> = ({ id, alt }) => {
+const TomatoImage: React.FC<{ tomato: Tomato }> = ({ tomato }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-
-  const src = `/images/${id}.jpg`;
+  const src = tomato.imageUrl || `/images/${tomato.id}.jpg`;
 
   return (
     <>
@@ -37,7 +36,7 @@ const TomatoImage: React.FC<{ id: string; alt: string }> = ({ id, alt }) => {
       {!hasError && (
         <img
           src={src}
-          alt={alt}
+          alt={tomato.name}
           className={`w-full h-full object-cover object-left transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
