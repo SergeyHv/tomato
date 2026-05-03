@@ -34,11 +34,12 @@ const TomatoImage: React.FC<{ tomato: Tomato }> = ({ tomato }) => {
 
       {!hasError && (
         <img
-          src={src}
-          alt={tomato.name}
-          className={`w-full h-full object-cover object-left transition-opacity duration-300 ${
-            isLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
+  src={src}
+  alt={tomato.name}
+  className={`w-full h-full object-cover object-left transition-all duration-300 group-hover:scale-105 ${
+    isLoaded ? 'opacity-100' : 'opacity-0'
+  }`}
+/>
           loading="lazy"
           onLoad={() => setIsLoaded(true)}
           onError={() => setHasError(true)}
