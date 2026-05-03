@@ -150,20 +150,20 @@ function App() {
       {selectedTomato && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-3xl w-full" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="relative bg-stone-100 flex-shrink-0" style={{ height: '300px' }}>
-              <img
-                src={selectedTomato.imageUrl || `/images/${selectedTomato.id}.jpg`}
-                alt={selectedTomato.name}
-                className="w-full h-full object-contain bg-stone-100"
-                onError={e => (e.currentTarget.style.display = 'none')}
-              />
-              <button 
-                onClick={closeDetail} 
-                className="absolute top-3 right-3 bg-black/50 text-white px-3 py-1 rounded hover:bg-black/70"
-              >
-                ✕
-              </button>
-            </div>
+            <div className="relative bg-stone-100 flex-shrink-0" style={{ height: 'clamp(300px, 50vh, 500px)' }}>
+  <img
+    src={selectedTomato.imageUrl || `/images/${selectedTomato.id}.jpg`}
+    alt={selectedTomato.name}
+    className="w-full h-full object-contain bg-stone-100"
+    onError={e => (e.currentTarget.style.display = 'none')}
+  />
+  <button 
+    onClick={closeDetail} 
+    className="absolute top-3 right-3 bg-black/50 text-white px-3 py-1 rounded hover:bg-black/70"
+  >
+    ✕
+  </button>
+</div>
             <div className="p-6 overflow-y-auto flex-1">
               <h2 className="text-2xl font-bold">{selectedTomato.name}</h2>
               <p className="mt-2 text-gray-700 leading-relaxed">
