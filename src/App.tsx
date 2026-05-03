@@ -154,19 +154,26 @@ function App() {
               <img
                 src={selectedTomato.imageUrl || `/images/${selectedTomato.id}.jpg`}
                 alt={selectedTomato.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain bg-stone-100"
                 onError={e => (e.currentTarget.style.display = 'none')}
               />
-              <button onClick={closeDetail} className="absolute top-3 right-3 bg-black/50 text-white px-3 py-1 rounded">
+              <button 
+                onClick={closeDetail} 
+                className="absolute top-3 right-3 bg-black/50 text-white px-3 py-1 rounded hover:bg-black/70"
+              >
                 ✕
               </button>
             </div>
             <div className="p-6 overflow-y-auto flex-1">
               <h2 className="text-2xl font-bold">{selectedTomato.name}</h2>
-              <p className="mt-2">{selectedTomato.fullDescription || selectedTomato.description}</p>
+              <p className="mt-2 text-gray-700 leading-relaxed">
+                {selectedTomato.fullDescription || selectedTomato.description || 'Описание отсутствует'}
+              </p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                <div>Рост: {selectedTomato.height}</div>
-                <div>Вес: {selectedTomato.weight}</div>
+                <div className="text-gray-500">Рост:</div>
+                <div>{selectedTomato.height || 'Не указано'}</div>
+                <div className="text-gray-500">Вес:</div>
+                <div>{selectedTomato.weight || 'Не указано'}</div>
               </div>
             </div>
           </div>
