@@ -19,7 +19,6 @@ interface CatalogProps {
   onViewDetail: (tomato: Tomato) => void;
 }
 
-/** ИСПРАВЛЕНО: теперь используем id */
 const TomatoImage: React.FC<{ tomato: Tomato }> = ({ tomato }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -63,7 +62,7 @@ export const Catalog: React.FC<CatalogProps> = ({
   onViewDetail,
 }) => {
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pageSize] = useState(DEFAULT_PAGE_SIZE);
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     environment: '',
@@ -76,9 +75,10 @@ export const Catalog: React.FC<CatalogProps> = ({
   const topAnchorRef = useRef<HTMLDivElement>(null);
 
   const filteredTomatoes = useMemo(() => {
+    if (!tomatoes || tomatoes.length === 0) return [];
     return tomatoes.filter((tomato) => {
       const matchesSearch =
-        tomato.name.toLowerCase().includes(filters.search.toLowerCase());
+        tomato.name?.toLowerCase().includes(filters.search.toLowerCase()) || false;
 
       const matchesColor = !filters.color || tomato.color === filters.color;
       const matchesType = !filters.type || tomato.type === filters.type;
@@ -120,6 +120,14 @@ export const Catalog: React.FC<CatalogProps> = ({
       block: 'start',
     });
   };
+
+  if (!tomatoes || tomatoes.length === 0) {
+    return (
+      <div className="text-center py-20 bg-white rounded-xl border border-dashed border-stone-300">
+        <p className="text-stone-400 text-lg">Загрузка томатов...</p>
+      </div>
+    );
+  }
 
   if (total === 0) {
     return (
@@ -176,7 +184,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                 className="relative h-56 bg-stone-100 cursor-pointer overflow-hidden"
                 onClick={() => onViewDetail(tomato)}
               >
-                <TomatoImage id={tomato.id} alt={tomato.name} />
+                <TomatoImage tomato={tomato} />
               </div>
 
               <div className="p-4 flex flex-col flex-grow">
@@ -195,7 +203,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                   <button
                     onClick={() => onAddToCart(tomato)}
                     disabled={isInCart}
-                    className="w-full py-2 rounded-lg bg-stone-800 text-white"
+                    className="w-full py-2 rounded-lg bg-stone-800 text-white disabled:bg-stone-300 disabled:cursor-not-allowed"
                   >
                     {isInCart ? 'Добавлено' : 'В список'}
                   </button>
@@ -207,17 +215,25 @@ export const Catalog: React.FC<CatalogProps> = ({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 pt-4">
-          <button onClick={() => goPage(page - 1)}>
-            <ChevronLeft />
+        <div className="flex justify-center items-center gap-4 pt-4">
+          <button
+            onClick={() => goPage(page - 1)}
+            disabled={page === 1}
+            className="p-2 rounded-lg border disabled:opacity-50"
+          >
+            <ChevronLeft size={20} />
           </button>
 
-          <span>
+          <span className="text-sm">
             {page} / {totalPages}
           </span>
 
-          <button onClick={() => goPage(page + 1)}>
-            <ChevronRight />
+          <button
+            onClick={() => goPage(page + 1)}
+            disabled={page === totalPages}
+            className="p-2 rounded-lg border disabled:opacity-50"
+          >
+            <ChevronRight size={20} />
           </button>
         </div>
       )}
