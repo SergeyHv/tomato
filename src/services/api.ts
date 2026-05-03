@@ -1,50 +1,34 @@
 import { Tomato, CartItem } from '../types';
-import { TOMATO_DATA } from '../constants';
-import { normalizeCategory } from '../utils/localization';
 
-const getEnv = (key: string): string | undefined => {
-  try {
-    // @ts-ignore
-    const env = import.meta.env;
-    return env ? env[key] : undefined;
-  } catch {
-    return undefined;
-  }
-};
+export interface OrderFormData {
+  name: string;
+  phone: string;
+  address: string;
+  comment?: string;
+}
 
-const getField = (fields: Record<string, any>, ...keys: string[]): any => {
-  for (const key of keys) {
-    if (fields[key] !== undefined) return fields[key];
-  }
-  const fieldKeys = Object.keys(fields);
-  for (const key of keys) {
-    const found = fieldKeys.find(k => k.toLowerCase() === key.toLowerCase());
-    if (found) return fields[found];
-  }
-  return undefined;
-};
+export const submitOrder = async (items: CartItem[], formData: OrderFormData) => {
+  const itemsText = items.map(item => 
+    `${item.tomato.name} — ${item.quantity} шт.`
+  ).join('\n');
 
-/** КАНОНИЗАЦИЯ RIPENING */
-const normalizeRipening = (value: any): string | undefined => {
-  if (!value) return undefined;
+  const message = `
+🛒 *Новый заказ томатов*
 
-  const raw =
-    typeof value === 'string'
-      ? value
-      : typeof value === 'object'
-      ? value.name
-      : '';
+*Клиент:* ${formData.name}
+*Телефон:* ${formData.phone}
+*Адрес:* ${formData.address}
+${formData.comment ? `*Комментарий:* ${formData.comment}` : ''}
 
-  if (!raw) return undefined;
+*Состав заказа:*
+${itemsText}
 
-  const v = raw.trim().toLowerCase();
+*Итого:* ${items.reduce((sum, item) => sum + item.quantity, 0)} шт.
+  `;
 
-  if (v.startsWith('ран')) return 'Ранний';
-  if (v.startsWith('среднеран')) return 'Среднеранний';
-  if (v.startsWith('средн')) return 'Средний';
-  if (v.startsWith('позд')) return 'Поздний';
-
-  return undefined;
+  console.log('Заказ:', { items, formData, message });
+  
+  return { success: true, mock: true };
 };
 
 export const fetchTomatoes = async (): Promise<Tomato[]> => {
@@ -54,21 +38,20 @@ export const fetchTomatoes = async (): Promise<Tomato[]> => {
 
     const data = await res.json();
 
-    return data.map((item: any): Tomato => ({
-      id: String(item.id),
+    return data.map((item: any, index: number): Tomato => ({
+      id: String(item.id || index + 1),
       name: item.name || 'Без имени',
-      originalName: '',
+      originalName: item.originalName || '',
       description: item.description || '',
-      fullDescription: item.description || '',
-      color: normalizeCategory(item.color || 'Разное'),
-      type: normalizeCategory(item.type || 'Классика'),
-      growth: normalizeCategory(item.growth || 'Индет'),
-      height: 'Не указано',
-      weight: item.weight || 'Не указано',
+      fullDescription: item.fullDescription || '',
+      color: item.color || 'Red',
+      type: item.type || 'Classic',
+      growth: item.growth || 'Medium',
+      height: item.height || '?',
+      weight: item.weight || '?',
       imageUrl: item.imageUrl || '',
-      price: 0,
-      origin: item.origin || '',
-      ripening: item.ripening || undefined,
+      ripening: item.ripening || 'средний',
+      environment: item.environment || 'универсал',
     }));
   } catch (err) {
     console.error('JSON fetch error:', err);
