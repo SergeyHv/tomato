@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Catalog } from './components/Catalog';
+import { CartModal } from './components/CartModal';
 import { TOMATO_DATA } from './constants';
 import { Tomato, CartItem } from './types';
 
 function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedTomato, setSelectedTomato] = useState<Tomato | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -23,6 +25,14 @@ function App() {
     });
   };
 
+  const removeFromCart = (id: string) => {
+    setCartItems((prev) => prev.filter((item) => item.tomato.id !== id));
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
   const viewDetail = (tomato: Tomato) => {
     setSelectedTomato(tomato);
     window.history.pushState({}, '', `/?id=${tomato.id}`);
@@ -33,17 +43,48 @@ function App() {
     window.history.pushState({}, '', '/');
   };
 
+  const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Каталог томатов</h1>
+    <div className="min-h-screen bg-stone-50">
+      {/* Хедер с кнопкой корзины */}
+      <header className="bg-white border-b border-stone-200 sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-stone-800">🍅 Каталог томатов</h1>
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="relative bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition flex items-center gap-2"
+          >
+            📋 Список
+            {totalCartItems > 0 && (
+              <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {totalCartItems}
+              </span>
+            )}
+          </button>
+        </div>
+      </header>
 
-      <Catalog
-        tomatoes={TOMATO_DATA}
-        cartItems={cartItems}
-        onAddToCart={addToCart}
-        onViewDetail={viewDetail}
-      />
+      <div className="container mx-auto px-4 py-8">
+        <Catalog
+          tomatoes={TOMATO_DATA}
+          cartItems={cartItems}
+          onAddToCart={addToCart}
+          onViewDetail={viewDetail}
+        />
+      </div>
 
+      {/* Модалка корзины */}
+      {isCartOpen && (
+        <CartModal
+          cart={cartItems}
+          onClose={() => setIsCartOpen(false)}
+          onRemove={removeFromCart}
+          onClear={clearCart}
+        />
+      )}
+
+      {/* Модалка деталей сорта */}
       {selectedTomato && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-3xl w-full" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
