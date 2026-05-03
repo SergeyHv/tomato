@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function App({ initialId }: { initialId?: string | null }) {
+function App({ initialId = null }: { initialId?: string | null }) {
   const [tomatoes, setTomatoes] = useState<any[]>([]);
   const [selectedTomato, setSelectedTomato] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +48,6 @@ function App({ initialId }: { initialId?: string | null }) {
 
         const data = dataRows
           .map((cols) => {
-            // Проверяем, что колонок достаточно (минимум 11 для imageUrl)
             if (cols.length < 11) return null;
             return {
               id: cols[0],
@@ -61,7 +60,7 @@ function App({ initialId }: { initialId?: string | null }) {
               growth: cols[7],
               height: cols[8],
               weight: cols[9],
-              imageUrl: cols[10], // ← вот она, колонка с ссылкой на фото!
+              imageUrl: cols[10],
             };
           })
           .filter(Boolean);
@@ -74,8 +73,11 @@ function App({ initialId }: { initialId?: string | null }) {
           if (found) setSelectedTomato(found);
         }
       })
-      .catch(() => setIsLoading(false));
-  }, []);
+      .catch((err) => {
+        console.error('Ошибка загрузки:', err);
+        setIsLoading(false);
+      });
+  }, [initialId]);
 
   const openTomatoModal = (tomato: any) => {
     setSelectedTomato(tomato);
@@ -94,6 +96,8 @@ function App({ initialId }: { initialId?: string | null }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {isLoading ? (
           <p className="text-center col-span-full">Загрузка...</p>
+        ) : tomatoes.length === 0 ? (
+          <p className="text-center col-span-full">Нет данных о томатах</p>
         ) : (
           tomatoes.map((tomato) => (
             <div
@@ -129,7 +133,7 @@ function App({ initialId }: { initialId?: string | null }) {
                 </div>
 
                 <div className="text-sm text-gray-500">
-                  {tomato.height} см • {tomato.weight} г
+                  {tomato.height || '?'} см • {tomato.weight || '?'} г
                 </div>
               </div>
             </div>
@@ -143,6 +147,7 @@ function App({ initialId }: { initialId?: string | null }) {
             <div className="relative h-80 bg-stone-100">
               <img
                 src={selectedTomato.imageUrl || `/images/${selectedTomato.id}.jpg`}
+                alt={selectedTomato.name}
                 className="w-full h-full object-cover object-left"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
@@ -151,7 +156,7 @@ function App({ initialId }: { initialId?: string | null }) {
 
               <button
                 onClick={closeTomatoModal}
-                className="absolute top-3 right-3 bg-black/50 text-white px-3 py-1 rounded"
+                className="absolute top-3 right-3 bg-black/50 text-white px-3 py-1 rounded hover:bg-black/70"
               >
                 ✕
               </button>
@@ -163,17 +168,17 @@ function App({ initialId }: { initialId?: string | null }) {
               </h2>
 
               <p className="text-gray-700 leading-relaxed">
-                {selectedTomato.description}
+                {selectedTomato.description || 'Описание отсутствует'}
               </p>
 
               <div className="grid grid-cols-2 gap-4 text-sm pt-4 border-t">
                 <div>
                   <div className="text-gray-500">Рост</div>
-                  <div>{selectedTomato.height} см</div>
+                  <div>{selectedTomato.height || '?'} см</div>
                 </div>
                 <div>
                   <div className="text-gray-500">Вес</div>
-                  <div>{selectedTomato.weight} г</div>
+                  <div>{selectedTomato.weight || '?'} г</div>
                 </div>
               </div>
             </div>
