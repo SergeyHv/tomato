@@ -21,13 +21,12 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
     setSubmitError(null);
 
     try {
-      await submitOrder({
-        name: formData.name,
-        phone: formData.phone,
-        address: formData.address,
-        comment: formData.comment,
-        items: cart
-      });
+      await submitOrder(cart, {
+  name: formData.name,
+  phone: formData.phone,
+  address: formData.address,
+  comment: formData.comment
+});
 
       alert("Заказ успешно отправлен! Мы свяжемся с вами.");
       onClear();
