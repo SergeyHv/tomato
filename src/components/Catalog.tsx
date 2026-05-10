@@ -9,6 +9,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { localize } from '../utils/localization';
+import { Filters } from './Filters';  // ← новый человеколюбивый компонент
 
 const DEFAULT_PAGE_SIZE = 24;
 
@@ -74,49 +75,43 @@ export const Catalog: React.FC<CatalogProps> = ({
 
   const topAnchorRef = useRef<HTMLDivElement>(null);
 
-  // Динамические фильтры — собираем уникальные значения из данных
-  const uniqueColors = useMemo(() => {
-    const colors = new Set<string>();
-    tomatoes.forEach(t => t.color && colors.add(t.color));
-    return Array.from(colors).sort();
-  }, [tomatoes]);
-
-  const uniqueTypes = useMemo(() => {
-    const types = new Set<string>();
-    tomatoes.forEach(t => t.type && types.add(t.type));
-    return Array.from(types).sort();
-  }, [tomatoes]);
-
-  const uniqueGrowth = useMemo(() => {
-    const growths = new Set<string>();
-    tomatoes.forEach(t => t.growth && growths.add(t.growth));
-    return Array.from(growths).sort();
-  }, [tomatoes]);
-
-  const uniqueRipening = useMemo(() => {
-    const ripenings = new Set<string>();
-    tomatoes.forEach(t => t.ripening && ripenings.add(t.ripening));
-    return Array.from(ripenings).sort();
-  }, [tomatoes]);
-
+  // Основная фильтрация с поддержкой environment (грядка/теплица)
   const filteredTomatoes = useMemo(() => {
     if (!tomatoes || tomatoes.length === 0) return [];
+
     return tomatoes.filter((tomato) => {
+      // Поиск по имени
       const matchesSearch =
         tomato.name?.toLowerCase().includes(filters.search.toLowerCase()) || false;
 
+      // Цвет
       const matchesColor = !filters.color || tomato.color === filters.color;
+      // Тип плода
       const matchesType = !filters.type || tomato.type === filters.type;
+      // Тип куста (рост)
       const matchesGrowth = !filters.growth || tomato.growth === filters.growth;
+      // Срок созревания
       const matchesRipening =
         !filters.ripening || tomato.ripening === filters.ripening;
+
+      // Логика для "Для грядок" и "Для теплиц"
+      let matchesEnvironment = true;
+      if (filters.environment === 'ground') {
+        // Для грядок исключаем позднеспелые и высокорослые (Индет)
+        matchesEnvironment =
+          tomato.ripening !== 'Позднеспелый' && tomato.growth !== 'Индет';
+      } else if (filters.environment === 'greenhouse') {
+        // Для теплиц никаких ограничений (можно оставить true)
+        matchesEnvironment = true;
+      }
 
       return (
         matchesSearch &&
         matchesColor &&
         matchesType &&
         matchesGrowth &&
-        matchesRipening
+        matchesRipening &&
+        matchesEnvironment
       );
     });
   }, [tomatoes, filters]);
@@ -124,10 +119,12 @@ export const Catalog: React.FC<CatalogProps> = ({
   const total = filteredTomatoes.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
+  // Сброс страницы при изменении фильтров
   useEffect(() => {
     setPage(1);
   }, [filteredTomatoes]);
 
+  // Корректировка страницы, если она стала больше общего количества
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
@@ -157,7 +154,15 @@ export const Catalog: React.FC<CatalogProps> = ({
     });
   };
 
-  const hasActiveFilters = filters.search || filters.color || filters.type || filters.growth || filters.ripening;
+  // Есть ли активные фильтры (для отображения кнопки сброса)
+  const hasActiveFilters = !!(
+    filters.search ||
+    filters.environment ||
+    filters.ripening ||
+    filters.color ||
+    filters.type ||
+    filters.growth
+  );
 
   if (!tomatoes || tomatoes.length === 0) {
     return (
@@ -171,89 +176,38 @@ export const Catalog: React.FC<CatalogProps> = ({
     <div className="space-y-6">
       <div ref={topAnchorRef} className="sr-only" aria-hidden />
 
-      {/* БЛОК ФИЛЬТРОВ */}
-      <div className="bg-white rounded-xl border border-stone-200 p-4">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="font-medium text-stone-700">🔍 Фильтры и поиск</h3>
-          {hasActiveFilters && (
-            <button
-              onClick={resetFilters}
-              className="text-sm text-rose-500 hover:text-rose-700 flex items-center gap-1"
-            >
-              <X size={14} /> Сбросить всё
-            </button>
-          )}
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {/* Поиск */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              placeholder="Поиск по названию..."
-              className="w-full border border-stone-200 rounded-lg pl-9 pr-3 py-2 text-sm"
-            />
-          </div>
+      {/* НОВЫЙ ЧЕЛОВЕКОЛЮБИВЫЙ ФИЛЬТР */}
+      <Filters
+        filters={filters}
+        onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
+        onReset={resetFilters}
+        totalCount={tomatoes.length}
+        filteredCount={total}
+      />
 
-          {/* Цвет — ВРЕМЕННО ЗАКОММЕНТИРОВАН 
-          <select
-            value={filters.color}
-            onChange={(e) => setFilters({ ...filters, color: e.target.value })}
-            className="border border-stone-200 rounded-lg px-3 py-2 text-sm"
+      {/* ПОИСК (строка) – можно оставить или перенести в Filters, но для удобства оставим здесь */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+        <input
+          type="text"
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          placeholder="🔎 Поиск по названию..."
+          className="w-full border border-stone-200 rounded-lg pl-9 pr-3 py-2 text-sm bg-white"
+        />
+        {filters.search && (
+          <button
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+            onClick={() => setFilters({ ...filters, search: '' })}
           >
-            <option value="">🎨 Все цвета ({uniqueColors.length})</option>
-            {uniqueColors.map(color => (
-              <option key={color} value={color}>{localize(color)}</option>
-            ))}
-          </select>
-          */}
+            <X size={14} />
+          </button>
+        )}
+      </div>
 
-          {/* Тип плода */}
-          <select
-            value={filters.type}
-            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-            className="border border-stone-200 rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="">🍅 Все типы ({uniqueTypes.length})</option>
-            {uniqueTypes.map(type => (
-              <option key={type} value={type}>{localize(type)}</option>
-            ))}
-          </select>
-
-          {/* Тип куста */}
-          <select
-            value={filters.growth}
-            onChange={(e) => setFilters({ ...filters, growth: e.target.value })}
-            className="border border-stone-200 rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="">🌱 Все кусты ({uniqueGrowth.length})</option>
-            {uniqueGrowth.map(growth => (
-              <option key={growth} value={growth}>{localize(growth)}</option>
-            ))}
-          </select>
-
-          {/* Срок созревания */}
-          <select
-            value={filters.ripening}
-            onChange={(e) => setFilters({ ...filters, ripening: e.target.value })}
-            className="border border-stone-200 rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="">📅 Все сроки ({uniqueRipening.length})</option>
-            {uniqueRipening.map(ripening => (
-              <option key={ripening} value={ripening}>{localize(ripening)}</option>
-            ))}
-          </select>
-
-          {/* Счётчик */}
-          <div className="flex items-center justify-center bg-stone-50 rounded-lg px-3 py-2 text-sm col-span-1">
-            <span className="text-stone-600">
-              Найдено: <span className="font-bold text-emerald-600">{total}</span> из {tomatoes.length}
-            </span>
-          </div>
-        </div>
+      {/* Счётчик над карточками */}
+      <div className="text-right text-sm text-stone-500">
+        Найдено сортов: <span className="font-bold text-emerald-600">{total}</span>
       </div>
 
       {/* СЕТКА ТОМАТОВ */}
