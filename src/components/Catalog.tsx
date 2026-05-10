@@ -154,16 +154,19 @@ export const Catalog: React.FC<CatalogProps> = ({
       <div ref={topAnchorRef} className="sr-only" aria-hidden />
 
       <div className="flex flex-col lg:flex-row lg:gap-8">
-        {/* Блок фильтров – на десктопе слева, прилипает; на мобилке сверху (тоже sticky) */}
         <aside className="w-full lg:w-80 xl:w-96">
-  <div className="sticky top-4">
-    <Filters ... />
-  </div>
-</aside>
+          <div className="sticky top-4">
+            <Filters
+              filters={filters}
+              onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
+              onReset={resetFilters}
+              totalCount={tomatoes.length}
+              filteredCount={total}
+            />
+          </div>
+        </aside>
 
-        {/* Основное содержимое (поиск, карточки, пагинация) */}
         <main className="flex-1 min-w-0">
-          {/* Поиск */}
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
             <input
@@ -183,7 +186,6 @@ export const Catalog: React.FC<CatalogProps> = ({
             )}
           </div>
 
-          {/* Счётчик */}
           <div className="text-right text-sm text-stone-500 mb-4">
             Найдено сортов: <span className="font-bold text-emerald-600">{total}</span>
           </div>
