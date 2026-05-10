@@ -155,17 +155,11 @@ export const Catalog: React.FC<CatalogProps> = ({
 
       <div className="flex flex-col lg:flex-row lg:gap-8">
         {/* Блок фильтров – на десктопе слева, прилипает; на мобилке сверху (тоже sticky) */}
-        <aside className="lg:w-80 xl:w-96">
-          <div className="lg:sticky lg:top-4">
-            <Filters
-              filters={filters}
-              onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
-              onReset={resetFilters}
-              totalCount={tomatoes.length}
-              filteredCount={total}
-            />
-          </div>
-        </aside>
+        <aside className="w-full lg:w-80 xl:w-96">
+  <div className="sticky top-4">
+    <Filters ... />
+  </div>
+</aside>
 
         {/* Основное содержимое (поиск, карточки, пагинация) */}
         <main className="flex-1 min-w-0">
