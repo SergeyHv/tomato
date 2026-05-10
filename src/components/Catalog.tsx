@@ -7,6 +7,7 @@ import {
   ImageOff,
   ChevronLeft,
   ChevronRight,
+  Menu,           // иконка бургера
 } from 'lucide-react';
 import { localize } from '../utils/localization';
 import { Filters } from './Filters';
@@ -72,6 +73,7 @@ export const Catalog: React.FC<CatalogProps> = ({
     type: '',
     growth: '',
   });
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false); // для мобильных
 
   const topAnchorRef = useRef<HTMLDivElement>(null);
 
@@ -153,9 +155,21 @@ export const Catalog: React.FC<CatalogProps> = ({
     <div className="space-y-6">
       <div ref={topAnchorRef} className="sr-only" aria-hidden />
 
+      {/* Кнопка бургер – только на мобильных */}
+      <div className="lg:hidden flex justify-end mb-2">
+        <button
+          onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+          className="p-2 bg-white rounded-full shadow border border-stone-200"
+          aria-label="Фильтры"
+        >
+          <Menu size={20} />
+        </button>
+      </div>
+
       <div className="flex flex-col lg:flex-row lg:gap-8">
-        <aside className="w-full lg:w-80 xl:w-96">
-          <div className="sticky top-4">
+        {/* Фильтры: на мобилке показываем только если isFiltersOpen = true, на десктопе всегда */}
+        <aside className={`w-full lg:w-80 xl:w-96 ${isFiltersOpen ? 'block' : 'hidden lg:block'}`}>
+          <div className="lg:sticky lg:top-4">
             <Filters
               filters={filters}
               onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
@@ -167,6 +181,7 @@ export const Catalog: React.FC<CatalogProps> = ({
         </aside>
 
         <main className="flex-1 min-w-0">
+          {/* Поиск */}
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
             <input
