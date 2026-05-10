@@ -7,7 +7,7 @@ import {
   ImageOff,
   ChevronLeft,
   ChevronRight,
-  Menu,           // иконка бургера
+  Menu,
 } from 'lucide-react';
 import { localize } from '../utils/localization';
 import { Filters } from './Filters';
@@ -73,7 +73,7 @@ export const Catalog: React.FC<CatalogProps> = ({
     type: '',
     growth: '',
   });
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false); // для мобильных
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   const topAnchorRef = useRef<HTMLDivElement>(null);
 
@@ -155,19 +155,39 @@ export const Catalog: React.FC<CatalogProps> = ({
     <div className="space-y-6">
       <div ref={topAnchorRef} className="sr-only" aria-hidden />
 
-      {/* Кнопка бургер – только на мобильных */}
-      <div className="lg:hidden flex justify-end mb-2">
-        <button
-          onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-          className="p-2 bg-white rounded-full shadow border border-stone-200"
-          aria-label="Фильтры"
-        >
-          <Menu size={20} />
-        </button>
+      {/* 👇 НОВЫЙ STICKY-БЛОК ДЛЯ БУРГЕРА И ПОИСКА (только на мобилках) */}
+      <div className="sticky top-16 z-20 bg-stone-50 pt-2 pb-2 lg:hidden">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            className="p-2 bg-white rounded-full shadow border border-stone-200"
+            aria-label="Фильтры"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+            <input
+              type="text"
+              value={filters.search}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              placeholder="🔎 Поиск по названию..."
+              className="w-full border border-stone-200 rounded-lg pl-9 pr-3 py-2 text-sm bg-white"
+            />
+            {filters.search && (
+              <button
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                onClick={() => setFilters({ ...filters, search: '' })}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row lg:gap-8">
-        {/* Фильтры: на мобилке показываем только если isFiltersOpen = true, на десктопе всегда */}
+        {/* Фильтры – на мобилке открываются по бургеру */}
         <aside className={`w-full lg:w-80 xl:w-96 ${isFiltersOpen ? 'block' : 'hidden lg:block'}`}>
           <div className="lg:sticky lg:top-4">
             <Filters
@@ -181,8 +201,8 @@ export const Catalog: React.FC<CatalogProps> = ({
         </aside>
 
         <main className="flex-1 min-w-0">
-          {/* Поиск */}
-          <div className="relative mb-4">
+          {/* На десктопе поиск будет здесь (уже есть), но на мобилке он уже в sticky-блоке, поэтому дублировать не будем */}
+          <div className="hidden lg:block relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
             <input
               type="text"
