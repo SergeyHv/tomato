@@ -39,48 +39,54 @@ function App() {
   };
 
   useEffect(() => {
-    const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSpEDrdN5bZsJsb6k6JQk4My96Tet3Sac8N4-BGcJ4KHcSrfeqKbLolME0CMb9lvfecYbay7R1bqYY/pub?output=csv';
+  const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSpEDrdN5bZsJsb6k6JQk4My96Tet3Sac8N4-BGcJ4KHcSrfeqKbLolME0CMb9lvfecYbay7R1bqYY/pub?output=csv';
 
-    fetch(url)
-      .then(res => res.text())
-      .then(text => {
-        const rows = parseCSV(text);
-        const dataRows = rows.slice(1);
-        const data: Tomato[] = dataRows
-          .map(cols => {
-            if (cols.length < 11) return null;
-            return {
-              id: cols[0],
-              name: cols[1],
-              originalName: cols[2],
-              description: cols[3],
-              fullDescription: cols[4],
-              color: cols[5],
-              type: cols[6],
-              growth: cols[7],
-              height: cols[8],
-              weight: cols[9],
-              imageUrl: cols[10],
-              price: 0,
-              ripening: cols[11] || '',
-            } as Tomato;
-          })
-          .filter(Boolean);
-        setTomatoes(data);
-        setIsLoading(false);
+  fetch(url)
+    .then(res => res.text())
+    .then(text => {
+      const rows = parseCSV(text);
+      if (rows.length < 2) return;
+      
+      const headers = rows[0]; // первая строка – имена колонок
+      
+      // Функция для поиска индекса колонки по её названию
+      const colIndex = (name: string) => {
+        const idx = headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase());
+        if (idx === -1) console.warn(`Колонка "${name}" не найдена`);
+        return idx;
+      };
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get('id');
-        if (id && data.length) {
-          const found = data.find(t => t.id === id);
-          if (found) setSelectedTomato(found);
-        }
-      })
-      .catch(err => {
-        console.error('Ошибка загрузки CSV:', err);
-        setIsLoading(false);
-      });
-  }, []);
+      const dataRows = rows.slice(1);
+      const data: Tomato[] = dataRows
+        .map(cols => {
+          // Проверяем, что строка не пустая и у нас есть хотя бы id
+          if (!cols[colIndex('id')]) return null;
+          
+          return {
+            id: cols[colIndex('id')],
+            name: cols[colIndex('name')],
+            description: cols[colIndex('description')] || cols[colIndex('fullDescription')] || 'Описание отсутствует',
+            color: cols[colIndex('color')] || 'Red',
+            type: cols[colIndex('type')] || 'Classic',
+            growth: cols[colIndex('growth')] || 'Среднерослый',
+            height: cols[colIndex('height')] || 'Не указано',
+            weight: cols[colIndex('weight')] || 'Не указано',
+            imageUrl: cols[colIndex('imageUrl')] || '',
+            price: 0,
+            origin: 'Любительский сорт',
+            ripening: cols[colIndex('ripening')] || 'Среднеспелый',
+          } as Tomato;
+        })
+        .filter(Boolean);
+
+      setTomatoes(data);
+      setIsLoading(false);
+    })
+    .catch(err => {
+      console.error('Ошибка загрузки CSV:', err);
+      setIsLoading(false);
+    });
+}, []);
 
   const addToCart = (tomato: Tomato) => {
     setCartItems(prev => {
