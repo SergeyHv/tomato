@@ -76,6 +76,7 @@ export const Catalog: React.FC<CatalogProps> = ({
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   const topAnchorRef = useRef<HTMLDivElement>(null);
+  const filtersRef = useRef<HTMLDivElement>(null); // реф на блок фильтров
 
   const filteredTomatoes = useMemo(() => {
     if (!tomatoes || tomatoes.length === 0) return [];
@@ -143,6 +144,18 @@ export const Catalog: React.FC<CatalogProps> = ({
     });
   };
 
+  // Обработчик клика по бургеру
+  const toggleFilters = () => {
+    const newState = !isFiltersOpen;
+    setIsFiltersOpen(newState);
+    if (newState) {
+      // Отложим прокрутку, чтобы DOM успел обновиться
+      setTimeout(() => {
+        filtersRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  };
+
   if (!tomatoes || tomatoes.length === 0) {
     return (
       <div className="text-center py-20 bg-white rounded-xl border border-dashed border-stone-300">
@@ -155,11 +168,11 @@ export const Catalog: React.FC<CatalogProps> = ({
     <div className="space-y-6">
       <div ref={topAnchorRef} className="sr-only" aria-hidden />
 
-      {/* 👇 НОВЫЙ STICKY-БЛОК ДЛЯ БУРГЕРА И ПОИСКА (только на мобилках) */}
+      {/* Sticky-блок для бургера и поиска (только мобильные) */}
       <div className="sticky top-16 z-20 bg-stone-50 pt-2 pb-2 lg:hidden">
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            onClick={toggleFilters}
             className="p-2 bg-white rounded-full shadow border border-stone-200"
             aria-label="Фильтры"
           >
@@ -187,8 +200,11 @@ export const Catalog: React.FC<CatalogProps> = ({
       </div>
 
       <div className="flex flex-col lg:flex-row lg:gap-8">
-        {/* Фильтры – на мобилке открываются по бургеру */}
-        <aside className={`w-full lg:w-80 xl:w-96 ${isFiltersOpen ? 'block' : 'hidden lg:block'}`}>
+        {/* Блок фильтров – на мобилке открывается/закрывается, на десктопе всегда виден */}
+        <aside
+          ref={filtersRef}
+          className={`w-full lg:w-80 xl:w-96 ${isFiltersOpen ? 'block' : 'hidden lg:block'}`}
+        >
           <div className="lg:sticky lg:top-4">
             <Filters
               filters={filters}
@@ -201,7 +217,7 @@ export const Catalog: React.FC<CatalogProps> = ({
         </aside>
 
         <main className="flex-1 min-w-0">
-          {/* На десктопе поиск будет здесь (уже есть), но на мобилке он уже в sticky-блоке, поэтому дублировать не будем */}
+          {/* Десктопный поиск (на мобилке он уже в sticky-блоке, здесь дублировать не нужно) */}
           <div className="hidden lg:block relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
             <input
