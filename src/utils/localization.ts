@@ -7,7 +7,7 @@ export const localize = (value: string): string => {
     'Pink': 'Розовый',
     'Yellow': 'Жёлтый',
     'Orange': 'Оранжевый',
-    'Black': 'Чёрный',
+    'Black': 'Темный',
     'Green': 'Зелёный',
     'BiColor': 'Биколор',
     'White': 'Белый',
