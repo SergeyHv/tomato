@@ -49,7 +49,7 @@ export const Filters: React.FC<FiltersProps> = ({
   // Это упрощает код, а динамичность не нужна – у вас все значения стандартизированы.
   const growthOptions = ['Гном', 'Дет', 'Среднерослый', 'Индет'];
   const ripeningOptions = ['Раннеспелый', 'Среднеранний', 'Среднеспелый', 'Позднеспелый'];
-  const colorOptions = ['Red', 'Pink', 'Yellow', 'Orange', 'Black', 'Green', 'BiColor', 'White'];
+  const colorOptions = ['Red', 'Pink', 'Yellow', 'Orange', 'Black', 'Green', 'BiColor', ];
   const typeOptions = ['Cherry', 'Plum', 'Classic', 'Beefsteak', 'Heart'];
 
   const isFiltered = !!(
