@@ -83,8 +83,10 @@ export const Catalog: React.FC<CatalogProps> = ({
 
     return tomatoes.filter((tomato) => {
       const matchesSearch =
-        tomato.name?.toLowerCase().includes(filters.search.toLowerCase()) || false;
-
+  !filters.search ||
+  tomato.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+  tomato.description?.toLowerCase().includes(filters.search.toLowerCase()) ||
+  (tomato.ocrText && tomato.ocrText.toLowerCase().includes(filters.search.toLowerCase()));
       const matchesColor = !filters.color || tomato.color === filters.color;
       const matchesType = !filters.type || tomato.type === filters.type;
       const matchesGrowth = !filters.growth || tomato.growth === filters.growth;
