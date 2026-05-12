@@ -1,18 +1,17 @@
 export interface Tomato {
   id: string;
-  name: string;
-  originalName: string;
-  description: string;
-  fullDescription: string;
-  color: string;
-  type: string;
-  growth: string;
-  height: string;
-  weight: string;
-  imageUrl: string;
-  price: number;
-  origin?: string;
-  ripening?: string;
+  name: string;                 // Название сорта
+  description: string;          // Описание (краткое или полное)
+  color: string;                // Цвет плода
+  type: string;                 // Тип плода
+  growth: string;               // Тип куста
+  height: string;               // Высота
+  weight: string;               // Вес
+  imageUrl: string;             // Ссылка на фото
+  price: number;                // Цена (пока не используется, но можно оставить)
+  origin?: string;              // Происхождение
+  ripening?: string;            // Срок созревания
+  ocrText?: string;             // Распознанный текст с фото (новое поле)
 }
 
 export interface CartItem {
@@ -37,7 +36,7 @@ export enum TomatoColor {
   Green = 'Green',
   Orange = 'Orange',
   BiColor = 'Bi-color',
-  White = 'White'
+  // White = 'White'   // убрали белый
 }
 
 export enum TomatoType {
@@ -48,7 +47,6 @@ export enum TomatoType {
   Heart = 'Heart'
 }
 
-/** Используется в constants.ts */
 export enum GrowthType {
   Dwarf = 'Гном',
   Determinate = 'Дет',
