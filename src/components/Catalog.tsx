@@ -74,7 +74,6 @@ export const Catalog: React.FC<CatalogProps> = ({
     growth: '',
   });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-
   const topAnchorRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null); // реф на блок фильтров
 
@@ -83,10 +82,10 @@ export const Catalog: React.FC<CatalogProps> = ({
 
     return tomatoes.filter((tomato) => {
       const matchesSearch =
-  !filters.search ||
-  tomato.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
-  tomato.description?.toLowerCase().includes(filters.search.toLowerCase()) ||
-  (tomato.ocrText && tomato.ocrText.toLowerCase().includes(filters.search.toLowerCase()));
+        tomato.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        (tomato.ocrText && tomato.ocrText.toLowerCase().includes(filters.search.toLowerCase())) ||
+        false;
+
       const matchesColor = !filters.color || tomato.color === filters.color;
       const matchesType = !filters.type || tomato.type === filters.type;
       const matchesGrowth = !filters.growth || tomato.growth === filters.growth;
@@ -146,12 +145,11 @@ export const Catalog: React.FC<CatalogProps> = ({
     });
   };
 
-  // Обработчик клика по бургеру
   const toggleFilters = () => {
     const newState = !isFiltersOpen;
     setIsFiltersOpen(newState);
     if (newState) {
-      // Отложим прокрутку, чтобы DOM успел обновиться
+      // Даём время на отрисовку, затем плавно скроллим к фильтрам
       setTimeout(() => {
         filtersRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
@@ -186,7 +184,7 @@ export const Catalog: React.FC<CatalogProps> = ({
               type="text"
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              placeholder="🔎 Поиск по названию..."
+              placeholder="🔎 Поиск по названию, описанию, тексту на фото..."
               className="w-full border border-stone-200 rounded-lg pl-9 pr-3 py-2 text-sm bg-white"
             />
             {filters.search && (
@@ -226,7 +224,7 @@ export const Catalog: React.FC<CatalogProps> = ({
               type="text"
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              placeholder="🔎 Поиск по названию..."
+              placeholder="🔎 Поиск по названию, описанию, тексту на фото..."
               className="w-full border border-stone-200 rounded-lg pl-9 pr-3 py-2 text-sm bg-white"
             />
             {filters.search && (
