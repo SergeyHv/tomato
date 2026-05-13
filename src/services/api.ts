@@ -2,13 +2,13 @@ import { CartItem } from '../types';
 import nodemailer from 'nodemailer';
 
 // === НАСТРОЙКИ ТЕЛЕГРАМ ===
-const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА';
-const TELEGRAM_CHAT_ID = 'ВАШ_CHAT_ID';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 
 // === НАСТРОЙКИ GMAIL ===
-const GMAIL_USER = 'ваш_адрес@gmail.com';
-const GMAIL_APP_PASSWORD = 'ваш_16-значный_пароль_приложения';
-const NOTIFICATION_EMAIL = 'куда_отправлять@example.com'; // может быть тот же адрес
+const GMAIL_USER = process.env.GMAIL_USER || '';
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || '';
+const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || '';
 
 export const submitOrder = async (items: CartItem[], formData: { name: string; phone: string; address: string; comment?: string }) => {
   const itemsText = items.map(item => `${item.tomato.name} — ${item.quantity} шт.`).join('\n');
