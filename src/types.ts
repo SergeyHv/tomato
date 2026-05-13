@@ -27,6 +27,7 @@ export interface FilterState {
   color: string;
   type: string;
   growth: string;
+  isNew?: boolean; // ← добавили
 }
 
 export enum TomatoColor {
