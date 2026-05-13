@@ -3,12 +3,31 @@ import { Catalog } from './components/Catalog';
 import { CartModal } from './components/CartModal';
 import { Tomato, CartItem } from './types';
 
+const CART_STORAGE_KEY = 'tomato-cart';
+
 function App() {
   const [tomatoes, setTomatoes] = useState<Tomato[]>([]);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    // Загружаем корзину из localStorage при первом рендере
+    try {
+      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedTomato, setSelectedTomato] = useState<Tomato | null>(null);
+
+  // Сохраняем корзину в localStorage при каждом её изменении
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    } catch (e) {
+      console.error('Ошибка сохранения корзины:', e);
+    }
+  }, [cartItems]);
 
   const parseCSV = (text: string) => {
     const rows = [];
