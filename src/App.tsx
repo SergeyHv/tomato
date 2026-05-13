@@ -56,11 +56,9 @@ function App() {
   };
 
   useEffect(() => {
-    // ✅ Работающая опубликованная ссылка (она была изначально)
     const PUBLISHED_BASE =
       'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSpEDrdN5bZsJsb6k6JQk4My96Tet3Sac8N4-BGcJ4KHcSrfeqKbLolME0CMb9lvfecYbay7R1bqYY/pub?output=csv';
 
-    // Каталог (первый лист, gid=0)
     const loadCatalog = fetch(PUBLISHED_BASE + '&gid=0')
       .then(res => res.text())
       .then(text => {
@@ -90,12 +88,12 @@ function App() {
               origin: 'Любительский сорт',
               ripening: cols[colIndex('ripening') as number] || 'Среднеспелый',
               ocrText: cols[colIndex('ocr_text') as number] || '',
+              isNew: (cols[colIndex('новинка')] || '').trim().toLowerCase() === 'да',
             } as Tomato;
           })
           .filter(Boolean);
       });
 
-    // Баннер (лист "Новости", gid=1103458362 – взят из вашей консоли)
     const loadNews = fetch(PUBLISHED_BASE + '&gid=1103458362')
       .then(res => res.text())
       .then(rawCsv => {
