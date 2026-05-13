@@ -174,7 +174,6 @@ export const Catalog: React.FC<CatalogProps> = ({
     <div className="space-y-6">
       <div ref={topAnchorRef} className="sr-only" aria-hidden />
 
-      {/* Sticky-блок для бургера и поиска (только мобильные) */}
       <div className="sticky top-16 z-20 bg-stone-50 pt-2 pb-2 lg:hidden">
         <div className="flex items-center gap-2">
           <button
@@ -206,7 +205,6 @@ export const Catalog: React.FC<CatalogProps> = ({
       </div>
 
       <div className="flex flex-col lg:flex-row lg:gap-8">
-        {/* Блок фильтров – на мобилке открывается/закрывается, на десктопе всегда виден */}
         <aside
           ref={filtersRef}
           className={`w-full lg:w-80 xl:w-96 ${isFiltersOpen ? 'block' : 'hidden lg:block'}`}
@@ -223,7 +221,6 @@ export const Catalog: React.FC<CatalogProps> = ({
         </aside>
 
         <main className="flex-1 min-w-0">
-          {/* Десктопный поиск (на мобилке он уже в sticky-блоке, здесь дублировать не нужно) */}
           <div className="hidden lg:block relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
             <input
@@ -270,6 +267,12 @@ export const Catalog: React.FC<CatalogProps> = ({
                         onClick={() => onViewDetail(tomato)}
                       >
                         <TomatoImage tomato={tomato} />
+                        {/* Бейдж "Новинка" на изображении */}
+                        {tomato.isNew && (
+                          <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-md shadow">
+                            Новинка 2026
+                          </span>
+                        )}
                       </div>
 
                       <div className="p-4 flex flex-col flex-grow">
@@ -280,9 +283,12 @@ export const Catalog: React.FC<CatalogProps> = ({
                           {tomato.name}
                         </h3>
 
-                        {/* <div className="text-xs text-stone-500 mt-2">
-  {localize(tomato.color)} • {localize(tomato.type)}
-</div> */}
+                        {/* Повтор бейджа под названием (опционально) */}
+                        {tomato.isNew && (
+                          <span className="inline-block bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-0.5 rounded mt-1">
+                            🌱 Новинка 2026
+                          </span>
+                        )}
 
                         <div className="mt-auto pt-4">
                           <button
