@@ -243,7 +243,7 @@ export const Catalog: React.FC<CatalogProps> = ({
             )}
           </div>
 
-          <div className="text-right text-sm text-stone-500 mb-4">
+          <div className="text-left text-sm text-stone-500 mb-4">
             Найдено сортов: <span className="font-bold text-emerald-600">{total}</span>
           </div>
 
