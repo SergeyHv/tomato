@@ -274,9 +274,9 @@ export const Catalog: React.FC<CatalogProps> = ({
                           {tomato.name}
                         </h3>
 
-                        <div className="text-xs text-stone-500 mt-2">
-                          {localize(tomato.color)} • {localize(tomato.type)}
-                        </div>
+                        {/* <div className="text-xs text-stone-500 mt-2">
+  {localize(tomato.color)} • {localize(tomato.type)}
+</div> */}
 
                         <div className="mt-auto pt-4">
                           <button
