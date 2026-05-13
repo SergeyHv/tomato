@@ -44,13 +44,12 @@ function App() {
       .then(res => res.text())
       .then(text => {
         const rows = parseCSV(text);
-        if (rows.length < 2) return;
+        const dataRows = rows.slice(1);
         const headers = rows[0];
         const colIndex = (name: string) => {
           const idx = headers.findIndex((h: string) => h.trim().toLowerCase() === name.toLowerCase());
           return idx !== -1 ? idx : null;
         };
-        const dataRows = rows.slice(1);
         const data: Tomato[] = dataRows
           .map(cols => {
             const id = cols[colIndex('id') as number];
@@ -76,7 +75,7 @@ function App() {
         setIsLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.error('Ошибка загрузки CSV:', err);
         setIsLoading(false);
       });
   }, []);
@@ -108,6 +107,7 @@ function App() {
           </button>
         </div>
       </header>
+
       <div className="container mx-auto px-4 py-8">
         <Catalog
           tomatoes={tomatoes}
@@ -116,41 +116,54 @@ function App() {
           onViewDetail={viewDetail}
         />
       </div>
+
       {isCartOpen && (
         <CartModal cart={cartItems} onClose={() => setIsCartOpen(false)} onRemove={removeFromCart} onClear={clearCart} />
       )}
-     {selectedTomato && (
-  <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-    <div className="bg-white rounded-xl max-w-3xl w-full" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Блок картинки – увеличенная высота, адаптив */}
-      <div className="relative bg-stone-100 flex-shrink-0" style={{ height: 'clamp(300px, 60vh, 600px)' }}>
-        <img
-          src={selectedTomato.imageUrl || `/images/${selectedTomato.id}.jpg`}
-          alt={selectedTomato.name}
-          className="w-full h-full object-contain bg-stone-100"
-          onError={e => (e.currentTarget.style.display = 'none')}
-        />
-        <button
-          onClick={closeDetail}
-          className="absolute top-3 right-3 bg-black/50 text-white px-3 py-1 rounded hover:bg-black/70 z-10"
-        >
-          ✕
-        </button>
-      </div>
 
-      <div className="p-6 overflow-y-auto flex-1">
-        <h2 className="text-2xl font-bold">{selectedTomato.name}</h2>
-        <p className="mt-2 text-gray-700 leading-relaxed">
-          {selectedTomato.fullDescription || selectedTomato.description || 'Описание отсутствует'}
-        </p>
-        <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-          <div className="text-gray-500">Рост:</div>
-          <div>{selectedTomato.height || 'Не указано'}</div>
-          <div className="text-gray-500">Вес:</div>
-          <div>{selectedTomato.weight || 'Не указано'}</div>
+      {selectedTomato && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-3xl w-full" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <div className="relative bg-stone-100 flex-shrink-0" style={{ height: 'clamp(300px, 60vh, 600px)' }}>
+              <img
+                src={selectedTomato.imageUrl || `/images/${selectedTomato.id}.jpg`}
+                alt={selectedTomato.name}
+                className="w-full h-full object-contain bg-stone-100"
+                onError={e => (e.currentTarget.style.display = 'none')}
+              />
+              <button
+                onClick={closeDetail}
+                className="absolute top-3 right-3 bg-black/50 text-white px-3 py-1 rounded hover:bg-black/70"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              <h2 className="text-2xl font-bold">{selectedTomato.name}</h2>
+              <p className="mt-2 text-gray-700 leading-relaxed">
+                {selectedTomato.fullDescription || selectedTomato.description || 'Описание отсутствует'}
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-500">Рост:</div>
+                <div>{selectedTomato.height || 'Не указано'}</div>
+                <div className="text-gray-500">Вес:</div>
+                <div>{selectedTomato.weight || 'Не указано'}</div>
+              </div>
+              <div className="mt-6">
+                <button
+                  onClick={() => addToCart(selectedTomato)}
+                  disabled={cartItems.some(i => i.tomato.id === selectedTomato.id)}
+                  className="w-full py-2 rounded-lg bg-emerald-600 text-white disabled:bg-stone-300"
+                >
+                  {cartItems.some(i => i.tomato.id === selectedTomato.id) ? '✅ Уже в списке' : '➕ В список заказа'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
-  </div>
-)}
+  );
+}
+
 export default App;
