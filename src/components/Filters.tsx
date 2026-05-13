@@ -59,10 +59,10 @@ export const Filters: React.FC<FiltersProps> = ({
     },
     {
       label: 'Черри',
-      active: filters.type === 'Черри',
+      active: filters.type === 'Cherry', // теперь значение из таблицы
       onClick: () =>
         onFilterChange({
-          type: filters.type === 'Черри' ? '' : 'Черри',
+          type: filters.type === 'Cherry' ? '' : 'Cherry',
         }),
     },
   ];
@@ -108,13 +108,14 @@ export const Filters: React.FC<FiltersProps> = ({
           className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
         >
           <option value="">Все</option>
-          <option value="Красный">Красный</option>
-          <option value="Розовый">Розовый</option>
-          <option value="Жёлтый">Жёлтый</option>
-          <option value="Оранжевый">Оранжевый</option>
-          <option value="Темный">Темный</option>
-          <option value="Зелёный">Зелёный</option>
-          <option value="Биколор">Биколор</option>
+          <option value="Red">Красный</option>
+          <option value="Pink">Розовый</option>
+          <option value="Yellow">Жёлтый</option>
+          <option value="Orange">Оранжевый</option>
+          <option value="Black">Темный</option>
+          <option value="Green">Зелёный</option>
+          <option value="BiColor">Биколор</option>
+          <option value="Классический">Классический</option>
         </select>
       </div>
 
@@ -127,12 +128,12 @@ export const Filters: React.FC<FiltersProps> = ({
           className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
         >
           <option value="">Все</option>
-          <option value="Черри">Черри</option>
-          <option value="Классический">Классический</option>
-          <option value="Биф">Биф</option>
-          <option value="Сливка">Сливка</option>
-          <option value="Перцевидный">Перцевидный</option>
-          <option value="Ребристый">Ребристый</option>
+          <option value="Cherry">Черри</option>
+          <option value="Classic">Классический</option>
+          <option value="Beefsteak">Биф</option>
+          <option value="Plum">Сливка</option>
+          <option value="Heart">Сердце</option>
+          <option value="Классический">Классический (рус.)</option>
         </select>
       </div>
 
