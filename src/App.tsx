@@ -18,11 +18,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedTomato, setSelectedTomato] = useState<Tomato | null>(null);
-
-  // Состояние для информационного баннера
   const [infoBanner, setInfoBanner] = useState<{ title: string; text: string } | null>(null);
 
-  // Сохраняем корзину в localStorage
   useEffect(() => {
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
@@ -59,11 +56,12 @@ function App() {
   };
 
   useEffect(() => {
-    const sheetBase =
-      'https://docs.google.com/spreadsheets/d/1uEoYK7-eqMNJy_vj6fF38Mpf4dB4fkg5obYTUUheb5Q/pub?output=csv';
+    // ✅ Работающая опубликованная ссылка (она была изначально)
+    const PUBLISHED_BASE =
+      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSpEDrdN5bZsJsb6k6JQk4My96Tet3Sac8N4-BGcJ4KHcSrfeqKbLolME0CMb9lvfecYbay7R1bqYY/pub?output=csv';
 
-    // Загрузка каталога (Лист1)
-    const loadCatalog = fetch(sheetBase + '&gid=0')
+    // Каталог (первый лист, gid=0)
+    const loadCatalog = fetch(PUBLISHED_BASE + '&gid=0')
       .then(res => res.text())
       .then(text => {
         const rows = parseCSV(text);
@@ -97,9 +95,8 @@ function App() {
           .filter(Boolean);
       });
 
-    // Загрузка баннера (лист "Новости") – используем gid листа
-    const NEWS_GID = '1103458362'; // !!! ЗАМЕНИТЕ на реальный gid вашего листа "Новости"
-    const loadNews = fetch(sheetBase + '&gid=' + NEWS_GID)
+    // Баннер (лист "Новости", gid=1103458362 – взят из вашей консоли)
+    const loadNews = fetch(PUBLISHED_BASE + '&gid=1103458362')
       .then(res => res.text())
       .then(rawCsv => {
         const rows = parseCSV(rawCsv);
@@ -167,7 +164,6 @@ function App() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Информационный баннер */}
         {infoBanner && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
             <h2 className="text-lg font-bold text-amber-800 flex items-center gap-2">
