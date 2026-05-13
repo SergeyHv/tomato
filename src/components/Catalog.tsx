@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  ChevronsRight,
 } from 'lucide-react';
 import { localize } from '../utils/localization';
 import { Filters } from './Filters';
@@ -75,6 +76,7 @@ export const Catalog: React.FC<CatalogProps> = ({
     isNew: undefined,
   });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [jumpInput, setJumpInput] = useState('');
   const topAnchorRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +84,6 @@ export const Catalog: React.FC<CatalogProps> = ({
     if (!tomatoes || tomatoes.length === 0) return [];
 
     return tomatoes.filter((tomato) => {
-      // Базовая доступность: показываем только отмеченные в колонке C
       if (tomato.isAvailable === false) return false;
 
       const matchesSearch =
@@ -109,7 +110,6 @@ export const Catalog: React.FC<CatalogProps> = ({
           tomato.ripening !== 'Позднеспелый' && tomato.growth !== 'Индет';
       }
 
-      // Фильтр "Новинки"
       const matchesNew = filters.isNew ? tomato.isNew === true : true;
 
       return (
@@ -143,10 +143,17 @@ export const Catalog: React.FC<CatalogProps> = ({
   const goPage = (next: number) => {
     const clamped = Math.min(totalPages, Math.max(1, next));
     setPage(clamped);
+    setJumpInput('');
     topAnchorRef.current?.scrollIntoView({
       behavior: 'smooth',
       block: 'start',
     });
+  };
+
+  const handleJumpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const target = parseInt(jumpInput, 10);
+    if (!isNaN(target)) goPage(target);
   };
 
   const resetFilters = () => {
@@ -319,9 +326,9 @@ export const Catalog: React.FC<CatalogProps> = ({
                   >
                     <ChevronLeft size={20} />
                   </button>
-                  <span className="text-sm">
-                    {page} / {totalPages}
-                  </span>
+
+                  <span className="text-sm">{page} / {totalPages}</span>
+
                   <button
                     onClick={() => goPage(page + 1)}
                     disabled={page === totalPages}
@@ -329,6 +336,25 @@ export const Catalog: React.FC<CatalogProps> = ({
                   >
                     <ChevronRight size={20} />
                   </button>
+
+                  <form onSubmit={handleJumpSubmit} className="flex items-center gap-1 ml-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={totalPages}
+                      value={jumpInput}
+                      onChange={(e) => setJumpInput(e.target.value)}
+                      placeholder="№"
+                      className="w-14 text-center border border-stone-200 rounded-lg px-1 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="p-2 rounded-lg border hover:bg-stone-50"
+                      title="Перейти на страницу"
+                    >
+                      <ChevronsRight size={16} />
+                    </button>
+                  </form>
                 </div>
               )}
             </>
