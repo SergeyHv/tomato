@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Trash2, Package, Send, Loader2 } from 'lucide-react';
+import { X, Trash2, Package, Send, Loader2, CheckCircle } from 'lucide-react';
 import { CartItem } from '../types';
 import { submitOrder } from '../services/api';
 
@@ -14,6 +14,7 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
   const [formData, setFormData] = useState({ name: '', phone: '', address: '', comment: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,9 +28,8 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
         address: formData.address,
         comment: formData.comment
       });
-      alert("✅ Заказ успешно отправлен! Мы свяжемся с вами.");
+      setIsSuccess(true);
       onClear();
-      onClose();
     } catch (error) {
       console.error(error);
       setSubmitError("❌ Не удалось отправить заказ. Попробуйте позже или напишите нам напрямую.");
@@ -37,6 +37,26 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
       setIsSubmitting(false);
     }
   };
+
+  // Экран успеха
+  if (isSuccess) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+          <CheckCircle className="mx-auto text-emerald-500 mb-4" size={48} />
+          <h2 className="text-xl font-bold text-stone-800 mb-2">Заказ отправлен!</h2>
+          <p className="text-stone-600 mb-6">Мы свяжемся с вами в ближайшее время.</p>
+          <button
+            onClick={onClose}
+            className="w-full bg-emerald-600 text-white py-2.5 rounded-lg font-medium hover:bg-emerald-700 transition"
+          >
+            Закрыть
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
