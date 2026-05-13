@@ -8,7 +8,6 @@ const CART_STORAGE_KEY = 'tomato-cart';
 function App() {
   const [tomatoes, setTomatoes] = useState<Tomato[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    // Загружаем корзину из localStorage при первом рендере
     try {
       const saved = localStorage.getItem(CART_STORAGE_KEY);
       return saved ? JSON.parse(saved) : [];
@@ -20,7 +19,10 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedTomato, setSelectedTomato] = useState<Tomato | null>(null);
 
-  // Сохраняем корзину в localStorage при каждом её изменении
+  // Новое состояние для информационного баннера
+  const [infoBanner, setInfoBanner] = useState<{ title: string; text: string } | null>(null);
+
+  // Сохранение корзины в localStorage
   useEffect(() => {
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
@@ -57,19 +59,21 @@ function App() {
   };
 
   useEffect(() => {
-    const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSpEDrdN5bZsJsb6k6JQk4My96Tet3Sac8N4-BGcJ4KHcSrfeqKbLolME0CMb9lvfecYbay7R1bqYY/pub?output=csv';
+    const sheetBase = 'https://docs.google.com/spreadsheets/d/1uEoYK7-eqMNJy_vj6fF38Mpf4dB4fkg5obYTUUheb5Q/pub?output=csv';
 
-    fetch(url)
+    // Загружаем каталог (Лист1) и баннер (Новости) параллельно
+    const loadCatalog = fetch(sheetBase + '&gid=0') // Лист1 или первый лист
       .then(res => res.text())
       .then(text => {
         const rows = parseCSV(text);
-        const dataRows = rows.slice(1);
+        if (rows.length < 2) return [];
         const headers = rows[0];
+        const dataRows = rows.slice(1);
         const colIndex = (name: string) => {
           const idx = headers.findIndex((h: string) => h.trim().toLowerCase() === name.toLowerCase());
           return idx !== -1 ? idx : null;
         };
-        const data: Tomato[] = dataRows
+        return dataRows
           .map(cols => {
             const id = cols[colIndex('id') as number];
             if (!id) return null;
@@ -90,11 +94,33 @@ function App() {
             } as Tomato;
           })
           .filter(Boolean);
-        setTomatoes(data);
+      });
+
+    const loadNews = fetch(sheetBase + '&gid=1953196992') // ID листа "Новости" (объясню ниже)
+      .then(res => res.text())
+      .then(text => {
+        const rows = parseCSV(text);
+        if (rows.length < 2) return null;
+        const headers = rows[0];
+        const titleIdx = headers.findIndex((h: string) => h.trim().toLowerCase() === 'заголовок');
+        const textIdx = headers.findIndex((h: string) => h.trim().toLowerCase() === 'текст');
+        if (titleIdx === -1 || textIdx === -1) return null;
+        const firstRow = rows[1];
+        const title = firstRow[titleIdx]?.trim();
+        const text = firstRow[textIdx]?.trim();
+        if (!title && !text) return null;
+        return { title: title || '', text: text || '' };
+      })
+      .catch(() => null); // если лист не найден, не падаем
+
+    Promise.all([loadCatalog, loadNews])
+      .then(([catalogData, newsData]) => {
+        setTomatoes(catalogData);
+        setInfoBanner(newsData);
         setIsLoading(false);
       })
       .catch(err => {
-        console.error('Ошибка загрузки CSV:', err);
+        console.error('Ошибка загрузки данных:', err);
         setIsLoading(false);
       });
   }, []);
@@ -128,6 +154,16 @@ function App() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Информационный баннер (если есть данные) */}
+        {infoBanner && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
+            <h2 className="text-lg font-bold text-amber-800 flex items-center gap-2">
+              <span>📢</span> {infoBanner.title}
+            </h2>
+            <p className="mt-2 text-amber-900 whitespace-pre-line">{infoBanner.text}</p>
+          </div>
+        )}
+
         <Catalog
           tomatoes={tomatoes}
           cartItems={cartItems}
@@ -158,26 +194,26 @@ function App() {
               </button>
             </div>
             <div className="p-6 overflow-y-auto flex-1">
-  <h2 className="text-2xl font-bold">{selectedTomato.name}</h2>
- <p className="mt-2 text-gray-700 leading-relaxed whitespace-pre-line">
-  {selectedTomato.description || 'Описание отсутствует'}
-</p>
-  <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-    <div className="text-gray-500">Рост:</div>
-    <div>{selectedTomato.height || 'Не указано'}</div>
-    <div className="text-gray-500">Вес:</div>
-    <div>{selectedTomato.weight || 'Не указано'}</div>
-  </div>
-  <div className="mt-6">
-    <button
-      onClick={() => addToCart(selectedTomato)}
-      disabled={cartItems.some(i => i.tomato.id === selectedTomato.id)}
-      className="w-full py-2 rounded-lg bg-emerald-600 text-white disabled:bg-stone-300"
-    >
-      {cartItems.some(i => i.tomato.id === selectedTomato.id) ? '✅ Уже в списке' : '➕ В список заказа'}
-    </button>
-  </div>
-</div>
+              <h2 className="text-2xl font-bold">{selectedTomato.name}</h2>
+              <p className="mt-2 text-gray-700 leading-relaxed whitespace-pre-line">
+                {selectedTomato.description || 'Описание отсутствует'}
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-500">Рост:</div>
+                <div>{selectedTomato.height || 'Не указано'}</div>
+                <div className="text-gray-500">Вес:</div>
+                <div>{selectedTomato.weight || 'Не указано'}</div>
+              </div>
+              <div className="mt-6">
+                <button
+                  onClick={() => addToCart(selectedTomato)}
+                  disabled={cartItems.some(i => i.tomato.id === selectedTomato.id)}
+                  className="w-full py-2 rounded-lg bg-emerald-600 text-white disabled:bg-stone-300"
+                >
+                  {cartItems.some(i => i.tomato.id === selectedTomato.id) ? '✅ Уже в списке' : '➕ В список заказа'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
