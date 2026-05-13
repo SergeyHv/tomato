@@ -19,10 +19,10 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedTomato, setSelectedTomato] = useState<Tomato | null>(null);
 
-  // Новое состояние для информационного баннера
+  // Состояние для информационного баннера
   const [infoBanner, setInfoBanner] = useState<{ title: string; text: string } | null>(null);
 
-  // Сохранение корзины в localStorage
+  // Сохраняем корзину в localStorage
   useEffect(() => {
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
@@ -59,10 +59,11 @@ function App() {
   };
 
   useEffect(() => {
-    const sheetBase = 'https://docs.google.com/spreadsheets/d/1uEoYK7-eqMNJy_vj6fF38Mpf4dB4fkg5obYTUUheb5Q/pub?output=csv';
+    const sheetBase =
+      'https://docs.google.com/spreadsheets/d/1uEoYK7-eqMNJy_vj6fF38Mpf4dB4fkg5obYTUUheb5Q/pub?output=csv';
 
-    // Загружаем каталог (Лист1) и баннер (Новости) параллельно
-    const loadCatalog = fetch(sheetBase + '&gid=0') // Лист1 или первый лист
+    // Загрузка каталога (Лист1)
+    const loadCatalog = fetch(sheetBase + '&gid=0')
       .then(res => res.text())
       .then(text => {
         const rows = parseCSV(text);
@@ -96,10 +97,12 @@ function App() {
           .filter(Boolean);
       });
 
-    const loadNews = fetch(sheetBase + '&gid=1103458362') // ID листа "Новости" (объясню ниже)
+    // Загрузка баннера (лист "Новости") – используем gid листа
+    const NEWS_GID = '1103458362'; // !!! ЗАМЕНИТЕ на реальный gid вашего листа "Новости"
+    const loadNews = fetch(sheetBase + '&gid=' + NEWS_GID)
       .then(res => res.text())
-      .then(text => {
-        const rows = parseCSV(text);
+      .then(rawCsv => {
+        const rows = parseCSV(rawCsv);
         if (rows.length < 2) return null;
         const headers = rows[0];
         const titleIdx = headers.findIndex((h: string) => h.trim().toLowerCase() === 'заголовок');
@@ -107,11 +110,11 @@ function App() {
         if (titleIdx === -1 || textIdx === -1) return null;
         const firstRow = rows[1];
         const title = firstRow[titleIdx]?.trim();
-        const text = firstRow[textIdx]?.trim();
-        if (!title && !text) return null;
-        return { title: title || '', text: text || '' };
+        const newsText = firstRow[textIdx]?.trim();
+        if (!title && !newsText) return null;
+        return { title: title || '', text: newsText || '' };
       })
-      .catch(() => null); // если лист не найден, не падаем
+      .catch(() => null);
 
     Promise.all([loadCatalog, loadNews])
       .then(([catalogData, newsData]) => {
@@ -126,7 +129,9 @@ function App() {
   }, []);
 
   const addToCart = (tomato: Tomato) => {
-    setCartItems(prev => (prev.some(i => i.tomato.id === tomato.id) ? prev : [...prev, { tomato, quantity: 1 }]));
+    setCartItems(prev =>
+      prev.some(i => i.tomato.id === tomato.id) ? prev : [...prev, { tomato, quantity: 1 }]
+    );
   };
   const removeFromCart = (id: string) => setCartItems(prev => prev.filter(i => i.tomato.id !== id));
   const clearCart = () => setCartItems([]);
@@ -140,21 +145,29 @@ function App() {
   };
   const totalCartItems = cartItems.reduce((s, i) => s + i.quantity, 0);
 
-  if (isLoading) return <div className="container mx-auto px-4 py-8"><p className="text-center">Загрузка 1300+ сортов...</p></div>;
+  if (isLoading)
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p className="text-center">Загрузка 1300+ сортов...</p>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-stone-50">
       <header className="bg-white border-b sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">🍅 Каталог томатов</h1>
-          <button onClick={() => setIsCartOpen(true)} className="relative bg-emerald-600 text-white px-4 py-2 rounded-lg">
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="relative bg-emerald-600 text-white px-4 py-2 rounded-lg"
+          >
             Список ({totalCartItems})
           </button>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Информационный баннер (если есть данные) */}
+        {/* Информационный баннер */}
         {infoBanner && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
             <h2 className="text-lg font-bold text-amber-800 flex items-center gap-2">
@@ -173,13 +186,24 @@ function App() {
       </div>
 
       {isCartOpen && (
-        <CartModal cart={cartItems} onClose={() => setIsCartOpen(false)} onRemove={removeFromCart} onClear={clearCart} />
+        <CartModal
+          cart={cartItems}
+          onClose={() => setIsCartOpen(false)}
+          onRemove={removeFromCart}
+          onClear={clearCart}
+        />
       )}
 
       {selectedTomato && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-3xl w-full" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="relative bg-stone-100 flex-shrink-0" style={{ height: 'clamp(300px, 60vh, 600px)' }}>
+          <div
+            className="bg-white rounded-xl max-w-3xl w-full"
+            style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
+          >
+            <div
+              className="relative bg-stone-100 flex-shrink-0"
+              style={{ height: 'clamp(300px, 60vh, 600px)' }}
+            >
               <img
                 src={selectedTomato.imageUrl || `/images/${selectedTomato.id}.jpg`}
                 alt={selectedTomato.name}
@@ -210,7 +234,9 @@ function App() {
                   disabled={cartItems.some(i => i.tomato.id === selectedTomato.id)}
                   className="w-full py-2 rounded-lg bg-emerald-600 text-white disabled:bg-stone-300"
                 >
-                  {cartItems.some(i => i.tomato.id === selectedTomato.id) ? '✅ Уже в списке' : '➕ В список заказа'}
+                  {cartItems.some(i => i.tomato.id === selectedTomato.id)
+                    ? '✅ Уже в списке'
+                    : '➕ В список заказа'}
                 </button>
               </div>
             </div>
