@@ -5,7 +5,7 @@ import { Tomato, CartItem } from './types';
 
 const CART_STORAGE_KEY = 'tomato-cart';
 
-// Словарь перевода английских цветов в русские
+// Словарь английских цветов → русские
 const COLOR_MAP: Record<string, string> = {
   'Red': 'Красный',
   'Pink': 'Розовый',
@@ -22,13 +22,42 @@ const COLOR_MAP: Record<string, string> = {
   'Brown': 'Коричневый',
 };
 
+// Унификация русских написаний (убираем вариации)
+const RUS_NORMALIZE: Record<string, string> = {
+  'темный': 'Тёмный',
+  'темная': 'Тёмный',
+  'жёлтый': 'Жёлтый',
+  'желтый': 'Жёлтый',
+  'зелёный': 'Зелёный',
+  'зеленый': 'Зелёный',
+  'черный': 'Тёмный',
+  'чёрный': 'Тёмный',
+  'белый': 'Белый',
+  'розовый': 'Розовый',
+  'красный': 'Красный',
+  'оранжевый': 'Оранжевый',
+  'биколор': 'Биколор',
+  'bicolor': 'Биколор',
+};
+
 function normalizeColor(raw: string | undefined): string {
   if (!raw) return 'Красный';
   const trimmed = raw.trim();
-  // Если в словаре есть перевод – возвращаем его
+  const lower = trimmed.toLowerCase();
+
+  // 1. Если есть точный английский ключ
   if (COLOR_MAP[trimmed]) return COLOR_MAP[trimmed];
-  // Если строка уже на русском (например, "Красный") – вернём как есть
-  return trimmed || 'Красный';
+
+  // 2. Если русский вариант с опечатками → нормализуем
+  if (RUS_NORMALIZE[lower]) return RUS_NORMALIZE[lower];
+
+  // 3. Если первая буква заглавная, а остальные строчные – возвращаем как есть (например, "Синий")
+  if (trimmed[0] === trimmed[0].toUpperCase() && trimmed.slice(1) === trimmed.slice(1).toLowerCase()) {
+    return trimmed;
+  }
+
+  // 4. Иначе делаем первую букву заглавной, остальные строчными
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
 }
 
 function App() {
@@ -100,9 +129,7 @@ function App() {
           .map(cols => {
             const id = cols[colIndex('id') as number];
             if (!id) return null;
-            // Колонка C (индекс 2) для доступности
             const availableValue = cols[2]?.trim();
-            // Цвет из соответствующей колонки, нормализуем
             const rawColor = cols[colIndex('color') as number];
             return {
               id,
