@@ -96,7 +96,7 @@ function App() {
           .filter(Boolean);
       });
 
-    const loadNews = fetch(sheetBase + '&gid=1953196992') // ID листа "Новости" (объясню ниже)
+    const loadNews = fetch(sheetBase + '&gid=1103458362') // ID листа "Новости" (объясню ниже)
       .then(res => res.text())
       .then(text => {
         const rows = parseCSV(text);
