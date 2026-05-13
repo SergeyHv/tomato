@@ -117,7 +117,6 @@ export const Filters: React.FC<FiltersProps> = ({
         >
           <option value="">Все</option>
           <option value="Красный">Красный</option>
-          <option value="Розовый">Розовый</option>
           <option value="Жёлтый">Жёлтый</option>
           <option value="Оранжевый">Оранжевый</option>
           <option value="Тёмный">Тёмный</option>
