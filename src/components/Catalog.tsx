@@ -82,6 +82,9 @@ export const Catalog: React.FC<CatalogProps> = ({
     if (!tomatoes || tomatoes.length === 0) return [];
 
     return tomatoes.filter((tomato) => {
+      // Базовая доступность: показываем только отмеченные в колонке C
+      if (tomato.isAvailable === false) return false;
+
       const matchesSearch =
         tomato.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
         (tomato.ocrText && tomato.ocrText.toLowerCase().includes(filters.search.toLowerCase())) ||
@@ -107,10 +110,7 @@ export const Catalog: React.FC<CatalogProps> = ({
       }
 
       // Фильтр "Новинки"
-      const matchesNew = filters.isNew === undefined || filters.isNew === false || tomato.isNew === true;
-      // Если isNew true, показываем только те, у которых isNew = true
-      // Если isNew false или undefined, показываем все
-      const finalMatchesNew = filters.isNew ? tomato.isNew === true : true;
+      const matchesNew = filters.isNew ? tomato.isNew === true : true;
 
       return (
         matchesSearch &&
@@ -119,7 +119,7 @@ export const Catalog: React.FC<CatalogProps> = ({
         matchesGrowth &&
         matchesRipening &&
         matchesEnvironment &&
-        finalMatchesNew
+        matchesNew
       );
     });
   }, [tomatoes, filters]);
