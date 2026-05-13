@@ -11,12 +11,11 @@ const GMAIL_USER = process.env.GMAIL_USER || '';
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || '';
 const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || '';
 
-// Для Google Sheets
-const GOOGLE_SHEETS_CLIENT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
-const GOOGLE_SHEETS_PRIVATE_KEY = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+// Для Google Sheets – имена констант совпадают с тем, как мы их используем ниже
+const GOOGLE_SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
+const GOOGLE_PRIVATE_KEY = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || '';
-// !!! НОВОЕ: Имя листа для журнала заказов
-const GOOGLE_SHEET_NAME = process.env.GOOGLE_SHEET_NAME || 'Заказы'; // Название листа, куда пишем заказы
+const GOOGLE_SHEET_NAME = process.env.GOOGLE_SHEET_NAME || 'Заказы';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -45,7 +44,7 @@ ${itemsText}
 📊 Итого: ${totalItems} шт.
     `.trim();
 
-    // --- 1. Telegram ---
+    // --- Telegram ---
     const sendToTelegram = async (chatId: string) => {
       if (!TELEGRAM_BOT_TOKEN || !chatId) return;
       await fetch(
@@ -62,21 +61,14 @@ ${itemsText}
       );
     };
 
-    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-      await sendToTelegram(TELEGRAM_CHAT_ID);
-    }
-    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID_2) {
-      await sendToTelegram(TELEGRAM_CHAT_ID_2);
-    }
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) await sendToTelegram(TELEGRAM_CHAT_ID);
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID_2) await sendToTelegram(TELEGRAM_CHAT_ID_2);
 
-    // --- 2. Email ---
+    // --- Email ---
     if (GMAIL_USER && GMAIL_APP_PASSWORD && NOTIFICATION_EMAIL) {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
-        auth: {
-          user: GMAIL_USER,
-          pass: GMAIL_APP_PASSWORD,
-        },
+        auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
       });
       await transporter.sendMail({
         from: GMAIL_USER,
@@ -87,7 +79,8 @@ ${itemsText}
       });
     }
 
-    // --- 3. Google Sheets (журнал) ---
+    // --- Google Sheets (журнал) ---
+    // Теперь проверяем переменные, которые реально определены в начале файла
     if (GOOGLE_SERVICE_ACCOUNT_EMAIL && GOOGLE_PRIVATE_KEY && GOOGLE_SHEET_ID) {
       try {
         const jwt = new JWT({
@@ -97,17 +90,14 @@ ${itemsText}
         });
 
         const doc = new GoogleSpreadsheet(GOOGLE_SHEET_ID, jwt);
-        await doc.loadInfo(); // загружаем свойства таблицы
+        await doc.loadInfo();
 
-        // Используем лист по названию, а не по индексу
         const sheet = doc.sheetsByTitle[GOOGLE_SHEET_NAME];
-
         if (!sheet) {
-          console.error(`❌ Лист с названием "${GOOGLE_SHEET_NAME}" не найден в таблице.`);
+          console.error(`❌ Лист "${GOOGLE_SHEET_NAME}" не найден. Доступные листы:`, Object.keys(doc.sheetsByTitle));
           throw new Error(`Лист "${GOOGLE_SHEET_NAME}" не найден`);
         }
 
-        // Добавляем строку с данными заказа
         await sheet.addRow({
           Дата: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
           Имя: formData.name,
@@ -116,19 +106,20 @@ ${itemsText}
           Комментарий: formData.comment || '',
           Состав: itemsText,
           Количество: totalItems,
-          Статус: 'Новый', // Начальный статус заказа
+          Статус: 'Новый',
         });
 
         console.log('✅ Заказ записан в Google Sheets на лист:', GOOGLE_SHEET_NAME);
       } catch (sheetError: any) {
         console.error('❌ Ошибка записи в Google Sheets:', sheetError.message);
-        // Не прерываем выполнение, заказ всё равно отправлен в Telegram/Email
       }
+    } else {
+      console.warn('⚠️ Пропущена запись в Google Sheets – не все переменные заданы');
     }
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    console.error('Ошибка при отправке заказа:', error);
+    console.error('Критическая ошибка обработчика:', error);
     return res.status(500).json({ error: 'Ошибка отправки заказа' });
   }
 }
