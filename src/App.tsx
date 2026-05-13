@@ -140,9 +140,9 @@ function App() {
             </div>
             <div className="p-6 overflow-y-auto flex-1">
   <h2 className="text-2xl font-bold">{selectedTomato.name}</h2>
-  <p className="mt-2 text-gray-700 leading-relaxed">
-    {selectedTomato.description || 'Описание отсутствует'}
-  </p>
+ <p className="mt-2 text-gray-700 leading-relaxed whitespace-pre-line">
+  {selectedTomato.description || 'Описание отсутствует'}
+</p>
   <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
     <div className="text-gray-500">Рост:</div>
     <div>{selectedTomato.height || 'Не указано'}</div>
