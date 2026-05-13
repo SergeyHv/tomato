@@ -72,6 +72,7 @@ export const Catalog: React.FC<CatalogProps> = ({
     color: '',
     type: '',
     growth: '',
+    isNew: undefined,
   });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const topAnchorRef = useRef<HTMLDivElement>(null);
@@ -88,7 +89,7 @@ export const Catalog: React.FC<CatalogProps> = ({
 
       const matchesColor = !filters.color || tomato.color === filters.color;
       const matchesType = !filters.type || tomato.type === filters.type;
-      
+
       const getGrowthCategory = (growth: string) => {
         if (growth === 'Гном' || growth === 'Дет') return 'low';
         if (growth === 'Среднерослый') return 'medium';
@@ -96,7 +97,7 @@ export const Catalog: React.FC<CatalogProps> = ({
         return '';
       };
       const matchesGrowth = !filters.growth || getGrowthCategory(tomato.growth) === filters.growth;
-      
+
       const matchesRipening = !filters.ripening || tomato.ripening === filters.ripening;
 
       let matchesEnvironment = true;
@@ -105,13 +106,20 @@ export const Catalog: React.FC<CatalogProps> = ({
           tomato.ripening !== 'Позднеспелый' && tomato.growth !== 'Индет';
       }
 
+      // Фильтр "Новинки"
+      const matchesNew = filters.isNew === undefined || filters.isNew === false || tomato.isNew === true;
+      // Если isNew true, показываем только те, у которых isNew = true
+      // Если isNew false или undefined, показываем все
+      const finalMatchesNew = filters.isNew ? tomato.isNew === true : true;
+
       return (
         matchesSearch &&
         matchesColor &&
         matchesType &&
         matchesGrowth &&
         matchesRipening &&
-        matchesEnvironment
+        matchesEnvironment &&
+        finalMatchesNew
       );
     });
   }, [tomatoes, filters]);
@@ -149,6 +157,7 @@ export const Catalog: React.FC<CatalogProps> = ({
       color: '',
       type: '',
       growth: '',
+      isNew: undefined,
     });
   };
 
@@ -267,7 +276,6 @@ export const Catalog: React.FC<CatalogProps> = ({
                         onClick={() => onViewDetail(tomato)}
                       >
                         <TomatoImage tomato={tomato} />
-                        {/* Бейдж "Новинка" на изображении */}
                         {tomato.isNew && (
                           <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-md shadow">
                             Новинка 2026
@@ -282,14 +290,11 @@ export const Catalog: React.FC<CatalogProps> = ({
                         >
                           {tomato.name}
                         </h3>
-
-                        {/* Повтор бейджа под названием (опционально) */}
                         {tomato.isNew && (
                           <span className="inline-block bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-0.5 rounded mt-1">
                             🌱 Новинка 2026
                           </span>
                         )}
-
                         <div className="mt-auto pt-4">
                           <button
                             onClick={() => onAddToCart(tomato)}
