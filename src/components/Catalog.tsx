@@ -88,7 +88,14 @@ export const Catalog: React.FC<CatalogProps> = ({
 
       const matchesColor = !filters.color || tomato.color === filters.color;
       const matchesType = !filters.type || tomato.type === filters.type;
-      const matchesGrowth = !filters.growth || tomato.growth === filters.growth;
+      // Преобразуем рост томата в категорию (low, medium, high)
+const getGrowthCategory = (growth: string) => {
+  if (growth === 'Гном' || growth === 'Дет') return 'low';
+  if (growth === 'Среднерослый') return 'medium';
+  if (growth === 'Индет') return 'high';
+  return '';
+};
+const matchesGrowth = !filters.growth || getGrowthCategory(tomato.growth) === filters.growth;
       const matchesRipening =
         !filters.ripening || tomato.ripening === filters.ripening;
 
