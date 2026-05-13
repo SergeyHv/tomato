@@ -12,8 +12,8 @@ const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || '';
 const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || '';
 
 // Для Google Sheets
-const GOOGLE_SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
-const GOOGLE_PRIVATE_KEY = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+const GOOGLE_SHEETS_CLIENT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
+const GOOGLE_SHEETS_PRIVATE_KEY = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || '';
 // !!! НОВОЕ: Имя листа для журнала заказов
 const GOOGLE_SHEET_NAME = process.env.GOOGLE_SHEET_NAME || 'Заказы'; // Название листа, куда пишем заказы
