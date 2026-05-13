@@ -102,9 +102,8 @@ const matchesGrowth = !filters.growth || getGrowthCategory(tomato.growth) === fi
 
       let matchesEnvironment = true;
       if (filters.environment === 'ground') {
-        matchesEnvironment =
-          tomato.ripening !== 'Позднеспелый' && tomato.growth !== 'Индет';
-      }
+  matchesEnvironment = tomato.growth !== 'Индет'; // исключаем только Индет
+}
 
       return (
         matchesSearch &&
