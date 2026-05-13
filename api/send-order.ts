@@ -1,54 +1,66 @@
-// api/send-order.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import nodemailer from 'nodemailer';
+
+// === НАСТРОЙКИ ТЕЛЕГРАМ ===
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
+
+// === НАСТРОЙКИ GMAIL ===
+const GMAIL_USER = process.env.GMAIL_USER || '';
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || '';
+const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || '';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, phone, address, comment, items } = req.body;
+  try {
+    const { items, formData } = req.body;
+    const itemsText = items.map((item: any) => `${item.tomato.name} — ${item.quantity} шт.`).join('\n');
+    const totalItems = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
-  // Формируем сообщение для Telegram / email
-  const orderText = `
-🛒 *Новый заказ томатов*
+    const tgMessage = `
+🛒 НОВЫЙ ЗАКАЗ ТОМАТОВ
 
-👤 *Клиент:* ${name}
-📞 *Телефон:* ${phone}
-📍 *Адрес:* ${address}
-📝 *Комментарий:* ${comment || 'нет'}
+👤 Клиент: ${formData.name}
+📞 Телефон: ${formData.phone}
+📍 Адрес: ${formData.address}
+📝 Комментарий: ${formData.comment || 'нет'}
 
-📦 *Состав заказа:*
-${items.map((item, idx) => `${idx+1}. ${item.tomato.name} — ${item.quantity} шт.`).join('\n')}
+📦 Состав:
+${itemsText}
 
-📊 *Итого сортов:* ${items.length}
-  `;
+📊 Итого: ${totalItems} шт.
+    `;
 
-  // Отправка в Telegram (замените токен и chat_id)
-  const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  let telegramOk = false;
-  if (telegramToken && chatId) {
-    const tgUrl = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
-    const tgRes = await fetch(tgUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: orderText,
-        parse_mode: 'Markdown',
-      }),
-    });
-    if (tgRes.ok) telegramOk = true;
-  }
+    // 1. Отправка в Telegram
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: tgMessage, parse_mode: 'HTML' })
+      });
+    }
 
-  // Отправка на email (через nodemailer или просто через API, но проще через Telegram, email сложнее)
-  // Для email потребуется SMTP-сервер или сервис вроде Resend. Пока реализуем только Telegram.
+    // 2. Отправка на Gmail
+    if (GMAIL_USER && GMAIL_APP_PASSWORD && NOTIFICATION_EMAIL) {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+      });
+      await transporter.sendMail({
+        from: GMAIL_USER,
+        to: NOTIFICATION_EMAIL,
+        subject: 'Новый заказ томатов',
+        text: tgMessage,
+        html: `<pre>${tgMessage}</pre>`,
+      });
+    }
 
-  if (telegramOk) {
-    res.status(200).json({ success: true, message: 'Заказ отправлен в Telegram' });
-  } else {
-    // Запасной вариант – сохранить заказ в лог или отправить на почту через другой сервис
-    console.error('Не удалось отправить в Telegram, токен не настроен');
-    res.status(500).json({ error: 'Ошибка отправки заказа' });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Ошибка отправки заказа' });
   }
 }
