@@ -12,6 +12,7 @@ export interface Tomato {
   origin?: string;
   ripening?: string;
   ocrText?: string; // текст с фото
+  isNew?: boolean; // ← новинка
 }
 
 export interface CartItem {
