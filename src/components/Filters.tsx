@@ -140,7 +140,6 @@ export const Filters: React.FC<FiltersProps> = ({
           <option value="Plum">Сливка</option>
           <option value="Heart">Сердце</option>
           <option value="Pepper">Перец</option>
-          <option value="Классический">Классический (рус.)</option>
         </select>
       </div>
 
