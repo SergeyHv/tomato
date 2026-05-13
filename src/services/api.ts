@@ -1,21 +1,21 @@
 import { CartItem } from '../types';
-import emailjs from '@emailjs/browser';
+import nodemailer from 'nodemailer';
 
 // === НАСТРОЙКИ ТЕЛЕГРАМ ===
-const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА';  // замените
-const TELEGRAM_CHAT_ID = 'ВАШ_CHAT_ID';       // замените
+const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА';
+const TELEGRAM_CHAT_ID = 'ВАШ_CHAT_ID';
 
-// === НАСТРОЙКИ EMAILJS ===
-const EMAILJS_SERVICE_ID = 'service_xxxx';    // из EmailJS
-const EMAILJS_TEMPLATE_ID = 'template_xxxx';  // из EmailJS
-const EMAILJS_PUBLIC_KEY = 'xxxx';            // из EmailJS (Account → Public Key)
-const NOTIFICATION_EMAIL = 'ваш_email@example.com'; // куда отправлять
+// === НАСТРОЙКИ GMAIL ===
+const GMAIL_USER = 'ваш_адрес@gmail.com';
+const GMAIL_APP_PASSWORD = 'ваш_16-значный_пароль_приложения';
+const NOTIFICATION_EMAIL = 'куда_отправлять@example.com'; // может быть тот же адрес
 
 export const submitOrder = async (items: CartItem[], formData: { name: string; phone: string; address: string; comment?: string }) => {
-  // Формируем текст заказа
   const itemsText = items.map(item => `${item.tomato.name} — ${item.quantity} шт.`).join('\n');
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const message = `
+
+  // 1. Отправка в Telegram
+  const tgMessage = `
 🛒 НОВЫЙ ЗАКАЗ ТОМАТОВ
 
 👤 Клиент: ${formData.name}
@@ -23,55 +23,46 @@ export const submitOrder = async (items: CartItem[], formData: { name: string; p
 📍 Адрес: ${formData.address}
 📝 Комментарий: ${formData.comment || 'нет'}
 
-📦 Состав заказа:
+📦 Состав:
 ${itemsText}
 
 📊 Итого: ${totalItems} шт.
   `;
 
-  // 1. Отправка в Telegram
-  if (TELEGRAM_BOT_TOKEN !== 'ВАШ_ТОКЕН_БОТА' && TELEGRAM_CHAT_ID !== 'ВАШ_CHAT_ID') {
-    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  if (TELEGRAM_BOT_TOKEN !== 'ВАШ_ТОКЕН_БОТА') {
     try {
-      await fetch(telegramUrl, {
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
-          text: message,
-          parse_mode: 'HTML'
-        })
+        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: tgMessage, parse_mode: 'HTML' })
       });
       console.log('✅ Заказ отправлен в Telegram');
-    } catch (error) {
-      console.error('Ошибка отправки в Telegram:', error);
-      throw new Error('Не удалось отправить заказ в Telegram');
-    }
-  } else {
-    console.warn('⚠️ Telegram не настроен. Заказ не отправлен.');
-    console.log(message);
+    } catch (e) { console.error('Telegram error:', e); }
   }
 
-  // 2. Отправка на email через EmailJS
+  // 2. Отправка на Gmail через SMTP
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: GMAIL_USER,
+      pass: GMAIL_APP_PASSWORD,
+    },
+  });
+
+  const mailOptions = {
+    from: GMAIL_USER,
+    to: NOTIFICATION_EMAIL,
+    subject: 'Новый заказ томатов',
+    text: tgMessage,
+    html: `<pre>${tgMessage}</pre>`,
+  };
+
   try {
-    await emailjs.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_ID,
-      {
-        name: formData.name,
-        phone: formData.phone,
-        address: formData.address,
-        comment: formData.comment,
-        items: itemsText,
-        total: totalItems.toString(),
-        to_email: NOTIFICATION_EMAIL,
-      },
-      EMAILJS_PUBLIC_KEY
-    );
-    console.log('✅ Заказ отправлен на email');
+    await transporter.sendMail(mailOptions);
+    console.log('✅ Заказ отправлен на Gmail');
   } catch (error) {
-    console.error('Ошибка отправки email:', error);
-    throw new Error('Не удалось отправить заказ на email');
+    console.error('❌ Ошибка отправки Gmail:', error);
+    throw new Error('Не удалось отправить заказ на почту');
   }
 
   return { success: true };
