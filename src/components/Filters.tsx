@@ -112,9 +112,8 @@ export const Filters: React.FC<FiltersProps> = ({
           <option value="Розовый">Розовый</option>
           <option value="Жёлтый">Жёлтый</option>
           <option value="Оранжевый">Оранжевый</option>
-          <option value="Чёрный">Чёрный</option>
+          <option value="Темный">Темный</option>
           <option value="Зелёный">Зелёный</option>
-          <option value="Белый">Белый</option>
           <option value="Биколор">Биколор</option>
         </select>
       </div>
@@ -129,7 +128,6 @@ export const Filters: React.FC<FiltersProps> = ({
         >
           <option value="">Все</option>
           <option value="Черри">Черри</option>
-          <option value="Коктейльный">Коктейльный</option>
           <option value="Классический">Классический</option>
           <option value="Биф">Биф</option>
           <option value="Сливка">Сливка</option>
@@ -162,7 +160,6 @@ export const Filters: React.FC<FiltersProps> = ({
           className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
         >
           <option value="">Все</option>
-          <option value="Ультраранний">Ультраранний</option>
           <option value="Раннеспелый">Раннеспелый</option>
           <option value="Среднеспелый">Среднеспелый</option>
           <option value="Позднеспелый">Позднеспелый</option>
