@@ -33,6 +33,14 @@ export const Filters: React.FC<FiltersProps> = ({
       onClick: () => onFilterChange({ isNew: !filters.isNew ? true : undefined }),
     },
     {
+      label: '🌶️ Перцы',
+      active: filters.type === 'Pepper',
+      onClick: () =>
+        onFilterChange({
+          type: filters.type === 'Pepper' ? '' : 'Pepper',
+        }),
+    },
+    {
       label: 'Для открытого грунта',
       active: filters.environment === 'ground',
       onClick: () =>
@@ -132,6 +140,7 @@ export const Filters: React.FC<FiltersProps> = ({
           <option value="Beefsteak">Биф</option>
           <option value="Plum">Сливка</option>
           <option value="Heart">Сердце</option>
+          <option value="Pepper">Перец</option>
           <option value="Классический">Классический (рус.)</option>
         </select>
       </div>
