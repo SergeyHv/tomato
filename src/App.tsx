@@ -74,6 +74,9 @@ function App() {
           .map(cols => {
             const id = cols[colIndex('id') as number];
             if (!id) return null;
+            // Колонка C (индекс 2) – управление видимостью
+            const availableValue = cols[2]?.trim();
+            const isAvailable = !!availableValue; // true если не пусто
             return {
               id,
               name: cols[colIndex('name') as number] || 'Без названия',
@@ -89,6 +92,7 @@ function App() {
               ripening: cols[colIndex('ripening') as number] || 'Среднеспелый',
               ocrText: cols[colIndex('ocr_text') as number] || '',
               isNew: (cols[colIndex('новинка')] || '').trim().toLowerCase() === 'да',
+              isAvailable,
             } as Tomato;
           })
           .filter(Boolean);
@@ -113,12 +117,6 @@ function App() {
 
     Promise.all([loadCatalog, loadNews])
       .then(([catalogData, newsData]) => {
-        // ДИАГНОСТИКА: вывести уникальные типы и цвета
-        const types = [...new Set(catalogData.map(t => t.type))].sort();
-        const colors = [...new Set(catalogData.map(t => t.color))].sort();
-        console.log('Уникальные типы:', types);
-        console.log('Уникальные цвета:', colors);
-
         setTomatoes(catalogData);
         setInfoBanner(newsData);
         setIsLoading(false);
