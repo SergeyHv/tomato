@@ -78,33 +78,43 @@ export const Catalog: React.FC<CatalogProps> = ({
   const filtersRef = useRef<HTMLDivElement>(null); // реф на блок фильтров
 
   const filteredTomatoes = useMemo(() => {
-    if (!tomatoes || tomatoes.length === 0) return [];
+  if (!tomatoes || tomatoes.length === 0) return [];
 
-    return tomatoes.filter((tomato) => {
-      const matchesSearch =
-        tomato.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        (tomato.ocrText && tomato.ocrText.toLowerCase().includes(filters.search.toLowerCase())) ||
-        false;
+  return tomatoes.filter((tomato) => {
+    const matchesSearch =
+      tomato.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      (tomato.ocrText && tomato.ocrText.toLowerCase().includes(filters.search.toLowerCase())) ||
+      false;
 
-      const matchesColor = !filters.color || tomato.color === filters.color;
-      const matchesType = !filters.type || tomato.type === filters.type;
-      // Преобразуем рост томата в категорию (low, medium, high)
-// Преобразование роста в категорию low/medium/high
-const getGrowthCategory = (growth: string) => {
-  if (growth === 'Гном' || growth === 'Дет') return 'low';
-  if (growth === 'Среднерослый') return 'medium';
-  if (growth === 'Индет') return 'high';
-  return '';
-};
-const matchesGrowth = !filters.growth || getGrowthCategory(tomato.growth) === filters.growth;
-      const matchesRipening =
-        !filters.ripening || tomato.ripening === filters.ripening;
+    const matchesColor = !filters.color || tomato.color === filters.color;
+    const matchesType = !filters.type || tomato.type === filters.type;
+    
+    const getGrowthCategory = (growth: string) => {
+      if (growth === 'Гном' || growth === 'Дет') return 'low';
+      if (growth === 'Среднерослый') return 'medium';
+      if (growth === 'Индет') return 'high';
+      return '';
+    };
+    const matchesGrowth = !filters.growth || getGrowthCategory(tomato.growth) === filters.growth;
+    
+    const matchesRipening = !filters.ripening || tomato.ripening === filters.ripening;
 
-      let matchesEnvironment = true;
-if (filters.environment === 'ground' && !filters.growth) {
-  matchesEnvironment =
-    tomato.ripening !== 'Позднеспелый' && tomato.growth !== 'Индет';
-}
+    let matchesEnvironment = true;
+    if (filters.environment === 'ground' && !filters.growth) {
+      matchesEnvironment =
+        tomato.ripening !== 'Позднеспелый' && tomato.growth !== 'Индет';
+    }
+
+    return (
+      matchesSearch &&
+      matchesColor &&
+      matchesType &&
+      matchesGrowth &&
+      matchesRipening &&
+      matchesEnvironment
+    );
+  });
+}, [tomatoes, filters]);
 
       return (
         matchesSearch &&
