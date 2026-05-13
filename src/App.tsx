@@ -113,15 +113,16 @@ function App() {
 
     Promise.all([loadCatalog, loadNews])
       .then(([catalogData, newsData]) => {
-        setTomatoes(catalogData);
-        setInfoBanner(newsData);
-        setIsLoading(false);
-      })
-      .catch(err => {
-        console.error('Ошибка загрузки данных:', err);
-        setIsLoading(false);
-      });
-  }, []);
+  // ДИАГНОСТИКА: вывести уникальные типы и цвета
+  const types = [...new Set(catalogData.map(t => t.type))].sort();
+  const colors = [...new Set(catalogData.map(t => t.color))].sort();
+  console.log('Уникальные типы:', types);
+  console.log('Уникальные цвета:', colors);
+
+  setTomatoes(catalogData);
+  setInfoBanner(newsData);
+  setIsLoading(false);
+})
 
   const addToCart = (tomato: Tomato) => {
     setCartItems(prev =>
