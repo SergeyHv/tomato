@@ -13,6 +13,7 @@ export interface Tomato {
   ripening?: string;
   ocrText?: string; // текст с фото
   isNew?: boolean; // ← новинка
+  isAvailable?: boolean; // доступен для отображения
 }
 
 export interface CartItem {
