@@ -429,7 +429,8 @@ export const Catalog: React.FC<CatalogProps> = ({
       <div className="space-y-6">
         <div ref={topAnchorRef} className="sr-only" aria-hidden />
 
-        <div className="sticky top-16 z-20 bg-stone-50 pt-2 pb-2 lg:hidden">
+        {/* Мобильный sticky-блок с улучшенным позиционированием */}
+        <div className="sticky top-[72px] z-30 bg-white pt-2 pb-2 lg:hidden shadow-sm">
           <div className="flex items-center gap-2">
             <button
               onClick={toggleFilters}
@@ -642,10 +643,9 @@ export const Catalog: React.FC<CatalogProps> = ({
                         </button>
                       </form>
                     </div>
-                    {/* Подсказка о свайпе – видна на мобильных устройствах */}
                     <div className="text-xs text-stone-400 flex items-center gap-1 lg:hidden">
                       <span>↔</span>
-                      <span>Возможно листать страницы свайпом влево-вправо</span>
+                      <span>Листайте страницы свайпом влево-вправо</span>
                     </div>
                   </div>
                 )}
