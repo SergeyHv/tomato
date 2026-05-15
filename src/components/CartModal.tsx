@@ -19,34 +19,39 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
   const [isSuccess, setIsSuccess] = useState(false);
   const [submittedItems, setSubmittedItems] = useState<CartItem[]>([]);
   const [submittedForm, setSubmittedForm] = useState(formData);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // 1 - контакты, 2 - отправка, 3 - отправлено
 
-  // Генерация текста для текущего списка (не для отправленного)
-  const getListText = (items: CartItem[], data: typeof formData) => {
+  // Текст для текущего списка (на основе cart и formData)
+  const getCurrentListText = () => {
     const headerParts: string[] = ['🛒 Мой заказ томатов'];
-    if (data.name) headerParts.push(`👤 Имя: ${data.name}`);
-    if (data.phone) headerParts.push(`📞 Телефон: ${data.phone}`);
-    if (data.address) headerParts.push(`📍 Адрес: ${data.address}`);
-    if (data.comment) headerParts.push(`📝 Комментарий: ${data.comment}`);
+    if (formData.name) headerParts.push(`👤 Имя: ${formData.name}`);
+    if (formData.phone) headerParts.push(`📞 Телефон: ${formData.phone}`);
+    if (formData.address) headerParts.push(`📍 Адрес: ${formData.address}`);
+    if (formData.comment) headerParts.push(`📝 Комментарий: ${formData.comment}`);
 
     const header = headerParts.join('\n');
-    const itemsLines = items.map((item, i) => `${i + 1}. ${item.tomato.name} — ${item.quantity} шт.`).join('\n');
-    const total = items.reduce((s, i) => s + i.quantity, 0);
+    const itemsLines = cart.map((item, i) => `${i + 1}. ${item.tomato.name} — ${item.quantity} шт.`).join('\n');
+    const total = cart.reduce((s, i) => s + i.quantity, 0);
     return `${header}\n\n📦 Состав:\n${itemsLines}\n\n📊 Всего сортов: ${total}`;
   };
 
-  // Текст для экрана успеха (после отправки)
-  const generateSuccessText = () => {
+  // Текст для экрана успеха (отправленный список)
+  const getSuccessListText = () => {
     const header = `🛒 Мой заказ томатов\n\n👤 Имя: ${submittedForm.name}\n📞 Телефон: ${submittedForm.phone}\n📍 Адрес: ${submittedForm.address}\n📝 Комментарий: ${submittedForm.comment || 'нет'}\n\n📦 Состав:\n`;
     const items = submittedItems.map((item, i) => `${i + 1}. ${item.tomato.name} — ${item.quantity} шт.`).join('\n');
     const total = submittedItems.reduce((s, i) => s + i.quantity, 0);
     return header + items + `\n\n📊 Всего сортов: ${total}`;
   };
 
+  // Проверка, мобильное ли устройство (имеет тач-события)
+  const isMobile = () => {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  };
+
   const handleShare = async () => {
-    const text = getListText(cart, formData);
-    // На мобильных пробуем нативный шаринг, иначе копируем
-    if (navigator.share) {
+    const text = getCurrentListText();
+    // На мобильных используем нативный шаринг, на десктопах сразу копируем
+    if (navigator.share && isMobile()) {
       try {
         await navigator.share({ title: 'Мой заказ томатов', text });
         return; // успешно поделились
@@ -87,7 +92,7 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
 
   const handleCopySuccess = async () => {
     try {
-      await navigator.clipboard.writeText(generateSuccessText());
+      await navigator.clipboard.writeText(getSuccessListText());
       alert('✅ Список скопирован в буфер обмена');
     } catch {
       alert('❌ Не удалось скопировать. Попробуйте выделить текст вручную.');
@@ -112,7 +117,7 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
         </head>
         <body>
           <h2>Мой заказ томатов</h2>
-          <pre>${generateSuccessText()}</pre>
+          <pre>${getSuccessListText()}</pre>
           <script>window.onload = function() { window.print(); }</script>
         </body>
       </html>
@@ -155,7 +160,7 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
           </div>
         </div>
 
-        {/* Прогресс-бар */}
+        {/* Прогресс-бар (только когда не экран успеха) */}
         {!isSuccess && cart.length > 0 && (
           <div className="px-5 pt-4">
             <div className="flex items-center justify-between mb-2">
