@@ -645,7 +645,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                     {/* Подсказка о свайпе – видна на мобильных устройствах */}
                     <div className="text-xs text-stone-400 flex items-center gap-1 lg:hidden">
                       <span>↔</span>
-                      <span>Листайте страницы свайпом влево-вправо</span>
+                      <span>Возможно листать страницы свайпом влево-вправо</span>
                     </div>
                   </div>
                 )}
