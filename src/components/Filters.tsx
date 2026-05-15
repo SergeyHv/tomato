@@ -98,7 +98,7 @@ export const Filters: React.FC<FiltersProps> = ({
             onClick={btn.onClick}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
               btn.active
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                ? 'bg-emerald-600 text-white border-emerald-600'
                 : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300'
             }`}
           >
