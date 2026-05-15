@@ -60,7 +60,6 @@ const TomatoImage: React.FC<{ tomato: Tomato }> = ({ tomato }) => {
   );
 };
 
-// Метки для отображения активных фильтров
 const FILTER_LABELS: Record<string, string> = {
   isNew: 'Новинки 2026',
   'Cherry': 'Черри',
@@ -120,7 +119,6 @@ export const Catalog: React.FC<CatalogProps> = ({
     touchEndY.current = 0;
   };
 
-  // Базовая фильтрация
   const baseFiltered = useMemo(() => {
     if (!tomatoes || tomatoes.length === 0) return [];
     return tomatoes.filter(t => {
@@ -213,7 +211,7 @@ export const Catalog: React.FC<CatalogProps> = ({
     setIsFiltersOpen(!isFiltersOpen);
   };
 
-  // ========== Умные фильтры: подсчёт доступных значений ==========
+  // Умные фильтры: подсчёт доступных значений
   const smartCounts = useMemo(() => {
     const counts: {
       colors: { value: string; count: number }[];
@@ -311,10 +309,9 @@ export const Catalog: React.FC<CatalogProps> = ({
   if (filters.growth) activeFilterLabels.push(FILTER_LABELS[filters.growth] || filters.growth);
   if (filters.color) activeFilterLabels.push(FILTER_LABELS[filters.color] || filters.color);
 
-  // ========== Ripple Effect ==========
+  // Ripple Effect
   const createRipple = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const target = e.currentTarget as HTMLElement;
-    // Удаляем старые ripple-элементы
     const existing = target.querySelector('.ripple-effect');
     if (existing) existing.remove();
 
@@ -360,7 +357,6 @@ export const Catalog: React.FC<CatalogProps> = ({
 
   return (
     <>
-      {/* Встроенный стиль для анимации ripple */}
       <style>{`
         @keyframes ripple-animation {
           to {
@@ -381,7 +377,7 @@ export const Catalog: React.FC<CatalogProps> = ({
       <div className="space-y-6">
         <div ref={topAnchorRef} className="sr-only" aria-hidden />
 
-        {/* Мобильный sticky-блок с бургером и поиском */}
+        {/* Мобильный sticky-блок */}
         <div className="sticky top-16 z-20 bg-stone-50 pt-2 pb-2 lg:hidden">
           <div className="flex items-center gap-2">
             <button
@@ -412,7 +408,6 @@ export const Catalog: React.FC<CatalogProps> = ({
           </div>
         </div>
 
-        {/* Десктопная раскладка */}
         <div className="flex flex-col lg:flex-row lg:gap-8">
           <aside className="hidden lg:block w-full lg:w-80 xl:w-96">
             <div className="lg:sticky lg:top-4">
@@ -428,7 +423,6 @@ export const Catalog: React.FC<CatalogProps> = ({
           </aside>
 
           <main className="flex-1 min-w-0">
-            {/* Десктопный поиск */}
             <div className="hidden lg:block relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
               <input
@@ -448,7 +442,6 @@ export const Catalog: React.FC<CatalogProps> = ({
               )}
             </div>
 
-            {/* Активные фильтры */}
             {activeFilterLabels.length > 0 && (
               <div className="mb-4 flex items-center gap-2 flex-wrap bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
                 <span className="font-medium">Применены фильтры:</span>
@@ -469,8 +462,15 @@ export const Catalog: React.FC<CatalogProps> = ({
 
             {total === 0 ? (
               <div className="text-center py-20 bg-white rounded-xl border border-dashed border-stone-300">
-                <p className="text-stone-400 text-lg">Ничего не найдено.</p>
-                <p className="text-stone-300 text-sm mt-2">Попробуйте изменить фильтры.</p>
+                <p className="text-stone-500 text-lg mb-4">😔 Ничего не найдено</p>
+                <p className="text-stone-400 text-sm mb-6">Попробуйте изменить или сбросить фильтры</p>
+                <button
+                  onClick={resetFilters}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition"
+                >
+                  <RotateCcw size={18} />
+                  Сбросить все фильтры
+                </button>
               </div>
             ) : (
               <>
@@ -529,7 +529,6 @@ export const Catalog: React.FC<CatalogProps> = ({
                   })}
                 </div>
 
-                {/* Пагинация */}
                 {totalPages > 1 && (
                   <div className="flex justify-center items-center gap-2 sm:gap-4 pt-4">
                     <button
