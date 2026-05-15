@@ -10,6 +10,7 @@ import {
   Menu,
   ChevronsRight,
   ChevronsLeft,
+  RotateCcw,
 } from 'lucide-react';
 import { localize } from '../utils/localization';
 import { Filters } from './Filters';
@@ -59,6 +60,26 @@ const TomatoImage: React.FC<{ tomato: Tomato }> = ({ tomato }) => {
   );
 };
 
+// Словарь для отображения значений фильтров пользователю
+const FILTER_LABELS: Record<string, string> = {
+  isNew: 'Новинки 2026',
+  'Cherry': 'Черри',
+  'Pepper': 'Перцы',
+  'ground': 'Для открытого грунта',
+  'low': 'Низкорослые',
+  'medium': 'Среднерослые',
+  'high': 'Индетерминантные',
+  'Красный': 'Красный',
+  'Жёлтый': 'Жёлтый',
+  'Оранжевый': 'Оранжевый',
+  'Тёмный': 'Тёмный',
+  'Зелёный': 'Зелёный',
+  'Биколор': 'Биколор',
+  'Раннеспелый': 'Раннеспелые',
+  'Среднеспелый': 'Среднеспелые',
+  'Позднеспелый': 'Позднеспелые',
+};
+
 export const Catalog: React.FC<CatalogProps> = ({
   tomatoes,
   cartItems,
@@ -84,7 +105,6 @@ export const Catalog: React.FC<CatalogProps> = ({
   const touchStartY = useRef<number>(0);
   const touchEndY = useRef<number>(0);
 
-  // Закрытие Bottom Sheet по свайпу вниз
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
   };
@@ -192,6 +212,15 @@ export const Catalog: React.FC<CatalogProps> = ({
     setIsFiltersOpen(!isFiltersOpen);
   };
 
+  // Собираем читаемые метки активных фильтров
+  const activeFilterLabels: string[] = [];
+  if (filters.isNew) activeFilterLabels.push(FILTER_LABELS['isNew']);
+  if (filters.type) activeFilterLabels.push(FILTER_LABELS[filters.type] || filters.type);
+  if (filters.environment) activeFilterLabels.push(FILTER_LABELS[filters.environment] || filters.environment);
+  if (filters.ripening) activeFilterLabels.push(FILTER_LABELS[filters.ripening] || filters.ripening);
+  if (filters.growth) activeFilterLabels.push(FILTER_LABELS[filters.growth] || filters.growth);
+  if (filters.color) activeFilterLabels.push(FILTER_LABELS[filters.color] || filters.color);
+
   if (!tomatoes || tomatoes.length === 0) {
     return (
       <div className="text-center py-20 bg-white rounded-xl border border-dashed border-stone-300">
@@ -253,7 +282,7 @@ export const Catalog: React.FC<CatalogProps> = ({
         </aside>
 
         <main className="flex-1 min-w-0">
-          {/* Десктопный поиск (на мобилке он уже в sticky-блоке) */}
+          {/* Десктопный поиск */}
           <div className="hidden lg:block relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
             <input
@@ -272,6 +301,21 @@ export const Catalog: React.FC<CatalogProps> = ({
               </button>
             )}
           </div>
+
+          {/* Блок активных фильтров */}
+          {activeFilterLabels.length > 0 && (
+            <div className="mb-4 flex items-center gap-2 flex-wrap bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
+              <span className="font-medium">Применены фильтры:</span>
+              <span>{activeFilterLabels.join(', ')}</span>
+              <button
+                onClick={resetFilters}
+                className="ml-auto text-amber-700 hover:text-amber-900 p-1 rounded-full hover:bg-amber-100 transition"
+                title="Сбросить все фильтры"
+              >
+                <RotateCcw size={16} />
+              </button>
+            </div>
+          )}
 
           <div className="text-left text-sm text-stone-500 mb-4">
             Найдено сортов: <span className="font-bold text-emerald-600">{total}</span>
@@ -401,13 +445,10 @@ export const Catalog: React.FC<CatalogProps> = ({
       {/* Мобильный Bottom Sheet для фильтров */}
       {isFiltersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          {/* Затемнение */}
           <div
             className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
             onClick={() => setIsFiltersOpen(false)}
           />
-
-          {/* Сам лист */}
           <div
             ref={sheetRef}
             className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto animate-slide-up"
@@ -415,11 +456,9 @@ export const Catalog: React.FC<CatalogProps> = ({
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {/* Ручка свайпа */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1.5 bg-stone-300 rounded-full" />
             </div>
-
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-stone-800 text-lg">Фильтры</h3>
@@ -430,7 +469,6 @@ export const Catalog: React.FC<CatalogProps> = ({
                   <X size={20} />
                 </button>
               </div>
-
               <Filters
                 filters={filters}
                 onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
