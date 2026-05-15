@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://tomato-catalog.vercel.app/sitemap.xml
