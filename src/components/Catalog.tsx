@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Tomato, CartItem, FilterState } from '../types';
 import {
   Search,
@@ -12,6 +12,7 @@ import {
   ChevronsLeft,
   RotateCcw,
 } from 'lucide-react';
+import { localize } from '../utils/localization';
 import { Filters } from './Filters';
 
 const DEFAULT_PAGE_SIZE = 24;
@@ -119,7 +120,7 @@ export const Catalog: React.FC<CatalogProps> = ({
     touchEndY.current = 0;
   };
 
-  // Базовая фильтрация (без учёта одного исключаемого фильтра — будет использоваться для подсчётов)
+  // Базовая фильтрация
   const baseFiltered = useMemo(() => {
     if (!tomatoes || tomatoes.length === 0) return [];
     return tomatoes.filter(t => {
@@ -163,9 +164,7 @@ export const Catalog: React.FC<CatalogProps> = ({
     });
   }, [tomatoes, filters]);
 
-  // Итоговая фильтрация (такая же, как базовая)
   const filteredTomatoes = baseFiltered;
-
   const total = filteredTomatoes.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -221,7 +220,7 @@ export const Catalog: React.FC<CatalogProps> = ({
       types: { value: string; count: number }[];
       growths: { value: string; count: number }[];
       ripenings: { value: string; count: number }[];
-      isNewCount: number; // количество новинок в текущей выборке
+      isNewCount: number;
     } = {
       colors: [],
       types: [],
@@ -232,7 +231,6 @@ export const Catalog: React.FC<CatalogProps> = ({
 
     if (!tomatoes || tomatoes.length === 0) return counts;
 
-    // Функция для проверки, подходит ли томат под все фильтры, кроме указанного поля
     const matchesExcept = (t: Tomato, exceptField: keyof FilterState) => {
       if (t.isAvailable === false) return false;
 
@@ -264,21 +262,18 @@ export const Catalog: React.FC<CatalogProps> = ({
       return true;
     };
 
-    // Подсчёт для каждого значения цвета
     const colorValues = [...new Set(tomatoes.map(t => t.color))].sort();
     counts.colors = colorValues.map(val => ({
       value: val,
       count: tomatoes.filter(t => t.color === val && matchesExcept(t, 'color')).length,
     }));
 
-    // Типы
     const typeValues = [...new Set(tomatoes.map(t => t.type))].sort();
     counts.types = typeValues.map(val => ({
       value: val,
       count: tomatoes.filter(t => t.type === val && matchesExcept(t, 'type')).length,
     }));
 
-    // Рост (категории)
     const growthMap: { [key: string]: string } = {
       'low': 'Низкорослые (Гном, Дет)',
       'medium': 'Среднерослые',
@@ -297,20 +292,17 @@ export const Catalog: React.FC<CatalogProps> = ({
       }).length,
     }));
 
-    // Созревание
     const ripeningValues = [...new Set(tomatoes.map(t => t.ripening))].sort();
     counts.ripenings = ripeningValues.map(val => ({
       value: val,
       count: tomatoes.filter(t => t.ripening === val && matchesExcept(t, 'ripening')).length,
     }));
 
-    // Новинки
     counts.isNewCount = tomatoes.filter(t => t.isNew === true && matchesExcept(t, 'isNew')).length;
 
     return counts;
   }, [tomatoes, filters]);
 
-  // Собираем читаемые метки активных фильтров
   const activeFilterLabels: string[] = [];
   if (filters.isNew) activeFilterLabels.push(FILTER_LABELS['isNew']);
   if (filters.type) activeFilterLabels.push(FILTER_LABELS[filters.type] || filters.type);
@@ -318,6 +310,45 @@ export const Catalog: React.FC<CatalogProps> = ({
   if (filters.ripening) activeFilterLabels.push(FILTER_LABELS[filters.ripening] || filters.ripening);
   if (filters.growth) activeFilterLabels.push(FILTER_LABELS[filters.growth] || filters.growth);
   if (filters.color) activeFilterLabels.push(FILTER_LABELS[filters.color] || filters.color);
+
+  // ========== Ripple Effect ==========
+  const createRipple = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const target = e.currentTarget as HTMLElement;
+    // Удаляем старые ripple-элементы
+    const existing = target.querySelector('.ripple-effect');
+    if (existing) existing.remove();
+
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple-effect';
+
+    const rect = target.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = `${size}px`;
+
+    let clientX: number, clientY: number;
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = (e as React.MouseEvent).clientX;
+      clientY = (e as React.MouseEvent).clientY;
+    }
+
+    ripple.style.left = `${clientX - rect.left - size / 2}px`;
+    ripple.style.top = `${clientY - rect.top - size / 2}px`;
+    ripple.style.position = 'absolute';
+    ripple.style.borderRadius = '50%';
+    ripple.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+    ripple.style.transform = 'scale(0)';
+    ripple.style.animation = 'ripple-animation 0.6s ease-out';
+    ripple.style.pointerEvents = 'none';
+
+    target.appendChild(ripple);
+
+    ripple.addEventListener('animationend', () => {
+      ripple.remove();
+    });
+  }, []);
 
   if (!tomatoes || tomatoes.length === 0) {
     return (
@@ -328,240 +359,63 @@ export const Catalog: React.FC<CatalogProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      <div ref={topAnchorRef} className="sr-only" aria-hidden />
+    <>
+      {/* Встроенный стиль для анимации ripple */}
+      <style>{`
+        @keyframes ripple-animation {
+          to {
+            transform: scale(4);
+            opacity: 0;
+          }
+        }
+        .ripple-effect {
+          position: absolute;
+          border-radius: 50%;
+          background-color: rgba(255, 255, 255, 0.3);
+          transform: scale(0);
+          animation: ripple-animation 0.6s ease-out;
+          pointer-events: none;
+        }
+      `}</style>
 
-      {/* Мобильный sticky-блок с бургером и поиском */}
-      <div className="sticky top-16 z-20 bg-stone-50 pt-2 pb-2 lg:hidden">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={toggleFilters}
-            className="p-2 bg-white rounded-full shadow border border-stone-200"
-            aria-label="Фильтры"
-          >
-            <Menu size={20} />
-          </button>
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              placeholder="🔎 Поиск по названию, описанию, тексту на фото..."
-              className="w-full border border-stone-200 rounded-lg pl-9 pr-3 py-2 text-sm bg-white"
-            />
-            {filters.search && (
-              <button
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
-                onClick={() => setFilters({ ...filters, search: '' })}
-              >
-                <X size={14} />
-              </button>
-            )}
+      <div className="space-y-6">
+        <div ref={topAnchorRef} className="sr-only" aria-hidden />
+
+        {/* Мобильный sticky-блок с бургером и поиском */}
+        <div className="sticky top-16 z-20 bg-stone-50 pt-2 pb-2 lg:hidden">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleFilters}
+              className="p-2 bg-white rounded-full shadow border border-stone-200"
+              aria-label="Фильтры"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+              <input
+                type="text"
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                placeholder="🔎 Поиск по названию, описанию, тексту на фото..."
+                className="w-full border border-stone-200 rounded-lg pl-9 pr-3 py-2 text-sm bg-white"
+              />
+              {filters.search && (
+                <button
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                  onClick={() => setFilters({ ...filters, search: '' })}
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Десктопная раскладка */}
-      <div className="flex flex-col lg:flex-row lg:gap-8">
-        <aside className="hidden lg:block w-full lg:w-80 xl:w-96">
-          <div className="lg:sticky lg:top-4">
-            <Filters
-              filters={filters}
-              onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
-              onReset={resetFilters}
-              totalCount={tomatoes.length}
-              filteredCount={total}
-              smartCounts={smartCounts}
-            />
-          </div>
-        </aside>
-
-        <main className="flex-1 min-w-0">
-          {/* Десктопный поиск */}
-          <div className="hidden lg:block relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              placeholder="🔎 Поиск по названию, описанию, тексту на фото..."
-              className="w-full border border-stone-200 rounded-lg pl-9 pr-3 py-2 text-sm bg-white"
-            />
-            {filters.search && (
-              <button
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
-                onClick={() => setFilters({ ...filters, search: '' })}
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-
-          {/* Активные фильтры */}
-          {activeFilterLabels.length > 0 && (
-            <div className="mb-4 flex items-center gap-2 flex-wrap bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
-              <span className="font-medium">Применены фильтры:</span>
-              <span>{activeFilterLabels.join(', ')}</span>
-              <button
-                onClick={resetFilters}
-                className="ml-auto text-amber-700 hover:text-amber-900 p-1 rounded-full hover:bg-amber-100 transition"
-                title="Сбросить все фильтры"
-              >
-                <RotateCcw size={16} />
-              </button>
-            </div>
-          )}
-
-          <div className="text-left text-sm text-stone-500 mb-4">
-            Найдено сортов: <span className="font-bold text-emerald-600">{total}</span>
-          </div>
-
-          {total === 0 ? (
-            <div className="text-center py-20 bg-white rounded-xl border border-dashed border-stone-300">
-              <p className="text-stone-400 text-lg">Ничего не найдено.</p>
-              <p className="text-stone-300 text-sm mt-2">Попробуйте изменить фильтры.</p>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {visible.map((tomato) => {
-                  const isInCart = cartItems.some(
-                    (item) => item.tomato.id === tomato.id
-                  );
-
-                  return (
-                    <div
-                      key={tomato.id}
-                      className="group bg-white rounded-2xl border shadow-sm hover:shadow-lg transition overflow-hidden flex flex-col"
-                    >
-                      <div
-                        className="relative h-56 bg-stone-100 cursor-pointer overflow-hidden"
-                        onClick={() => onViewDetail(tomato)}
-                      >
-                        <TomatoImage tomato={tomato} />
-                        {tomato.isNew && (
-                          <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-md shadow">
-                            Новинка 2026
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="p-4 flex flex-col flex-grow">
-                        <h3
-                          className="font-bold text-lg cursor-pointer"
-                          onClick={() => onViewDetail(tomato)}
-                        >
-                          {tomato.name}
-                        </h3>
-                        {tomato.isNew && (
-                          <span className="inline-block bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-0.5 rounded mt-1">
-                            🌱 Новинка 2026
-                          </span>
-                        )}
-                        <div className="mt-auto pt-4">
-                          <button
-                            onClick={() => onAddToCart(tomato)}
-                            disabled={isInCart}
-                            className="w-full py-2 rounded-lg bg-stone-800 text-white disabled:bg-stone-300 disabled:cursor-not-allowed sm:bg-emerald-600 sm:text-white hover:bg-emerald-700 transition"
-                          >
-                            {isInCart ? 'Добавлено' : 'В список'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Пагинация */}
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 sm:gap-4 pt-4">
-                  <button
-                    onClick={() => goPage(1)}
-                    disabled={page === 1}
-                    className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
-                  >
-                    <ChevronsLeft size={16} />
-                  </button>
-
-                  <button
-                    onClick={() => goPage(page - 1)}
-                    disabled={page === 1}
-                    className="p-2 rounded-lg border disabled:opacity-50"
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-
-                  <span className="text-sm">{page} / {totalPages}</span>
-
-                  <button
-                    onClick={() => goPage(page + 1)}
-                    disabled={page === totalPages}
-                    className="p-2 rounded-lg border disabled:opacity-50"
-                  >
-                    <ChevronRight size={20} />
-                  </button>
-
-                  <button
-                    onClick={() => goPage(totalPages)}
-                    disabled={page === totalPages}
-                    className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
-                  >
-                    <ChevronsRight size={16} />
-                  </button>
-
-                  <form onSubmit={handleJumpSubmit} className="flex items-center gap-1 ml-1 sm:ml-2">
-                    <input
-                      type="number"
-                      min={1}
-                      max={totalPages}
-                      value={jumpInput}
-                      onChange={(e) => setJumpInput(e.target.value)}
-                      placeholder="№"
-                      className="w-12 sm:w-14 text-center border border-stone-200 rounded-lg px-1 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-                    />
-                    <button
-                      type="submit"
-                      className="p-2 rounded-lg border hover:bg-stone-50"
-                    >
-                      <ChevronsRight size={16} />
-                    </button>
-                  </form>
-                </div>
-              )}
-            </>
-          )}
-        </main>
-      </div>
-
-      {/* Мобильный Bottom Sheet */}
-      {isFiltersOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
-            onClick={() => setIsFiltersOpen(false)}
-          />
-          <div
-            ref={sheetRef}
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto animate-slide-up"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1.5 bg-stone-300 rounded-full" />
-            </div>
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-stone-800 text-lg">Фильтры</h3>
-                <button
-                  onClick={() => setIsFiltersOpen(false)}
-                  className="text-stone-400 hover:text-stone-600 p-2 rounded-full hover:bg-stone-100"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+        {/* Десктопная раскладка */}
+        <div className="flex flex-col lg:flex-row lg:gap-8">
+          <aside className="hidden lg:block w-full lg:w-80 xl:w-96">
+            <div className="lg:sticky lg:top-4">
               <Filters
                 filters={filters}
                 onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
@@ -571,10 +425,212 @@ export const Catalog: React.FC<CatalogProps> = ({
                 smartCounts={smartCounts}
               />
             </div>
-          </div>
+          </aside>
+
+          <main className="flex-1 min-w-0">
+            {/* Десктопный поиск */}
+            <div className="hidden lg:block relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+              <input
+                type="text"
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                placeholder="🔎 Поиск по названию, описанию, тексту на фото..."
+                className="w-full border border-stone-200 rounded-lg pl-9 pr-3 py-2 text-sm bg-white"
+              />
+              {filters.search && (
+                <button
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                  onClick={() => setFilters({ ...filters, search: '' })}
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Активные фильтры */}
+            {activeFilterLabels.length > 0 && (
+              <div className="mb-4 flex items-center gap-2 flex-wrap bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
+                <span className="font-medium">Применены фильтры:</span>
+                <span>{activeFilterLabels.join(', ')}</span>
+                <button
+                  onClick={resetFilters}
+                  className="ml-auto text-amber-700 hover:text-amber-900 p-1 rounded-full hover:bg-amber-100 transition"
+                  title="Сбросить все фильтры"
+                >
+                  <RotateCcw size={16} />
+                </button>
+              </div>
+            )}
+
+            <div className="text-left text-sm text-stone-500 mb-4">
+              Найдено сортов: <span className="font-bold text-emerald-600">{total}</span>
+            </div>
+
+            {total === 0 ? (
+              <div className="text-center py-20 bg-white rounded-xl border border-dashed border-stone-300">
+                <p className="text-stone-400 text-lg">Ничего не найдено.</p>
+                <p className="text-stone-300 text-sm mt-2">Попробуйте изменить фильтры.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {visible.map((tomato) => {
+                    const isInCart = cartItems.some(
+                      (item) => item.tomato.id === tomato.id
+                    );
+
+                    return (
+                      <div
+                        key={tomato.id}
+                        className="group bg-white rounded-2xl border shadow-sm hover:shadow-lg transition overflow-hidden flex flex-col relative"
+                        onMouseDown={createRipple}
+                        onTouchStart={createRipple}
+                      >
+                        <div
+                          className="relative h-56 bg-stone-100 cursor-pointer overflow-hidden"
+                          onClick={() => onViewDetail(tomato)}
+                        >
+                          <TomatoImage tomato={tomato} />
+                          {tomato.isNew && (
+                            <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-md shadow">
+                              Новинка 2026
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="p-4 flex flex-col flex-grow">
+                          <h3
+                            className="font-bold text-lg cursor-pointer"
+                            onClick={() => onViewDetail(tomato)}
+                          >
+                            {tomato.name}
+                          </h3>
+                          {tomato.isNew && (
+                            <span className="inline-block bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-0.5 rounded mt-1">
+                              🌱 Новинка 2026
+                            </span>
+                          )}
+                          <div className="mt-auto pt-4">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAddToCart(tomato);
+                              }}
+                              disabled={isInCart}
+                              className="w-full py-2 rounded-lg bg-stone-800 text-white disabled:bg-stone-300 disabled:cursor-not-allowed sm:bg-emerald-600 sm:text-white hover:bg-emerald-700 transition"
+                            >
+                              {isInCart ? 'Добавлено' : 'В список'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Пагинация */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 sm:gap-4 pt-4">
+                    <button
+                      onClick={() => goPage(1)}
+                      disabled={page === 1}
+                      className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
+                    >
+                      <ChevronsLeft size={16} />
+                    </button>
+
+                    <button
+                      onClick={() => goPage(page - 1)}
+                      disabled={page === 1}
+                      className="p-2 rounded-lg border disabled:opacity-50"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+
+                    <span className="text-sm">{page} / {totalPages}</span>
+
+                    <button
+                      onClick={() => goPage(page + 1)}
+                      disabled={page === totalPages}
+                      className="p-2 rounded-lg border disabled:opacity-50"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+
+                    <button
+                      onClick={() => goPage(totalPages)}
+                      disabled={page === totalPages}
+                      className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
+                    >
+                      <ChevronsRight size={16} />
+                    </button>
+
+                    <form onSubmit={handleJumpSubmit} className="flex items-center gap-1 ml-1 sm:ml-2">
+                      <input
+                        type="number"
+                        min={1}
+                        max={totalPages}
+                        value={jumpInput}
+                        onChange={(e) => setJumpInput(e.target.value)}
+                        placeholder="№"
+                        className="w-12 sm:w-14 text-center border border-stone-200 rounded-lg px-1 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                      <button
+                        type="submit"
+                        className="p-2 rounded-lg border hover:bg-stone-50"
+                      >
+                        <ChevronsRight size={16} />
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </>
+            )}
+          </main>
         </div>
-      )}
-    </div>
+
+        {/* Мобильный Bottom Sheet */}
+        {isFiltersOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div
+              className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
+              onClick={() => setIsFiltersOpen(false)}
+            />
+            <div
+              ref={sheetRef}
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto animate-slide-up"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1.5 bg-stone-300 rounded-full" />
+              </div>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-stone-800 text-lg">Фильтры</h3>
+                  <button
+                    onClick={() => setIsFiltersOpen(false)}
+                    className="text-stone-400 hover:text-stone-600 p-2 rounded-full hover:bg-stone-100"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <Filters
+                  filters={filters}
+                  onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
+                  onReset={resetFilters}
+                  totalCount={tomatoes.length}
+                  filteredCount={total}
+                  smartCounts={smartCounts}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
