@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Menu,
   ChevronsRight,
+  ChevronsLeft,
 } from 'lucide-react';
 import { localize } from '../utils/localization';
 import { Filters } from './Filters';
@@ -79,6 +80,25 @@ export const Catalog: React.FC<CatalogProps> = ({
   const [jumpInput, setJumpInput] = useState('');
   const topAnchorRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number>(0);
+  const touchEndY = useRef<number>(0);
+
+  // Закрытие Bottom Sheet по свайпу вниз
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndY.current = e.touches[0].clientY;
+  };
+  const handleTouchEnd = () => {
+    const diff = touchEndY.current - touchStartY.current;
+    if (diff > 60) {
+      setIsFiltersOpen(false);
+    }
+    touchStartY.current = 0;
+    touchEndY.current = 0;
+  };
 
   const filteredTomatoes = useMemo(() => {
     if (!tomatoes || tomatoes.length === 0) return [];
@@ -169,13 +189,7 @@ export const Catalog: React.FC<CatalogProps> = ({
   };
 
   const toggleFilters = () => {
-    const newState = !isFiltersOpen;
-    setIsFiltersOpen(newState);
-    if (newState) {
-      setTimeout(() => {
-        filtersRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-    }
+    setIsFiltersOpen(!isFiltersOpen);
   };
 
   if (!tomatoes || tomatoes.length === 0) {
@@ -190,6 +204,7 @@ export const Catalog: React.FC<CatalogProps> = ({
     <div className="space-y-6">
       <div ref={topAnchorRef} className="sr-only" aria-hidden />
 
+      {/* Мобильный sticky-блок с бургером и поиском */}
       <div className="sticky top-16 z-20 bg-stone-50 pt-2 pb-2 lg:hidden">
         <div className="flex items-center gap-2">
           <button
@@ -220,10 +235,11 @@ export const Catalog: React.FC<CatalogProps> = ({
         </div>
       </div>
 
+      {/* Десктопная раскладка: фильтры слева */}
       <div className="flex flex-col lg:flex-row lg:gap-8">
         <aside
           ref={filtersRef}
-          className={`w-full lg:w-80 xl:w-96 ${isFiltersOpen ? 'block' : 'hidden lg:block'}`}
+          className="hidden lg:block w-full lg:w-80 xl:w-96"
         >
           <div className="lg:sticky lg:top-4">
             <Filters
@@ -237,6 +253,7 @@ export const Catalog: React.FC<CatalogProps> = ({
         </aside>
 
         <main className="flex-1 min-w-0">
+          {/* Десктопный поиск (на мобилке он уже в sticky-блоке) */}
           <div className="hidden lg:block relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
             <input
@@ -306,7 +323,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                           <button
                             onClick={() => onAddToCart(tomato)}
                             disabled={isInCart}
-                            className="w-full py-2 rounded-lg bg-stone-800 text-white disabled:bg-stone-300 disabled:cursor-not-allowed"
+                            className="w-full py-2 rounded-lg bg-stone-800 text-white disabled:bg-stone-300 disabled:cursor-not-allowed sm:bg-emerald-600 sm:text-white hover:bg-emerald-700 transition"
                           >
                             {isInCart ? 'Добавлено' : 'В список'}
                           </button>
@@ -317,8 +334,18 @@ export const Catalog: React.FC<CatalogProps> = ({
                 })}
               </div>
 
+              {/* Пагинация */}
               {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-4 pt-4">
+                <div className="flex justify-center items-center gap-2 sm:gap-4 pt-4">
+                  <button
+                    onClick={() => goPage(1)}
+                    disabled={page === 1}
+                    className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
+                    title="Первая страница"
+                  >
+                    <ChevronsLeft size={16} />
+                  </button>
+
                   <button
                     onClick={() => goPage(page - 1)}
                     disabled={page === 1}
@@ -337,7 +364,16 @@ export const Catalog: React.FC<CatalogProps> = ({
                     <ChevronRight size={20} />
                   </button>
 
-                  <form onSubmit={handleJumpSubmit} className="flex items-center gap-1 ml-2">
+                  <button
+                    onClick={() => goPage(totalPages)}
+                    disabled={page === totalPages}
+                    className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
+                    title="Последняя страница"
+                  >
+                    <ChevronsRight size={16} />
+                  </button>
+
+                  <form onSubmit={handleJumpSubmit} className="flex items-center gap-1 ml-1 sm:ml-2">
                     <input
                       type="number"
                       min={1}
@@ -345,7 +381,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                       value={jumpInput}
                       onChange={(e) => setJumpInput(e.target.value)}
                       placeholder="№"
-                      className="w-14 text-center border border-stone-200 rounded-lg px-1 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                      className="w-12 sm:w-14 text-center border border-stone-200 rounded-lg px-1 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                     />
                     <button
                       type="submit"
@@ -361,6 +397,51 @@ export const Catalog: React.FC<CatalogProps> = ({
           )}
         </main>
       </div>
+
+      {/* Мобильный Bottom Sheet для фильтров */}
+      {isFiltersOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Затемнение */}
+          <div
+            className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
+            onClick={() => setIsFiltersOpen(false)}
+          />
+
+          {/* Сам лист */}
+          <div
+            ref={sheetRef}
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto animate-slide-up"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Ручка свайпа */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1.5 bg-stone-300 rounded-full" />
+            </div>
+
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-stone-800 text-lg">Фильтры</h3>
+                <button
+                  onClick={() => setIsFiltersOpen(false)}
+                  className="text-stone-400 hover:text-stone-600 p-2 rounded-full hover:bg-stone-100"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <Filters
+                filters={filters}
+                onFilterChange={(newFilters) => setFilters({ ...filters, ...newFilters })}
+                onReset={resetFilters}
+                totalCount={tomatoes.length}
+                filteredCount={total}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
