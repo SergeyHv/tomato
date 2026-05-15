@@ -430,7 +430,7 @@ export const Catalog: React.FC<CatalogProps> = ({
         <div ref={topAnchorRef} className="sr-only" aria-hidden />
 
         {/* Мобильный sticky-блок с улучшенным позиционированием */}
-       <div className="sticky top-20 z-30 bg-white pt-2 pb-2 lg:hidden shadow-sm"> так было лучше
+       <div className="sticky top-20 z-30 bg-white pt-2 pb-2 lg:hidden shadow-sm"> Фильтр
           <div className="flex items-center gap-2">
             <button
               onClick={toggleFilters}
