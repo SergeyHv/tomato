@@ -19,9 +19,24 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
   const [isSuccess, setIsSuccess] = useState(false);
   const [submittedItems, setSubmittedItems] = useState<CartItem[]>([]);
   const [submittedForm, setSubmittedForm] = useState(formData);
-  const [step, setStep] = useState(1); // 1 - контакты, 2 - отправка, 3 - отправлено
+  const [step, setStep] = useState(1);
 
-  const generateListText = () => {
+  // Генерация текста для текущего списка (не для отправленного)
+  const getListText = (items: CartItem[], data: typeof formData) => {
+    const headerParts: string[] = ['🛒 Мой заказ томатов'];
+    if (data.name) headerParts.push(`👤 Имя: ${data.name}`);
+    if (data.phone) headerParts.push(`📞 Телефон: ${data.phone}`);
+    if (data.address) headerParts.push(`📍 Адрес: ${data.address}`);
+    if (data.comment) headerParts.push(`📝 Комментарий: ${data.comment}`);
+
+    const header = headerParts.join('\n');
+    const itemsLines = items.map((item, i) => `${i + 1}. ${item.tomato.name} — ${item.quantity} шт.`).join('\n');
+    const total = items.reduce((s, i) => s + i.quantity, 0);
+    return `${header}\n\n📦 Состав:\n${itemsLines}\n\n📊 Всего сортов: ${total}`;
+  };
+
+  // Текст для экрана успеха (после отправки)
+  const generateSuccessText = () => {
     const header = `🛒 Мой заказ томатов\n\n👤 Имя: ${submittedForm.name}\n📞 Телефон: ${submittedForm.phone}\n📍 Адрес: ${submittedForm.address}\n📝 Комментарий: ${submittedForm.comment || 'нет'}\n\n📦 Состав:\n`;
     const items = submittedItems.map((item, i) => `${i + 1}. ${item.tomato.name} — ${item.quantity} шт.`).join('\n');
     const total = submittedItems.reduce((s, i) => s + i.quantity, 0);
@@ -29,20 +44,22 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
   };
 
   const handleShare = async () => {
-    const text = generateListText();
+    const text = getListText(cart, formData);
+    // На мобильных пробуем нативный шаринг, иначе копируем
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Мой заказ томатов', text });
+        return; // успешно поделились
       } catch {
-        // пользователь отменил
+        // пользователь отменил или ошибка – fallback на копирование
       }
-    } else {
-      try {
-        await navigator.clipboard.writeText(text);
-        alert('✅ Список скопирован в буфер обмена');
-      } catch {
-        alert('❌ Не удалось скопировать. Попробуйте выделить текст вручную.');
-      }
+    }
+    // Fallback: копирование в буфер
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('✅ Список скопирован в буфер обмена');
+    } catch {
+      alert('❌ Не удалось скопировать. Попробуйте выделить текст вручную.');
     }
   };
 
@@ -50,34 +67,34 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitError(null);
-    setStep(2); // переключаем на шаг отправки
+    setStep(2);
 
     try {
       await submitOrder(cart, formData);
       setSubmittedItems([...cart]);
       setSubmittedForm({ ...formData });
       setIsSuccess(true);
-      setStep(3); // отправлено
+      setStep(3);
       onClear();
     } catch (error) {
       console.error(error);
       setSubmitError("❌ Не удалось отправить заказ. Попробуйте позже или напишите нам напрямую.");
-      setStep(1); // возвращаем на шаг контактов
+      setStep(1);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCopy = async () => {
+  const handleCopySuccess = async () => {
     try {
-      await navigator.clipboard.writeText(generateListText());
+      await navigator.clipboard.writeText(generateSuccessText());
       alert('✅ Список скопирован в буфер обмена');
     } catch {
       alert('❌ Не удалось скопировать. Попробуйте выделить текст вручную.');
     }
   };
 
-  const handlePrint = () => {
+  const handlePrintSuccess = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       alert('❌ Не удалось открыть окно печати. Разрешите всплывающие окна.');
@@ -95,7 +112,7 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
         </head>
         <body>
           <h2>Мой заказ томатов</h2>
-          <pre>${generateListText()}</pre>
+          <pre>${generateSuccessText()}</pre>
           <script>window.onload = function() { window.print(); }</script>
         </body>
       </html>
@@ -103,7 +120,6 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
     printWindow.document.close();
   };
 
-  // Прогресс-бар
   const steps = [
     { num: 1, label: 'Контакты' },
     { num: 2, label: isSubmitting ? 'Отправка...' : 'Подтверждение' },
@@ -139,7 +155,7 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
           </div>
         </div>
 
-        {/* Прогресс-бар (только если не экран успеха) */}
+        {/* Прогресс-бар */}
         {!isSuccess && cart.length > 0 && (
           <div className="px-5 pt-4">
             <div className="flex items-center justify-between mb-2">
@@ -160,7 +176,6 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
                 </div>
               ))}
             </div>
-            {/* Полоска соединения */}
             <div className="flex items-center px-4 mb-2">
               <div className={`flex-1 h-1 rounded-full ${step >= 2 ? 'bg-emerald-500' : 'bg-stone-200'}`} />
               <div className={`flex-1 h-1 rounded-full ${step >= 3 ? 'bg-emerald-500' : 'bg-stone-200'}`} />
@@ -171,7 +186,6 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
         {/* Контент */}
         <div className="flex-1 overflow-y-auto p-5 bg-stone-50/30">
           {isSuccess ? (
-            // Экран успеха
             <div className="text-center">
               <CheckCircle className="mx-auto text-emerald-500 mb-2" size={48} />
               <h2 className="text-xl font-bold text-stone-800">Заказ отправлен!</h2>
@@ -193,13 +207,13 @@ export const CartModal: React.FC<CartModalProps> = ({ cart, onClose, onRemove, o
 
               <div className="flex gap-2 mb-4">
                 <button
-                  onClick={handleCopy}
+                  onClick={handleCopySuccess}
                   className="flex-1 flex items-center justify-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-700 py-2 px-3 rounded-lg text-sm font-medium transition"
                 >
                   <Copy size={16} /> Скопировать
                 </button>
                 <button
-                  onClick={handlePrint}
+                  onClick={handlePrintSuccess}
                   className="flex-1 flex items-center justify-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-700 py-2 px-3 rounded-lg text-sm font-medium transition"
                 >
                   <Printer size={16} /> Распечатать
