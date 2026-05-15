@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Catalog } from './components/Catalog';
 import { CartModal } from './components/CartModal';
+import { Footer } from './components/Footer'; // <-- импорт футера
 import { Tomato, CartItem } from './types';
 
 const CART_STORAGE_KEY = 'tomato-cart';
@@ -232,7 +233,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <header className="bg-white border-b sticky top-0 z-40">
         <div className="container mx-auto px-4 py-5 flex justify-between items-center">
           <h1 className="text-2xl font-bold">🍅🌶️ Каталог томатов и перцев</h1>
@@ -245,7 +246,7 @@ function App() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 flex-1">
         {infoBanner && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
             <h2 className="text-lg font-bold text-amber-800 flex items-center gap-2">
@@ -262,6 +263,8 @@ function App() {
           onViewDetail={viewDetail}
         />
       </div>
+
+      <Footer /> {/* <-- Футер */}
 
       {isCartOpen && (
         <CartModal
