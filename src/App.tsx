@@ -5,7 +5,7 @@ import { Tomato, CartItem } from './types';
 
 const CART_STORAGE_KEY = 'tomato-cart';
 
-// Словарь английских цветов → русские
+// Словарь для перевода английских цветов в русские
 const COLOR_MAP: Record<string, string> = {
   'Red': 'Красный',
   'Pink': 'Розовый',
@@ -22,7 +22,7 @@ const COLOR_MAP: Record<string, string> = {
   'Brown': 'Коричневый',
 };
 
-// Унификация русских написаний (убираем вариации)
+// Унификация русских написаний цветов
 const RUS_NORMALIZE: Record<string, string> = {
   'темный': 'Тёмный',
   'темная': 'Тёмный',
@@ -45,20 +45,16 @@ function normalizeColor(raw: string | undefined): string {
   const trimmed = raw.trim();
   const lower = trimmed.toLowerCase();
 
-  // 1. Если есть точный английский ключ
   if (COLOR_MAP[trimmed]) return COLOR_MAP[trimmed];
-
-  // 2. Если русский вариант с опечатками → нормализуем
   if (RUS_NORMALIZE[lower]) return RUS_NORMALIZE[lower];
 
-  // 3. Если первая буква заглавная, а остальные строчные – возвращаем как есть (например, "Синий")
   if (trimmed[0] === trimmed[0].toUpperCase() && trimmed.slice(1) === trimmed.slice(1).toLowerCase()) {
     return trimmed;
   }
-
-  // 4. Иначе делаем первую букву заглавной, остальные строчными
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
 }
+
+const STANDARD_RIPENING = ['Раннеспелый', 'Среднеспелый', 'Позднеспелый'];
 
 function App() {
   const [tomatoes, setTomatoes] = useState<Tomato[]>([]);
@@ -131,6 +127,13 @@ function App() {
             if (!id) return null;
             const availableValue = cols[2]?.trim();
             const rawColor = cols[colIndex('color') as number];
+            const rawRipening = cols[colIndex('ripening') as number] || '';
+
+            let ripening = rawRipening.trim();
+            if (!STANDARD_RIPENING.includes(ripening)) {
+              ripening = 'Среднеспелый';
+            }
+
             return {
               id,
               name: cols[colIndex('name') as number] || 'Без названия',
@@ -143,7 +146,7 @@ function App() {
               imageUrl: cols[colIndex('imageUrl') as number] || '',
               price: 0,
               origin: 'Любительский сорт',
-              ripening: cols[colIndex('ripening') as number] || 'Среднеспелый',
+              ripening,
               ocrText: cols[colIndex('ocr_text') as number] || '',
               isNew: (cols[colIndex('новинка')] || '').trim().toLowerCase() === 'да',
               isAvailable: !!availableValue,
@@ -198,18 +201,44 @@ function App() {
   };
   const totalCartItems = cartItems.reduce((s, i) => s + i.quantity, 0);
 
-  if (isLoading)
+  // Скелетон-лоадеры во время загрузки
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <p className="text-center">Загрузка 1300+ сортов...</p>
+      <div className="min-h-screen bg-stone-50">
+        <header className="bg-white border-b sticky top-0 z-40">
+          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div className="h-8 bg-stone-200 rounded w-48 animate-pulse" />
+            <div className="h-9 bg-stone-200 rounded w-24 animate-pulse" />
+          </div>
+        </header>
+        <div className="container mx-auto px-4 py-8">
+          {/* Информационный баннер-заглушка */}
+          <div className="mb-6 h-24 bg-stone-100 rounded-xl animate-pulse" />
+          {/* Сетка скелетонов */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl border shadow-sm overflow-hidden flex flex-col animate-pulse">
+                <div className="h-56 bg-stone-200" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-stone-200 rounded w-3/4" />
+                  <div className="h-3 bg-stone-200 rounded w-1/2" />
+                  <div className="pt-4">
+                    <div className="h-10 bg-stone-200 rounded w-full" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen bg-stone-50">
       <header className="bg-white border-b sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-         <h1 className="text-2xl font-bold">🍅🌶️ Каталог томатов и перцев</h1>
+          <h1 className="text-2xl font-bold">🍅🌶️ Каталог томатов и перцев</h1>
           <button
             onClick={() => setIsCartOpen(true)}
             className="relative bg-emerald-600 text-white px-4 py-2 rounded-lg"
