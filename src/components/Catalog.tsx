@@ -101,14 +101,12 @@ export const Catalog: React.FC<CatalogProps> = ({
   const topAnchorRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
-  const cardsContainerRef = useRef<HTMLDivElement>(null); // для свайпа по карточкам
+  const cardsContainerRef = useRef<HTMLDivElement>(null);
 
-  // Для свайпов по карточкам
   const touchStartX = useRef<number>(0);
   const touchStartY = useRef<number>(0);
   const touchMoved = useRef(false);
 
-  // Закрытие Bottom Sheet по свайпу вниз
   const handleSheetTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
   };
@@ -124,9 +122,8 @@ export const Catalog: React.FC<CatalogProps> = ({
     touchEndY.current = 0;
   };
 
-  // Обработчики свайпа для карточек
   const handleCardsTouchStart = (e: React.TouchEvent) => {
-    if (isFiltersOpen) return; // не перелистываем, если фильтры открыты
+    if (isFiltersOpen) return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     touchMoved.current = false;
@@ -136,9 +133,8 @@ export const Catalog: React.FC<CatalogProps> = ({
     if (isFiltersOpen || !touchStartX.current) return;
     const deltaX = e.touches[0].clientX - touchStartX.current;
     const deltaY = e.touches[0].clientY - touchStartY.current;
-    // Если горизонтальное движение больше вертикального, начинаем свайп
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-      e.preventDefault(); // предотвращаем прокрутку страницы
+      e.preventDefault();
       touchMoved.current = true;
     }
   };
@@ -154,7 +150,6 @@ export const Catalog: React.FC<CatalogProps> = ({
     touchStartX.current = 0;
     touchMoved.current = false;
 
-    // Только если горизонтальное движение доминирует и превышает порог
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 80) {
       if (deltaX < -50 && page < totalPages) {
         goPage(page + 1);
@@ -256,7 +251,6 @@ export const Catalog: React.FC<CatalogProps> = ({
     setIsFiltersOpen(!isFiltersOpen);
   };
 
-  // Умные фильтры: подсчёт доступных значений
   const smartCounts = useMemo(() => {
     const counts: {
       colors: { value: string; count: number }[];
@@ -354,7 +348,6 @@ export const Catalog: React.FC<CatalogProps> = ({
   if (filters.growth) activeFilterLabels.push(FILTER_LABELS[filters.growth] || filters.growth);
   if (filters.color) activeFilterLabels.push(FILTER_LABELS[filters.color] || filters.color);
 
-  // Ripple Effect
   const createRipple = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     const target = e.currentTarget as HTMLElement;
     const existing = target.querySelector('.ripple-effect');
@@ -436,7 +429,6 @@ export const Catalog: React.FC<CatalogProps> = ({
       <div className="space-y-6">
         <div ref={topAnchorRef} className="sr-only" aria-hidden />
 
-        {/* Мобильный sticky-блок */}
         <div className="sticky top-16 z-20 bg-stone-50 pt-2 pb-2 lg:hidden">
           <div className="flex items-center gap-2">
             <button
@@ -596,58 +588,65 @@ export const Catalog: React.FC<CatalogProps> = ({
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 sm:gap-4 pt-4">
-                    <button
-                      onClick={() => goPage(1)}
-                      disabled={page === 1}
-                      className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
-                    >
-                      <ChevronsLeft size={16} />
-                    </button>
-
-                    <button
-                      onClick={() => goPage(page - 1)}
-                      disabled={page === 1}
-                      className="p-2 rounded-lg border disabled:opacity-50"
-                    >
-                      <ChevronLeft size={20} />
-                    </button>
-
-                    <span className="text-sm">{page} / {totalPages}</span>
-
-                    <button
-                      onClick={() => goPage(page + 1)}
-                      disabled={page === totalPages}
-                      className="p-2 rounded-lg border disabled:opacity-50"
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-
-                    <button
-                      onClick={() => goPage(totalPages)}
-                      disabled={page === totalPages}
-                      className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
-                    >
-                      <ChevronsRight size={16} />
-                    </button>
-
-                    <form onSubmit={handleJumpSubmit} className="flex items-center gap-1 ml-1 sm:ml-2">
-                      <input
-                        type="number"
-                        min={1}
-                        max={totalPages}
-                        value={jumpInput}
-                        onChange={(e) => setJumpInput(e.target.value)}
-                        placeholder="№"
-                        className="w-12 sm:w-14 text-center border border-stone-200 rounded-lg px-1 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-                      />
+                  <div className="flex flex-col items-center gap-2 pt-4">
+                    <div className="flex justify-center items-center gap-2 sm:gap-4">
                       <button
-                        type="submit"
-                        className="p-2 rounded-lg border hover:bg-stone-50"
+                        onClick={() => goPage(1)}
+                        disabled={page === 1}
+                        className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
+                      >
+                        <ChevronsLeft size={16} />
+                      </button>
+
+                      <button
+                        onClick={() => goPage(page - 1)}
+                        disabled={page === 1}
+                        className="p-2 rounded-lg border disabled:opacity-50"
+                      >
+                        <ChevronLeft size={20} />
+                      </button>
+
+                      <span className="text-sm">{page} / {totalPages}</span>
+
+                      <button
+                        onClick={() => goPage(page + 1)}
+                        disabled={page === totalPages}
+                        className="p-2 rounded-lg border disabled:opacity-50"
+                      >
+                        <ChevronRight size={20} />
+                      </button>
+
+                      <button
+                        onClick={() => goPage(totalPages)}
+                        disabled={page === totalPages}
+                        className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
                       >
                         <ChevronsRight size={16} />
                       </button>
-                    </form>
+
+                      <form onSubmit={handleJumpSubmit} className="flex items-center gap-1 ml-1 sm:ml-2">
+                        <input
+                          type="number"
+                          min={1}
+                          max={totalPages}
+                          value={jumpInput}
+                          onChange={(e) => setJumpInput(e.target.value)}
+                          placeholder="№"
+                          className="w-12 sm:w-14 text-center border border-stone-200 rounded-lg px-1 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                        />
+                        <button
+                          type="submit"
+                          className="p-2 rounded-lg border hover:bg-stone-50"
+                        >
+                          <ChevronsRight size={16} />
+                        </button>
+                      </form>
+                    </div>
+                    {/* Подсказка о свайпе – видна на мобильных устройствах */}
+                    <div className="text-xs text-stone-400 flex items-center gap-1 lg:hidden">
+                      <span>↔</span>
+                      <span>Листайте страницы свайпом влево-вправо</span>
+                    </div>
                   </div>
                 )}
               </>
