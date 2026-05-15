@@ -101,22 +101,67 @@ export const Catalog: React.FC<CatalogProps> = ({
   const topAnchorRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
-  const touchStartY = useRef<number>(0);
-  const touchEndY = useRef<number>(0);
+  const cardsContainerRef = useRef<HTMLDivElement>(null); // для свайпа по карточкам
 
-  const handleTouchStart = (e: React.TouchEvent) => {
+  // Для свайпов по карточкам
+  const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const touchMoved = useRef(false);
+
+  // Закрытие Bottom Sheet по свайпу вниз
+  const handleSheetTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
   };
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleSheetTouchMove = (e: React.TouchEvent) => {
     touchEndY.current = e.touches[0].clientY;
   };
-  const handleTouchEnd = () => {
+  const handleSheetTouchEnd = () => {
     const diff = touchEndY.current - touchStartY.current;
     if (diff > 60) {
       setIsFiltersOpen(false);
     }
     touchStartY.current = 0;
     touchEndY.current = 0;
+  };
+
+  // Обработчики свайпа для карточек
+  const handleCardsTouchStart = (e: React.TouchEvent) => {
+    if (isFiltersOpen) return; // не перелистываем, если фильтры открыты
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchMoved.current = false;
+  };
+
+  const handleCardsTouchMove = (e: React.TouchEvent) => {
+    if (isFiltersOpen || !touchStartX.current) return;
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    // Если горизонтальное движение больше вертикального, начинаем свайп
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      e.preventDefault(); // предотвращаем прокрутку страницы
+      touchMoved.current = true;
+    }
+  };
+
+  const handleCardsTouchEnd = (e: React.TouchEvent) => {
+    if (isFiltersOpen || !touchStartX.current || !touchMoved.current) {
+      touchStartX.current = 0;
+      touchMoved.current = false;
+      return;
+    }
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartX.current = 0;
+    touchMoved.current = false;
+
+    // Только если горизонтальное движение доминирует и превышает порог
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 80) {
+      if (deltaX < -50 && page < totalPages) {
+        goPage(page + 1);
+      } else if (deltaX > 50 && page > 1) {
+        goPage(page - 1);
+      }
+    }
   };
 
   const baseFiltered = useMemo(() => {
@@ -488,7 +533,13 @@ export const Catalog: React.FC<CatalogProps> = ({
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div
+                  ref={cardsContainerRef}
+                  className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+                  onTouchStart={handleCardsTouchStart}
+                  onTouchMove={handleCardsTouchMove}
+                  onTouchEnd={handleCardsTouchEnd}
+                >
                   {visible.map((tomato, index) => {
                     const isInCart = cartItems.some(
                       (item) => item.tomato.id === tomato.id
@@ -614,9 +665,9 @@ export const Catalog: React.FC<CatalogProps> = ({
             <div
               ref={sheetRef}
               className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto animate-slide-up"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
+              onTouchStart={handleSheetTouchStart}
+              onTouchMove={handleSheetTouchMove}
+              onTouchEnd={handleSheetTouchEnd}
             >
               <div className="flex justify-center pt-3 pb-1">
                 <div className="w-10 h-1.5 bg-stone-300 rounded-full" />
