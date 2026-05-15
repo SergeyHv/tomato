@@ -372,6 +372,20 @@ export const Catalog: React.FC<CatalogProps> = ({
           animation: ripple-animation 0.6s ease-out;
           pointer-events: none;
         }
+
+        @keyframes card-in {
+          0% {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-card-in {
+          animation: card-in 0.4s ease-out both;
+        }
       `}</style>
 
       <div className="space-y-6">
@@ -475,7 +489,7 @@ export const Catalog: React.FC<CatalogProps> = ({
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {visible.map((tomato) => {
+                  {visible.map((tomato, index) => {
                     const isInCart = cartItems.some(
                       (item) => item.tomato.id === tomato.id
                     );
@@ -483,7 +497,8 @@ export const Catalog: React.FC<CatalogProps> = ({
                     return (
                       <div
                         key={tomato.id}
-                        className="group bg-white rounded-2xl border shadow-sm hover:shadow-lg transition overflow-hidden flex flex-col relative"
+                        className="group bg-white rounded-2xl border shadow-sm hover:shadow-lg transition overflow-hidden flex flex-col relative animate-card-in"
+                        style={{ animationDelay: `${index * 0.05}s` }}
                         onMouseDown={createRipple}
                         onTouchStart={createRipple}
                       >
