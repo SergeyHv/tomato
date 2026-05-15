@@ -1,71 +1,49 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Каталог томатов и перцев — более 1300 сортов | Новинки 2026</title>
+    <meta name="description" content="Каталог томатов и перцев: выбирайте из 1300+ сортов. Фильтры по цвету, типу, сроку созревания, новинкам. Отправьте заказ прямо с сайта. Быстрый подбор, умные фильтры." />
+    <meta name="keywords" content="томаты, перцы, каталог, сорта, новинки, семена, заказ, выбор, фильтр, черри, биф, сливка, открытый грунт, теплица" />
+    <link rel="canonical" href="https://tomato-catalog.vercel.app/" />
 
-  <title>Каталог томатов</title>
-  <meta name="description" content="Каталог сортов томатов с описаниями и характеристиками" />
+    <!-- Favicon (замените на свои файлы после создания) -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-  <style>
-    .scrollbar-hide::-webkit-scrollbar {
-      display: none;
-    }
-    .scrollbar-hide {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  </style>
-</head>
+    <!-- Open Graph (Facebook, Telegram, Viber, WhatsApp) -->
+    <meta property="og:title" content="Каталог томатов и перцев — более 1300 сортов" />
+    <meta property="og:description" content="Умный каталог с фильтрами. Выберите сорта для теплицы или открытого грунта, отправьте заказ в один клик." />
+    <meta property="og:image" content="https://tomato-catalog.vercel.app/og-image.jpg" />
+    <meta property="og:url" content="https://tomato-catalog.vercel.app/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Каталог томатов и перцев" />
 
-<body class="bg-stone-50 text-stone-800 font-sans antialiased">
-  <div id="root"></div>
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Каталог томатов и перцев" />
+    <meta name="twitter:description" content="Более 1300 сортов. Умные фильтры, новинки 2026, заказ онлайн." />
+    <meta name="twitter:image" content="https://tomato-catalog.vercel.app/og-image.jpg" />
 
-  <!-- Entry point -->
-  <script type="module" src="/src/index.tsx"></script>
-
-  <!-- Добавленный скрипт для обработки URL-параметра -->
-  <script>
-    // Функция для загрузки данных из JSON
-    async function loadTomatoesData() {
-      try {
-        const response = await fetch('/tomatoes_data.json');
-        if (!response.ok) throw new Error('Не удалось загрузить данные');
-        return await response.json();
-      } catch (error) {
-        console.error('Ошибка загрузки tomatoes_data.json:', error);
-        return [];
+    <!-- Структурированные данные (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Каталог томатов и перцев",
+      "url": "https://tomato-catalog.vercel.app/",
+      "description": "Каталог томатов и перцев с умными фильтрами, более 1300 сортов, новинки 2026.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Tomato Catalog"
       }
     }
-
-    // Функция для открытия модального окна
-    function openTomatoModal(tomato) {
-      console.log("Открыть модальное окно для:", tomato);
-      // Здесь добавьте логику открытия модального окна
-      // Например: document.getElementById('modal').showModal();
-    }
-
-    // Основная логика обработки URL-параметра
-    document.addEventListener('DOMContentLoaded', async () => {
-      const tomatoesData = await loadTomatoesData(); // Загружаем данные
-      window.tomatoesData = tomatoesData; // Сохраняем в глобальную переменную
-
-      // Получаем ID из URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const tomatoId = urlParams.get('id');
-
-      if (tomatoId) {
-        // Находим сорт по ID
-        const tomato = tomatoesData.find(tomato => tomato.id === tomatoId);
-
-        if (tomato) {
-          // Показываем модальное окно с этим сортом
-          openTomatoModal(tomato);
-        } else {
-          console.warn(`Сорт с ID ${tomatoId} не найден`);
-        }
-      }
-    });
-  </script>
-</body>
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
