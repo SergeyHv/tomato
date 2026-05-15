@@ -201,20 +201,17 @@ function App() {
   };
   const totalCartItems = cartItems.reduce((s, i) => s + i.quantity, 0);
 
-  // Скелетон-лоадеры во время загрузки
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-stone-50">
+      <div className="min-h-screen bg-white">
         <header className="bg-white border-b sticky top-0 z-40">
-          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="container mx-auto px-4 py-5 flex justify-between items-center">
             <div className="h-8 bg-stone-200 rounded w-48 animate-pulse" />
             <div className="h-9 bg-stone-200 rounded w-24 animate-pulse" />
           </div>
         </header>
         <div className="container mx-auto px-4 py-8">
-          {/* Информационный баннер-заглушка */}
           <div className="mb-6 h-24 bg-stone-100 rounded-xl animate-pulse" />
-          {/* Сетка скелетонов */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="bg-white rounded-2xl border shadow-sm overflow-hidden flex flex-col animate-pulse">
@@ -235,9 +232,9 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-white">
       <header className="bg-white border-b sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="container mx-auto px-4 py-5 flex justify-between items-center">
           <h1 className="text-2xl font-bold">🍅🌶️ Каталог томатов и перцев</h1>
           <button
             onClick={() => setIsCartOpen(true)}
