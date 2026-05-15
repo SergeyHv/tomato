@@ -12,7 +12,6 @@ import {
   ChevronsLeft,
   RotateCcw,
 } from 'lucide-react';
-import { localize } from '../utils/localization';
 import { Filters } from './Filters';
 
 const DEFAULT_PAGE_SIZE = 24;
@@ -60,7 +59,7 @@ const TomatoImage: React.FC<{ tomato: Tomato }> = ({ tomato }) => {
   );
 };
 
-// Словарь для отображения значений фильтров пользователю
+// Метки для отображения активных фильтров
 const FILTER_LABELS: Record<string, string> = {
   isNew: 'Новинки 2026',
   'Cherry': 'Черри',
@@ -120,19 +119,19 @@ export const Catalog: React.FC<CatalogProps> = ({
     touchEndY.current = 0;
   };
 
-  const filteredTomatoes = useMemo(() => {
+  // Базовая фильтрация (без учёта одного исключаемого фильтра — будет использоваться для подсчётов)
+  const baseFiltered = useMemo(() => {
     if (!tomatoes || tomatoes.length === 0) return [];
-
-    return tomatoes.filter((tomato) => {
-      if (tomato.isAvailable === false) return false;
+    return tomatoes.filter(t => {
+      if (t.isAvailable === false) return false;
 
       const matchesSearch =
-        tomato.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        (tomato.ocrText && tomato.ocrText.toLowerCase().includes(filters.search.toLowerCase())) ||
-        false;
+        !filters.search ||
+        t.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        (t.ocrText && t.ocrText.toLowerCase().includes(filters.search.toLowerCase()));
 
-      const matchesColor = !filters.color || tomato.color === filters.color;
-      const matchesType = !filters.type || tomato.type === filters.type;
+      const matchesColor = !filters.color || t.color === filters.color;
+      const matchesType = !filters.type || t.type === filters.type;
 
       const getGrowthCategory = (growth: string) => {
         if (growth === 'Гном' || growth === 'Дет') return 'low';
@@ -140,17 +139,17 @@ export const Catalog: React.FC<CatalogProps> = ({
         if (growth === 'Индет') return 'high';
         return '';
       };
-      const matchesGrowth = !filters.growth || getGrowthCategory(tomato.growth) === filters.growth;
+      const matchesGrowth = !filters.growth || getGrowthCategory(t.growth) === filters.growth;
 
-      const matchesRipening = !filters.ripening || tomato.ripening === filters.ripening;
+      const matchesRipening = !filters.ripening || t.ripening === filters.ripening;
 
       let matchesEnvironment = true;
       if (filters.environment === 'ground' && !filters.growth) {
         matchesEnvironment =
-          tomato.ripening !== 'Позднеспелый' && tomato.growth !== 'Индет';
+          t.ripening !== 'Позднеспелый' && t.growth !== 'Индет';
       }
 
-      const matchesNew = filters.isNew ? tomato.isNew === true : true;
+      const matchesNew = filters.isNew === undefined || filters.isNew === false || t.isNew === true;
 
       return (
         matchesSearch &&
@@ -163,6 +162,9 @@ export const Catalog: React.FC<CatalogProps> = ({
       );
     });
   }, [tomatoes, filters]);
+
+  // Итоговая фильтрация (такая же, как базовая)
+  const filteredTomatoes = baseFiltered;
 
   const total = filteredTomatoes.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -211,6 +213,102 @@ export const Catalog: React.FC<CatalogProps> = ({
   const toggleFilters = () => {
     setIsFiltersOpen(!isFiltersOpen);
   };
+
+  // ========== Умные фильтры: подсчёт доступных значений ==========
+  const smartCounts = useMemo(() => {
+    const counts: {
+      colors: { value: string; count: number }[];
+      types: { value: string; count: number }[];
+      growths: { value: string; count: number }[];
+      ripenings: { value: string; count: number }[];
+      isNewCount: number; // количество новинок в текущей выборке
+    } = {
+      colors: [],
+      types: [],
+      growths: [],
+      ripenings: [],
+      isNewCount: 0,
+    };
+
+    if (!tomatoes || tomatoes.length === 0) return counts;
+
+    // Функция для проверки, подходит ли томат под все фильтры, кроме указанного поля
+    const matchesExcept = (t: Tomato, exceptField: keyof FilterState) => {
+      if (t.isAvailable === false) return false;
+
+      if (exceptField !== 'search' && filters.search) {
+        const s = filters.search.toLowerCase();
+        if (!t.name?.toLowerCase().includes(s) && !(t.ocrText && t.ocrText.toLowerCase().includes(s))) return false;
+      }
+      if (exceptField !== 'color' && filters.color && t.color !== filters.color) return false;
+      if (exceptField !== 'type' && filters.type && t.type !== filters.type) return false;
+
+      if (exceptField !== 'growth' && filters.growth) {
+        const cat = (growth: string) => {
+          if (growth === 'Гном' || growth === 'Дет') return 'low';
+          if (growth === 'Среднерослый') return 'medium';
+          if (growth === 'Индет') return 'high';
+          return '';
+        };
+        if (cat(t.growth) !== filters.growth) return false;
+      }
+
+      if (exceptField !== 'ripening' && filters.ripening && t.ripening !== filters.ripening) return false;
+
+      if (exceptField !== 'environment' && filters.environment === 'ground' && !filters.growth) {
+        if (t.ripening === 'Позднеспелый' || t.growth === 'Индет') return false;
+      }
+
+      if (exceptField !== 'isNew' && filters.isNew !== undefined && filters.isNew === true && t.isNew !== true) return false;
+
+      return true;
+    };
+
+    // Подсчёт для каждого значения цвета
+    const colorValues = [...new Set(tomatoes.map(t => t.color))].sort();
+    counts.colors = colorValues.map(val => ({
+      value: val,
+      count: tomatoes.filter(t => t.color === val && matchesExcept(t, 'color')).length,
+    }));
+
+    // Типы
+    const typeValues = [...new Set(tomatoes.map(t => t.type))].sort();
+    counts.types = typeValues.map(val => ({
+      value: val,
+      count: tomatoes.filter(t => t.type === val && matchesExcept(t, 'type')).length,
+    }));
+
+    // Рост (категории)
+    const growthMap: { [key: string]: string } = {
+      'low': 'Низкорослые (Гном, Дет)',
+      'medium': 'Среднерослые',
+      'high': 'Индетерминантные',
+    };
+    counts.growths = Object.keys(growthMap).map(key => ({
+      value: key,
+      count: tomatoes.filter(t => {
+        const cat = (growth: string) => {
+          if (growth === 'Гном' || growth === 'Дет') return 'low';
+          if (growth === 'Среднерослый') return 'medium';
+          if (growth === 'Индет') return 'high';
+          return '';
+        };
+        return cat(t.growth) === key && matchesExcept(t, 'growth');
+      }).length,
+    }));
+
+    // Созревание
+    const ripeningValues = [...new Set(tomatoes.map(t => t.ripening))].sort();
+    counts.ripenings = ripeningValues.map(val => ({
+      value: val,
+      count: tomatoes.filter(t => t.ripening === val && matchesExcept(t, 'ripening')).length,
+    }));
+
+    // Новинки
+    counts.isNewCount = tomatoes.filter(t => t.isNew === true && matchesExcept(t, 'isNew')).length;
+
+    return counts;
+  }, [tomatoes, filters]);
 
   // Собираем читаемые метки активных фильтров
   const activeFilterLabels: string[] = [];
@@ -264,12 +362,9 @@ export const Catalog: React.FC<CatalogProps> = ({
         </div>
       </div>
 
-      {/* Десктопная раскладка: фильтры слева */}
+      {/* Десктопная раскладка */}
       <div className="flex flex-col lg:flex-row lg:gap-8">
-        <aside
-          ref={filtersRef}
-          className="hidden lg:block w-full lg:w-80 xl:w-96"
-        >
+        <aside className="hidden lg:block w-full lg:w-80 xl:w-96">
           <div className="lg:sticky lg:top-4">
             <Filters
               filters={filters}
@@ -277,6 +372,7 @@ export const Catalog: React.FC<CatalogProps> = ({
               onReset={resetFilters}
               totalCount={tomatoes.length}
               filteredCount={total}
+              smartCounts={smartCounts}
             />
           </div>
         </aside>
@@ -302,7 +398,7 @@ export const Catalog: React.FC<CatalogProps> = ({
             )}
           </div>
 
-          {/* Блок активных фильтров */}
+          {/* Активные фильтры */}
           {activeFilterLabels.length > 0 && (
             <div className="mb-4 flex items-center gap-2 flex-wrap bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-amber-800">
               <span className="font-medium">Применены фильтры:</span>
@@ -385,7 +481,6 @@ export const Catalog: React.FC<CatalogProps> = ({
                     onClick={() => goPage(1)}
                     disabled={page === 1}
                     className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
-                    title="Первая страница"
                   >
                     <ChevronsLeft size={16} />
                   </button>
@@ -412,7 +507,6 @@ export const Catalog: React.FC<CatalogProps> = ({
                     onClick={() => goPage(totalPages)}
                     disabled={page === totalPages}
                     className="p-2 rounded-lg border disabled:opacity-50 hidden sm:block"
-                    title="Последняя страница"
                   >
                     <ChevronsRight size={16} />
                   </button>
@@ -430,7 +524,6 @@ export const Catalog: React.FC<CatalogProps> = ({
                     <button
                       type="submit"
                       className="p-2 rounded-lg border hover:bg-stone-50"
-                      title="Перейти на страницу"
                     >
                       <ChevronsRight size={16} />
                     </button>
@@ -442,7 +535,7 @@ export const Catalog: React.FC<CatalogProps> = ({
         </main>
       </div>
 
-      {/* Мобильный Bottom Sheet для фильтров */}
+      {/* Мобильный Bottom Sheet */}
       {isFiltersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
@@ -475,6 +568,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                 onReset={resetFilters}
                 totalCount={tomatoes.length}
                 filteredCount={total}
+                smartCounts={smartCounts}
               />
             </div>
           </div>
