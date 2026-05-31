@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Catalog } from './components/Catalog';
 import { CartModal } from './components/CartModal';
-import { Footer } from './components/Footer'; // <-- импорт футера
+import { Footer } from './components/Footer';
 import { Tomato, CartItem } from './types';
 
 const CART_STORAGE_KEY = 'tomato-cart';
@@ -57,6 +57,12 @@ function normalizeColor(raw: string | undefined): string {
 
 const STANDARD_RIPENING = ['Раннеспелый', 'Среднеспелый', 'Позднеспелый'];
 
+interface Comment {
+  author: string;
+  text: string;
+  date: string;
+}
+
 function App() {
   const [tomatoes, setTomatoes] = useState<Tomato[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -71,6 +77,8 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedTomato, setSelectedTomato] = useState<Tomato | null>(null);
   const [infoBanner, setInfoBanner] = useState<{ title: string; text: string } | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentForm, setCommentForm] = useState({ author: '', text: '' });
 
   useEffect(() => {
     try {
@@ -198,9 +206,49 @@ function App() {
   };
   const closeDetail = () => {
     setSelectedTomato(null);
+    setComments([]);
+    setCommentForm({ author: '', text: '' });
     window.history.pushState({}, '', '/');
   };
   const totalCartItems = cartItems.reduce((s, i) => s + i.quantity, 0);
+
+  // Загрузка комментариев при открытии сорта
+  useEffect(() => {
+    if (!selectedTomato) return;
+    fetch(`/api/comments?id=${encodeURIComponent(selectedTomato.id)}`)
+      .then(res => res.json())
+      .then(data => setComments(data.comments || []))
+      .catch(() => setComments([]));
+  }, [selectedTomato]);
+
+  // Отправка комментария
+  const submitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTomato || !commentForm.author.trim() || !commentForm.text.trim()) return;
+    try {
+      const res = await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tomatoId: selectedTomato.id,
+          author: commentForm.author,
+          text: commentForm.text,
+        }),
+      });
+      if (res.ok) {
+        setComments(prev => [...prev, {
+          author: commentForm.author,
+          text: commentForm.text,
+          date: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+        }]);
+        setCommentForm({ author: '', text: '' });
+      } else {
+        alert('Ошибка при добавлении комментария');
+      }
+    } catch {
+      alert('Ошибка сети');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -264,7 +312,7 @@ function App() {
         />
       </div>
 
-      <Footer /> {/* <-- Футер */}
+      <Footer />
 
       {isCartOpen && (
         <CartModal
@@ -319,6 +367,47 @@ function App() {
                     ? '✅ Уже в списке'
                     : '➕ В список заказа'}
                 </button>
+              </div>
+
+              {/* Комментарии */}
+              <div className="mt-8 border-t pt-6">
+                <h3 className="font-bold text-lg mb-4">💬 Комментарии</h3>
+                {comments.length === 0 && (
+                  <p className="text-stone-400 text-sm">Пока нет комментариев.</p>
+                )}
+                {comments.map((c, i) => (
+                  <div key={i} className="mb-4 border-b pb-3">
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-medium text-sm">{c.author}</span>
+                      <span className="text-xs text-stone-400">{c.date}</span>
+                    </div>
+                    <p className="text-sm mt-1">{c.text}</p>
+                  </div>
+                ))}
+
+                <form onSubmit={submitComment} className="mt-4 space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Ваше имя"
+                    value={commentForm.author}
+                    onChange={e => setCommentForm({ ...commentForm, author: e.target.value })}
+                    className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                    required
+                  />
+                  <textarea
+                    placeholder="Ваш комментарий"
+                    value={commentForm.text}
+                    onChange={e => setCommentForm({ ...commentForm, text: e.target.value })}
+                    className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none h-20 resize-none"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition"
+                  >
+                    Отправить
+                  </button>
+                </form>
               </div>
             </div>
           </div>
