@@ -2,26 +2,39 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 
-const GOOGLE_SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
-const GOOGLE_PRIVATE_KEY = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
-const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || '';
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // GET — получить комментарии для сорта
+  // Диагностика переменных
+  const envStatus = {
+    GOOGLE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ? 'задан' : 'ОТСУТСТВУЕТ',
+    GOOGLE_PRIVATE_KEY: process.env.GOOGLE_PRIVATE_KEY ? 'задан' : 'ОТСУТСТВУЕТ',
+    GOOGLE_SHEET_ID: process.env.GOOGLE_SHEET_ID ? 'задан' : 'ОТСУТСТВУЕТ',
+  };
+
   if (req.method === 'GET') {
     const tomatoId = req.query.id as string;
     if (!tomatoId) return res.status(400).json({ error: 'Не указан id сорта' });
 
     try {
+      const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
+      const key = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+      const sheetId = process.env.GOOGLE_SHEET_ID || '';
+
+      if (!email || !key || !sheetId) {
+        return res.status(500).json({ error: 'Не все переменные окружения заданы', envStatus });
+      }
+
       const jwt = new JWT({
-        email: GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        key: GOOGLE_PRIVATE_KEY,
+        email,
+        key,
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
       });
-      const doc = new GoogleSpreadsheet(GOOGLE_SHEET_ID, jwt);
+
+      const doc = new GoogleSpreadsheet(sheetId, jwt);
       await doc.loadInfo();
       const sheet = doc.sheetsByTitle['Комментарии'];
-      if (!sheet) return res.json({ comments: [] });
+      if (!sheet) {
+        return res.json({ comments: [], debug: 'Лист Комментарии не найден. Доступные листы: ' + Object.keys(doc.sheetsByTitle).join(', ') });
+      }
 
       const rows = await sheet.getRows();
       const comments = rows
@@ -33,24 +46,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }));
 
       return res.json({ comments });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Ошибка получения комментариев' });
+    } catch (error: any) {
+      return res.status(500).json({ error: 'Ошибка получения комментариев', details: error.message, envStatus });
     }
   }
 
-  // POST — добавить комментарий
   if (req.method === 'POST') {
     const { tomatoId, author, text } = req.body;
     if (!tomatoId || !author || !text) return res.status(400).json({ error: 'Не все поля заполнены' });
 
     try {
+      const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
+      const key = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+      const sheetId = process.env.GOOGLE_SHEET_ID || '';
+
+      if (!email || !key || !sheetId) {
+        return res.status(500).json({ error: 'Не все переменные окружения заданы' });
+      }
+
       const jwt = new JWT({
-        email: GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        key: GOOGLE_PRIVATE_KEY,
+        email,
+        key,
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
       });
-      const doc = new GoogleSpreadsheet(GOOGLE_SHEET_ID, jwt);
+
+      const doc = new GoogleSpreadsheet(sheetId, jwt);
       await doc.loadInfo();
       const sheet = doc.sheetsByTitle['Комментарии'];
       if (!sheet) return res.status(500).json({ error: 'Лист "Комментарии" не найден' });
@@ -63,9 +83,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
 
       return res.json({ success: true });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Ошибка добавления комментария' });
+    } catch (error: any) {
+      return res.status(500).json({ error: 'Ошибка добавления комментария', details: error.message });
     }
   }
 
